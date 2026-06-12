@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext';
 const Register = () => {
   const [searchParams] = useSearchParams();
   const roleParam = searchParams.get('role');
-  const initialRole = roleParam === 'manager' ? 'manager' : 'seller';
-  const [role, setRole] = useState(initialRole);
+  // Only managers can register through this form
+  const initialRole = 'manager';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
@@ -17,13 +17,6 @@ const Register = () => {
 
   const { register } = useAuth();
   const navigate = useNavigate();
-
-  const isSeller = role === 'seller';
-
-  // Ensure role stays in sync if URL changes
-  useEffect(() => {
-    setRole(initialRole);
-  }, [initialRole]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,9 +42,9 @@ const Register = () => {
     }
     setLoading(true);
     try {
-      await register({ name, email, mobile, password, role: isSeller ? 'seller' : 'manager' });
+      await register({ name, email, mobile, password, role: 'manager' });
       alert('Registration successful! Please login to continue.');
-      navigate(`/login?role=${isSeller ? 'seller' : 'manager'}`, { replace: true });
+      navigate('/login?role=manager', { replace: true });
     } catch (err) {
       setError(typeof err === 'string' ? err : (err?.message || 'Registration failed'));
     } finally {
@@ -63,7 +56,7 @@ const Register = () => {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-8">
       <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-300 max-w-md w-full">
         <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-          Create {isSeller ? 'Seller' : 'Manager'} Account
+          Create Manager Account
         </h2>
 
         {error && (
@@ -138,12 +131,12 @@ const Register = () => {
             disabled={loading}
             className="w-full rounded bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-75 mt-2"
           >
-            {loading ? 'Creating account...' : `Register ${isSeller ? 'Seller' : 'Manager'}`}
+            {loading ? 'Creating account...' : 'Register as Manager'}
           </button>
         </form>
 
         <div className="text-center mt-4 text-sm">
-          <Link to={`/login?role=${isSeller ? 'seller' : 'manager'}`} className="text-primary hover:underline">
+          <Link to="/login?role=manager" className="text-primary hover:underline">
             Already have an account? Login
           </Link>
         </div>

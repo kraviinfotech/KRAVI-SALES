@@ -10,12 +10,14 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 // Protect all routes in this file for managers only
 router.use(authMiddleware, roleMiddleware('manager'));
 
-// POST /api/sellers -> Create seller user and profile
+// POST /api/sellers -> Create seller user and profile (Admin only - email and password mandatory)
 router.post(
   '/',
   [
     body('name').trim().notEmpty().withMessage('Name is required'),
-    body('mobile').trim().notEmpty().withMessage('Mobile is required')
+    body('mobile').trim().notEmpty().withMessage('Mobile is required'),
+    body('email').trim().isEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -26,47 +28,36 @@ router.post(
     const { name, email, mobile, password } = req.body;
 
     try {
-      // If email or password provided, require both and validate
-      if ((email && !password) || (!email && password)) {
-        return res.status(400).json({ message: 'Both email and password are required to create a login account' });
-      }
-
       // Check for existing seller by mobile
       const existingSeller = await Seller.findOne({ mobile });
       if (existingSeller) {
         return res.status(400).json({ message: 'A seller with this mobile number already exists' });
       }
 
-      let userId = null;
-
-      if (email && password) {
-        // validate email format
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          return res.status(400).json({ message: 'Valid email is required' });
-        }
-        if (password.length < 6) {
-          return res.status(400).json({ message: 'Password must be at least 6 characters' });
-        }
-
-        // Check if user already exists by email or mobile
-        const existingUser = await User.findOne({ $or: [{ mobile }, { email }] });
-        if (existingUser) {
-          return res.status(400).json({ message: 'A user with this mobile number or email already exists' });
-        }
-
-        // Create user account
-        const user = new User({ name, email, mobile, password, role: 'seller' });
-        await user.save();
-        userId = user._id;
+      // Check if user already exists by email or mobile
+      const existingUser = await User.findOne({ $or: [{ mobile }, { email }] });
+      if (existingUser) {
+        return res.status(400).json({ message: 'A user with this mobile number or email already exists' });
       }
 
-      // Create seller profile
-      const seller = new Seller({ userId, name, mobile });
+      // Create user account with login credentials
+      const user = new User({ name, email, mobile, password, role: 'seller' });
+      await user.save();
+
+      // Create seller profile linked to user and keep the password for admin view
+      const seller = new Seller({ userId: user._id, name, mobile, password });
       await seller.save();
 
       res.status(201).json({
-        message: 'Seller successfully created',
-        seller: { id: seller._id, userId: userId, name: seller.name, mobile: seller.mobile, createdAt: seller.createdAt }
+        message: 'Seller account created successfully. Share the email and password with the seller.',
+        seller: {
+          id: seller._id,
+          userId: user._id,
+          name: seller.name,
+          mobile: seller.mobile,
+          email: user.email,
+          createdAt: seller.createdAt
+        }
       });
     } catch (err) {
       console.error(err);
@@ -88,6 +79,7 @@ router.get('/', async (req, res) => {
       name: s.name,
       mobile: s.mobile,
       email: s.userId?.email || null,
+      password: s.password || null,
       createdAt: s.createdAt
     }));
 
@@ -98,7 +90,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// PATCH /api/sellers/:id/password -> Manager can change seller's password
+// PATCH /api/sellers/:id/password -> Manager can change seller's password (seller must have been created with /api/sellers endpoint)
 router.patch(
   '/:id/password',
   [
@@ -115,41 +107,23 @@ router.patch(
       const seller = await Seller.findById(req.params.id);
       if (!seller) return res.status(404).json({ message: 'Seller not found' });
 
-        let user = null;
-        if (seller.userId) {
-          user = await User.findById(seller.userId);
-        }
+      // All sellers must have been created with email and password via POST /api/sellers
+      if (!seller.userId) {
+        return res.status(400).json({ message: 'Seller account was not properly created. Please use POST /api/sellers to create seller with email and password.' });
+      }
 
-        // If user exists, update password
-        if (user) {
-          user.password = newPassword; // pre-save hook will hash
-          await user.save();
-          return res.json({ message: 'Password updated successfully' });
-        }
+      const user = await User.findById(seller.userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Seller user account not found' });
+      }
 
-        // No user linked to this seller. Allow creating one when manager provides an email alongside newPassword.
-        const { email } = req.body;
-        if (!email) {
-          return res.status(400).json({ message: 'Seller has no linked account. Provide email to create login along with the new password.' });
-        }
+      // Update password
+      user.password = newPassword; // pre-save hook will hash
+      await user.save();
 
-        // validate email and password
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          return res.status(400).json({ message: 'Valid email is required' });
-        }
-
-        // ensure email not already used
-        const existingUser = await User.findOne({ $or: [{ email }, { mobile: seller.mobile }] });
-        if (existingUser) {
-          return res.status(400).json({ message: 'A user with this email or mobile already exists' });
-        }
-
-        // create user and link to seller
-        const newUser = new User({ name: seller.name, email, mobile: seller.mobile, password: newPassword, role: 'seller' });
-        await newUser.save();
-        seller.userId = newUser._id;
-        await seller.save();
-        return res.json({ message: 'Login created and password set successfully' });
+      // Keep the admin-facing seller password in sync when manager updates it
+      await Seller.findOneAndUpdate({ userId: user._id }, { password: newPassword }).catch(() => null);
+      return res.json({ message: 'Password updated successfully' });
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: 'Server error updating password' });

@@ -17,6 +17,11 @@ const SellerSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  password: {
+    type: String,
+    required: false,
+    default: null
+  },
   monthlyTarget: {
     type: Number,
     default: 100000 // Default target of 1,000,000 or whatever, using 100k
