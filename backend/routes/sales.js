@@ -22,15 +22,19 @@ router.post(
     body('longitude').optional().isNumeric().withMessage('Longitude must be a number'),
     body('items').isArray({ min: 1 }).withMessage('At least one item is required'),
     body('items.*.productName').trim().notEmpty().withMessage('Product name is required'),
-    body('items.*.quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
-    body('items.*.rate').isFloat({ min: 0.01 }).withMessage('Rate must be greater than 0'),
+    body('items.*.unit').optional().isIn(['quantity', 'weight']).withMessage('Unit must be quantity or weight'),
+    body('items.*.quantity').optional().isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
+    body('items.*.weight').optional().isFloat({ min: 0.1 }).withMessage('Weight must be greater than 0.1'),
+    body('items.*.price').optional().isFloat({ min: 0.01 }).withMessage('Price must be greater than 0'),
+    body('items.*.rate').optional().isFloat({ min: 0.01 }).withMessage('Rate must be greater than 0'),
     // New optional fields
     body('checkInTime').optional().isISO8601().toDate(),
     body('checkOutTime').optional().isISO8601().toDate(),
-    body('paymentMethod').optional().isIn(['Online', 'Offline', 'None']).withMessage('Invalid payment method'),
+    body('paymentMethod').optional().isIn(['Online', 'Offline']).withMessage('Invalid payment method'),
     body('paidAmount').optional().isFloat({ min: 0 }).toFloat(),
     body('pendingAmount').optional().isFloat({ min: 0 }).toFloat(),
-    body('paymentStatus').optional().isIn(['Paid', 'Partial', 'Pending']).withMessage('Invalid payment status')
+    body('paymentStatus').optional().isIn(['Paid', 'Partial', 'Pending']).withMessage('Invalid payment status'),
+    body('scannerPhoto').optional().isString().withMessage('Scanner photo must be a string')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -38,7 +42,7 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { shopName, shopAddress, landmark, shopType, latitude, longitude, items, paymentMethod, paidAmount, pendingAmount, paymentStatus } = req.body;
+    const { shopName, shopAddress, landmark, shopType, latitude, longitude, items, paymentMethod, paidAmount, pendingAmount, paymentStatus, scannerPhoto } = req.body;
 
     try {
       // Find the seller profile of the logged-in user
@@ -56,17 +60,31 @@ router.post(
         await seller.save();
       }
 
-      // Prepare items
+      // Prepare items - handle both new (unit/weight/price) and old (quantity/rate) structures
       let totalAmount = 0;
       const itemsToSave = items.map(item => {
-        const quantity = Number(item.quantity);
-        const rate = Number(item.rate);
-        const amount = Number((quantity * rate).toFixed(2));
+        let quantity, rate, amount;
+        
+        if (item.unit === 'weight') {
+          // New weight-based structure
+          quantity = Number(item.weight) || 1;
+          rate = Number(item.price) || 0;
+        } else {
+          // New quantity-based structure or old structure
+          quantity = Number(item.quantity) || 1;
+          rate = Number(item.price || item.rate) || 0;
+        }
+        
+        amount = Number((quantity * rate).toFixed(2));
         totalAmount += amount;
+        
         return {
           productName: item.productName,
-          quantity,
-          rate,
+          unit: item.unit || 'quantity',
+          quantity: item.unit === 'weight' ? item.weight : item.quantity,
+          weight: item.unit === 'weight' ? item.weight : undefined,
+          price: item.price || item.rate,
+          rate: item.price || item.rate,
           amount
         };
       });
@@ -82,10 +100,11 @@ router.post(
         longitude,
         visitDatetime: new Date(),
         totalAmount: Number(totalAmount.toFixed(2)),
-        paymentMethod: paymentMethod || 'None',
+        paymentMethod: paymentMethod || 'Offline',
         paidAmount: paidAmount || 0,
         pendingAmount: pendingAmount || 0,
         paymentStatus: paymentStatus || 'Pending',
+        scannerPhoto: scannerPhoto || null
       });
 
       await record.save();
@@ -96,7 +115,10 @@ router.post(
         const saleItem = new SaleItem({
           recordId: record._id,
           productName: item.productName,
+          unit: item.unit,
           quantity: item.quantity,
+          weight: item.weight,
+          price: item.price,
           rate: item.rate,
           amount: item.amount
         });

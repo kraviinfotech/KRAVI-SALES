@@ -32,7 +32,13 @@ const SellerReports = () => {
   const stats = useMemo(() => {
     return records.reduce(
       (total, record) => {
-        const itemCount = (record.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+        const itemCount = (record.items || []).reduce((sum, item) => {
+          if (item.unit === 'weight') {
+            return sum + 1; // Count weight-based items as 1
+          } else {
+            return sum + Number(item.quantity || 0);
+          }
+        }, 0);
         return {
           visits: total.visits + 1,
           sales: total.sales + Number(record.totalAmount || 0),

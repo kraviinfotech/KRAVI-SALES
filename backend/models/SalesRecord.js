@@ -50,21 +50,8 @@ const SalesRecordSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['Online', 'Offline', 'None'],
-    default: 'None'
-  },
-  paidAmount: {
-    type: Number,
-    default: 0
-  },
-  pendingAmount: {
-    type: Number,
-    default: 0
-  },
-  paymentMethod: {
-    type: String,
-    enum: ['Online', 'Offline', 'None'],
-    default: 'None'
+    enum: ['Online', 'Offline'],
+    default: 'Offline'
   },
   paidAmount: {
     type: Number,
@@ -78,6 +65,10 @@ const SalesRecordSchema = new mongoose.Schema({
     type: String,
     enum: ['Paid', 'Partial', 'Pending'],
     default: 'Pending'
+  },
+  scannerPhoto: {
+    type: String,
+    default: null
   },
 
   createdAt: {

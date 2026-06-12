@@ -125,20 +125,33 @@ const SalesTable = ({ records }) => {
                                 <thead>
                                   <tr className="bg-gray-100 border-b border-gray-200 font-semibold text-gray-600">
                                     <th className="p-2">Product</th>
-                                    <th className="p-2 text-center">Qty</th>
+                                    <th className="p-2 text-center">Qty/Weight</th>
                                     <th className="p-2 text-right">Rate</th>
                                     <th className="p-2 text-right">Amount</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                  {record.items && record.items.map((item, idx) => (
-                                    <tr key={item._id || idx}>
-                                      <td className="p-2 text-gray-800 font-medium">{item.productName}</td>
-                                      <td className="p-2 text-center text-gray-600">{item.quantity}</td>
-                                      <td className="p-2 text-right text-gray-600">₹{item.rate.toFixed(2)}</td>
-                                      <td className="p-2 text-right text-gray-800 font-medium">₹{(item.quantity * item.rate).toFixed(2)}</td>
-                                    </tr>
-                                  ))}
+                                  {record.items && record.items.map((item, idx) => {
+                                    let quantity, displayLabel;
+                                    if (item.unit === 'weight') {
+                                      quantity = Number(item.weight) || 0;
+                                      displayLabel = `${quantity} kg`;
+                                    } else {
+                                      quantity = Number(item.quantity) || 0;
+                                      displayLabel = `${quantity} pcs`;
+                                    }
+                                    const rate = Number(item.price || item.rate) || 0;
+                                    const amount = quantity * rate;
+
+                                    return (
+                                      <tr key={item._id || idx}>
+                                        <td className="p-2 text-gray-800 font-medium">{item.productName}</td>
+                                        <td className="p-2 text-center text-gray-600">{displayLabel}</td>
+                                        <td className="p-2 text-right text-gray-600">₹{rate.toFixed(2)}</td>
+                                        <td className="p-2 text-right text-gray-800 font-medium">₹{amount.toFixed(2)}</td>
+                                      </tr>
+                                    );
+                                  })}
                                 </tbody>
                               </table>
                             </div>

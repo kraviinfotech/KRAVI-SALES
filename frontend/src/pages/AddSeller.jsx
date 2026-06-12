@@ -5,8 +5,17 @@ import { UserPlus, Loader2, AlertCircle, CheckCircle2, Phone, User, Lock, ListCo
 const AddSeller = () => {
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
+  // Change-password modal state
+  const [showChangeModal, setShowChangeModal] = useState(false);
+  const [changePasswordSellerId, setChangePasswordSellerId] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [modalEmail, setModalEmail] = useState('');
+  const [loadingChange, setLoadingChange] = useState(false);
+  const [changeMessage, setChangeMessage] = useState('');
+
   const [sellers, setSellers] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
@@ -35,13 +44,27 @@ const AddSeller = () => {
     setLoadingSubmit(true);
 
     try {
-      await API.post('/sellers', { name, mobile, password });
-      
+      // If one of email/password is provided, require both
+      if ((email && !password) || (!email && password)) {
+        setError('Both email and password are required to create a login account');
+        setLoadingSubmit(false);
+        return;
+      }
+
+      const payload = { name, mobile };
+      if (email && password) {
+        payload.email = email;
+        payload.password = password;
+      }
+
+      await API.post('/sellers', payload);
+
       setSuccess('Seller successfully created.');
       setName('');
       setMobile('');
+      setEmail('');
       setPassword('');
-      
+
       fetchSellers();
     } catch (err) {
       if (!err.response) {
@@ -54,7 +77,49 @@ const AddSeller = () => {
     }
   };
 
+    const handleChangePassword = async () => {
+        if (!newPassword || newPassword.length < 6) {
+          setChangeMessage('Password must be at least 6 characters');
+          return;
+        }
+
+        const currentSeller = sellers.find(s => s._id === changePasswordSellerId);
+        const hasLogin = !!currentSeller?.email;
+
+        // If no login, require modalEmail
+        if (!hasLogin) {
+          if (!modalEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(modalEmail)) {
+            setChangeMessage('Valid email is required to create login');
+            return;
+          }
+        }
+
+        setLoadingChange(true);
+        setChangeMessage('');
+        try {
+          const payload = { newPassword };
+          if (!hasLogin) payload.email = modalEmail;
+          await API.patch(`/sellers/${changePasswordSellerId}/password`, payload);
+
+          setChangeMessage(hasLogin ? 'Password updated successfully' : 'Login created and password set successfully');
+          setNewPassword('');
+          setModalEmail('');
+          fetchSellers();
+          setTimeout(() => {
+            setShowChangeModal(false);
+            setChangePasswordSellerId(null);
+            setChangeMessage('');
+          }, 900);
+        } catch (err) {
+          console.error(err);
+          setChangeMessage(err.response?.data?.message || 'Failed to update password');
+        } finally {
+          setLoadingChange(false);
+        }
+    };
+
   return (
+    <>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       {/* Left: Add Seller Form */}
       <div className="md:col-span-1 bg-white p-6 rounded-lg border border-gray-100 shadow-sm h-fit">
@@ -106,17 +171,28 @@ const AddSeller = () => {
             />
           </div>
 
+          {/* Email */}
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email (optional)</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              placeholder="seller@example.com"
+            />
+          </div>
+
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password (optional)</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              required
+              placeholder="Set a password (optional)"
             />
           </div>
 
@@ -159,22 +235,36 @@ const AddSeller = () => {
                 <tr className="bg-gray-50 text-gray-700 font-semibold border-b border-gray-200">
                   <th className="p-3">Seller Name</th>
                   <th className="p-3">Mobile Contact</th>
+                  <th className="p-3">Email</th>
+                  <th className="p-3">Has Login</th>
                   <th className="p-3">Registered Date</th>
+                  <th className="p-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-700">
                 {sellers.map((seller) => (
                   <tr key={seller._id} className="hover:bg-gray-50/55 transition-colors">
-                    <td className="p-3 font-medium text-gray-900">{seller.name}</td>
-                    <td className="p-3 font-mono">{seller.mobile}</td>
-                    <td className="p-3 text-gray-500">
-                      {new Date(seller.createdAt).toLocaleDateString('en-IN', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
-                    </td>
-                  </tr>
+                      <td className="p-3 font-medium text-gray-900">{seller.name}</td>
+                      <td className="p-3 font-mono">{seller.mobile}</td>
+                      <td className="p-3 font-mono">{seller.email || '-'}</td>
+                      <td className="p-3">{seller.email ? 'Yes' : 'No'}</td>
+                      <td className="p-3 text-gray-500">
+                        {new Date(seller.createdAt).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </td>
+                      <td className="p-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => { setShowChangeModal(true); setChangePasswordSellerId(seller._id); setChangeMessage(''); setModalEmail(seller.email || ''); }}
+                          className="text-sm text-primary underline"
+                        >
+                          {seller.email ? 'Change Password' : 'Set Password'}
+                        </button>
+                      </td>
+                    </tr>
                 ))}
               </tbody>
             </table>
@@ -182,7 +272,51 @@ const AddSeller = () => {
         )}
       </div>
     </div>
-  );
+    
+      {/* Change Password Modal */}
+      {showChangeModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="w-full max-w-md rounded bg-white p-6 shadow-lg">
+            {(() => {
+              const currentSeller = sellers.find(s => s._id === changePasswordSellerId);
+              const hasLogin = !!currentSeller?.email;
+              return (
+                <>
+                  <h3 className="text-lg font-bold mb-1">{hasLogin ? 'Change Seller Password' : 'Set Seller Password'}</h3>
+                  {currentSeller?.email && <div className="text-sm text-gray-600 mb-3">Email: {currentSeller.email}</div>}
+                </>
+              );
+            })()}
+            {changeMessage && <div className="mb-3 text-sm text-green-700">{changeMessage}</div>}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full rounded border border-gray-300 px-3 py-2" />
+              </div>
+              {/* If seller has no login, allow manager to enter email to create account */}
+              {(() => {
+                const currentSeller = sellers.find(s => s._id === changePasswordSellerId);
+                const hasLogin = !!currentSeller?.email;
+                if (!hasLogin) {
+                  return (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email (required to create login)</label>
+                      <input type="email" value={modalEmail} onChange={(e) => setModalEmail(e.target.value)} className="w-full rounded border border-gray-300 px-3 py-2" />
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setShowChangeModal(false)} className="px-3 py-2 rounded border">Cancel</button>
+                <button type="button" onClick={handleChangePassword} className="px-3 py-2 rounded bg-primary text-white">Update</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        )}
+        </>
+      );
 };
 
 export default AddSeller;

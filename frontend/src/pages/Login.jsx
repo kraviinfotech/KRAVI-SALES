@@ -151,7 +151,7 @@ const roleConfig = {
               <label className="mb-1 block text-sm font-medium text-gray-700">Email or Mobile Number</label>
               <input
                 type="text"
-                inputMode="tel"
+                inputMode="email"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="e.g. email@example.com or 9876543210"

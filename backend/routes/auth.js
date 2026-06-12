@@ -5,6 +5,8 @@ const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const Seller = require('../models/Seller');
+const authMiddleware = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware');
 
 // POST /api/auth/register
 router.post(
@@ -71,7 +73,8 @@ router.post(
         name: newUser.name,
         email: newUser.email,
         mobile: newUser.mobile,
-        role: newUser.role
+        role: newUser.role,
+        managerScannerPhoto: newUser.managerScannerPhoto || null
       }
     });
   }
@@ -140,7 +143,8 @@ router.post(
         name: user.name,
         email: user.email,
         mobile: user.mobile,
-        role: user.role
+        role: user.role,
+        managerScannerPhoto: user.managerScannerPhoto || null
       }
     });
   }
@@ -208,5 +212,74 @@ router.post(
     return res.json({ message: 'Password has been reset successfully' });
   }
 );
+
+// GET /api/auth/me -> return current authenticated user
+router.get('/me', authMiddleware, async (req, res) => {
+  const { _id, name, email, mobile, role, managerScannerPhoto } = req.user;
+  res.json({
+    user: {
+      _id,
+      name,
+      email,
+      mobile,
+      role,
+      managerScannerPhoto: managerScannerPhoto || null
+    }
+  });
+});
+
+// PATCH /api/auth/me/scanner -> manager uploads default scanner image
+router.patch(
+  '/me/scanner',
+  authMiddleware,
+  roleMiddleware('manager'),
+  [
+    body('managerScannerPhoto').optional().custom((value) => {
+      if (value !== null && typeof value !== 'string') {
+        throw new Error('Scanner image must be a base64 string or null');
+      }
+      return true;
+    })
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const manager = await User.findById(req.user._id);
+      if (!manager) {
+        return res.status(404).json({ message: 'Manager not found' });
+      }
+
+      manager.managerScannerPhoto = req.body.managerScannerPhoto || null;
+      await manager.save();
+
+      res.json({
+        message: 'Manager scanner updated successfully',
+        managerScannerPhoto: manager.managerScannerPhoto || null
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error updating scanner image' });
+    }
+  }
+);
+
+// GET /api/auth/manager-scanner -> return default manager scanner proof to authenticated users
+router.get('/manager-scanner', authMiddleware, async (req, res) => {
+  try {
+    const manager = await User.findOne({ role: 'manager', managerScannerPhoto: { $exists: true, $ne: null } });
+    if (!manager) {
+      return res.status(404).json({ message: 'No manager scanner configured' });
+    }
+
+    res.json({ scannerPhoto: manager.managerScannerPhoto });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error fetching manager scanner' });
+  }
+});
 
 module.exports = router;

@@ -11,9 +11,22 @@ const SaleItemSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  unit: {
+    type: String,
+    enum: ['quantity', 'weight'],
+    default: 'quantity'
+  },
   quantity: {
     type: Number,
     required: true
+  },
+  weight: {
+    type: Number,
+    default: null
+  },
+  price: {
+    type: Number,
+    default: null
   },
   rate: {
     type: Number,

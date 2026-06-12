@@ -42,7 +42,13 @@ const SellerDashboard = () => {
           visits: todayRecords.length,
           sales: todayRecords.reduce((sum, record) => sum + Number(record.totalAmount || 0), 0),
           items: todayRecords.reduce((sum, record) => {
-            const itemTotal = (record.items || []).reduce((itemSum, item) => itemSum + Number(item.quantity || 0), 0);
+            const itemTotal = (record.items || []).reduce((itemSum, item) => {
+              if (item.unit === 'weight') {
+                return itemSum + 1; // Count weight-based items as 1
+              } else {
+                return itemSum + Number(item.quantity || 0);
+              }
+            }, 0);
             return sum + itemTotal;
           }, 0)
         });

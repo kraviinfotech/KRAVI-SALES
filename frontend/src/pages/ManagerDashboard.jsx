@@ -169,12 +169,14 @@ const ManagerDashboard = () => {
   const sellerRows = useMemo(() => {
     const sellerMap = new Map();
 
-    records.forEach((record) => {
-      const sellerId = record.sellerId?._id || record.sellerId?.name || 'unknown';
+    records.forEach((record, index) => {
+      const sellerId = record.sellerId?._id;
       const sellerName = record.sellerId?.name || 'Unknown Seller';
+      const sellerKey = sellerId || `${sellerName}-${index}`;
 
-      if (!sellerMap.has(sellerId)) {
-        sellerMap.set(sellerId, {
+      if (!sellerMap.has(sellerKey)) {
+        sellerMap.set(sellerKey, {
+          sellerId,
           seller: sellerName,
           totalRecords: 0,
           totalShops: 0,
@@ -184,10 +186,16 @@ const ManagerDashboard = () => {
         });
       }
 
-      const row = sellerMap.get(sellerId);
+      const row = sellerMap.get(sellerKey);
       row.totalRecords += 1;
       row.totalShops += 1;
-      row.totalItems += (record.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+      row.totalItems += (record.items || []).reduce((sum, item) => {
+        if (item.unit === 'weight') {
+          return sum + 1; // Count weight-based items as 1
+        } else {
+          return sum + Number(item.quantity || 0);
+        }
+      }, 0);
       row.totalSales += Number(record.totalAmount || 0);
       row.totalPending += Number(record.pendingAmount || 0);
     });
@@ -261,7 +269,7 @@ const ManagerDashboard = () => {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/manager/records/new')}
+            onClick={() => navigate('/manager/records')}
             className="flex h-9 items-center gap-2 rounded-md bg-blue-700 px-4 text-xs font-black text-white shadow-sm transition-colors hover:bg-blue-800"
           >
             <Plus size={16} />
@@ -456,13 +464,11 @@ const ManagerDashboard = () => {
                 </tr>
               ) : (
                 sellerRows.map((row) => {
-                  // Find the ID. If not found, disable clicking to prevent 500 error
-                  const sellerId = records.find(r => r.sellerId?.name === row.seller)?.sellerId?._id;
                   return (
                     <tr 
-                      key={row.seller} 
-                      className={sellerId ? "hover:bg-slate-50 cursor-pointer" : "opacity-50"} 
-                      onClick={() => sellerId && navigate(`/manager/seller/${sellerId}`)}
+                      key={row.sellerId || row.seller}
+                      className={row.sellerId ? "hover:bg-slate-50 cursor-pointer" : "opacity-50 cursor-not-allowed"}
+                      onClick={() => row.sellerId && navigate(`/manager/seller/${row.sellerId}`)}
                     >
                     <td className="px-4 py-3 font-bold text-slate-950">{row.seller}</td>
                     <td className="px-4 py-3 text-center font-semibold text-slate-700">

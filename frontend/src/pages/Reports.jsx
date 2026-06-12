@@ -203,7 +203,14 @@ const Reports = () => {
     const headers = ['Date', 'Seller', 'Shop Name', 'Shop Type', 'Address', 'Landmark', 'Total Amount', 'Paid Amount', 'Pending Amount', 'Payment Status', 'Items Count', 'Items (Product x Qty @ Rate)'];
     
     const rows = records.map(r => {
-      const itemsFormatted = r.items?.map(item => `${item.productName} (${item.quantity} x ₹${item.rate})`).join('; ') || '';
+      const itemsFormatted = r.items?.map(item => {
+        if (item.unit === 'weight') {
+          return `${item.productName} (${item.weight} kg @ ₹${item.price})`;
+        } else {
+          const rate = item.price || item.rate;
+          return `${item.productName} (${item.quantity} pcs @ ₹${rate})`;
+        }
+      }).join('; ') || '';
       return [
         new Date(r.visitDatetime).toISOString(),
         r.sellerId?.name || 'Unknown',

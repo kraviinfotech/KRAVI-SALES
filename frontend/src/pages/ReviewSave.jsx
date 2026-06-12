@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useOutletContext,  } from 'react-router-dom';
 import API from '../api/axios';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Camera, X } from 'lucide-react';
 
 const currencyFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -16,30 +16,91 @@ const ReviewSave = () => {
   const [success, setSuccess] = useState(false);
 
   // Local state for payment details, initialized from formData
-  const [paymentMethod, setPaymentMethod] = useState(formData.paymentMethod || 'None');
-  const [paidAmount, setPaidAmount] = useState(formData.paidAmount || 0);
+  const [paymentMethod, setPaymentMethod] = useState(formData.paymentMethod || 'Offline');
+  const [payingAmount, setPayingAmount] = useState(formData.paidAmount || 0);
   const [paymentStatus, setPaymentStatus] = useState(formData.paymentStatus || 'Pending');
   const [error, setError] = useState(''); // Local error state for this component
+  
+  // Scanner modal states
+  const [showScanner, setShowScanner] = useState(false);
+  const [scannerPhoto, setScannerPhoto] = useState(null);
+  const [defaultScannerPhoto, setDefaultScannerPhoto] = useState(null);
+  const [managerScannerLoaded, setManagerScannerLoaded] = useState(false);
+  const fileInputRef = useRef(null);
 
   const { shopName, shopAddress, landmark, shopType, latitude, longitude, items } = formData; // Destructure other fields from formData
 
-  const totalAmount = useMemo(() => (items || []).reduce(
-    (sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.rate) || 0),
-    0
-  ), [items]);
+  const totalAmount = useMemo(() => (items || []).reduce((sum, item) => {
+    if (item.unit === 'weight') {
+      return sum + (Number(item.weight) || 0) * (Number(item.price) || 0);
+    } else {
+      return sum + (Number(item.quantity) || 0) * (Number(item.price) || 0);
+    }
+  }, 0), [items]);
 
-  const pendingAmount = useMemo(() => totalAmount - paidAmount, [totalAmount, paidAmount]);
+  const pendingAmount = useMemo(() => totalAmount - payingAmount, [totalAmount, payingAmount]);
 
   // Effect to update payment status based on paid amount
   useEffect(() => {
-    if (paidAmount >= totalAmount && totalAmount > 0) {
+    if (payingAmount >= totalAmount && totalAmount > 0) {
       setPaymentStatus('Paid');
-    } else if (paidAmount > 0 && paidAmount < totalAmount) {
+    } else if (payingAmount > 0 && payingAmount < totalAmount) {
       setPaymentStatus('Partial');
     } else {
       setPaymentStatus('Pending');
     }
-  }, [paidAmount, totalAmount]);
+  }, [payingAmount, totalAmount]);
+
+  // Open scanner immediately when payment method is Online
+  useEffect(() => {
+    setShowScanner(paymentMethod === 'Online');
+  }, [paymentMethod]);
+
+  // Fetch manager default scanner if available for sellers
+  useEffect(() => {
+    const loadDefaultScanner = async () => {
+      try {
+        const response = await API.get('/auth/manager-scanner');
+        setDefaultScannerPhoto(response.data.scannerPhoto || null);
+      } catch (err) {
+        // No default scanner is fine; seller can still capture their own proof
+        if (err.response?.status !== 404) {
+          console.error('Failed to load manager scanner:', err);
+        }
+      } finally {
+        setManagerScannerLoaded(true);
+      }
+    };
+
+    loadDefaultScanner();
+  }, []);
+
+  const handlePhotoCapture = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setScannerPhoto(event.target?.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Auto-launch the camera input when Online scanner opens
+  useEffect(() => {
+    if (paymentMethod === 'Online' && !scannerPhoto && !defaultScannerPhoto && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+    setShowScanner(paymentMethod === 'Online' && !scannerPhoto && !defaultScannerPhoto);
+  }, [paymentMethod, scannerPhoto, defaultScannerPhoto]);
+
+  const handleRemovePhoto = () => {
+    setScannerPhoto(null);
+    setDefaultScannerPhoto(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -55,14 +116,17 @@ const ReviewSave = () => {
         longitude,
         items,
         paymentMethod,
-        paidAmount,
+        paidAmount: payingAmount,
         pendingAmount, // Send calculated pending amount
         paymentStatus,
+        scannerPhoto: paymentMethod === 'Online' ? (scannerPhoto || defaultScannerPhoto) : null,
       });
 
       sessionStorage.removeItem('sellFormData'); // Clear persisted data
-      setFormData(prev => ({ ...prev, shopName: '', shopAddress: '', landmark: '', shopType: 'Retail', latitude: null, longitude: null, items: [{ productName: '', quantity: 1, rate: '' }], paymentMethod: 'None', paidAmount: 0, paymentStatus: 'Pending' })); // Reset local state
+      setFormData(prev => ({ ...prev, shopName: '', shopAddress: '', landmark: '', shopType: 'Retail', latitude: null, longitude: null, items: [{ productName: '', unit: 'quantity', quantity: 1, weight: '', price: '' }], paymentMethod: 'Offline', paidAmount: 0, paymentStatus: 'Pending' })); // Reset local state
       setSuccess(true);
+      setShowScanner(false);
+      setScannerPhoto(null);
       } catch (err) {
         console.error(err);
         // Handle validation errors array or single message
@@ -119,15 +183,26 @@ const ReviewSave = () => {
         <h3 className="text-sm font-semibold text-gray-700 mb-2">Products</h3>
         <div className="space-y-2 bg-gray-50 p-4 rounded border border-gray-100">
           {(items || []).map((item, index) => {
-            const quantity = Number(item.quantity) || 0;
-            const rate = Number(item.rate) || 0;
-            const amount = quantity * rate;
+            let quantity, rate, amount;
+            let displayLabel = '';
+
+            if (item.unit === 'weight') {
+              quantity = Number(item.weight) || 0;
+              displayLabel = `${quantity} kg`;
+              rate = Number(item.price) || 0;
+            } else {
+              quantity = Number(item.quantity) || 0;
+              displayLabel = `${quantity} pcs`;
+              rate = Number(item.price) || 0;
+            }
+
+            amount = quantity * rate;
 
             return (
               <div key={`${item.productName}-${index}`} className="flex items-center justify-between text-sm border-b border-gray-200 last:border-0 pb-2 last:pb-0">
                 <span className="font-medium text-gray-800">{item.productName}</span>
                 <span className="font-semibold text-gray-900">
-                  {quantity} x ₹{rate} = ₹{amount.toFixed(2)}
+                  {displayLabel} x ₹{rate} = ₹{amount.toFixed(2)}
                 </span>
               </div>
             );
@@ -141,8 +216,8 @@ const ReviewSave = () => {
           <p className="text-xl font-bold text-gray-900">{currencyFormatter.format(totalAmount)}</p>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-emerald-600">Paid Amount</span>
-          <span className="font-bold text-emerald-700">{currencyFormatter.format(paidAmount)}</span>
+          <span className="font-medium text-emerald-600">Paying Amount</span>
+          <span className="font-bold text-emerald-700">{currencyFormatter.format(payingAmount)}</span>
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium text-red-600">Pending Amount</span>
@@ -160,25 +235,29 @@ const ReviewSave = () => {
             <select
               id="paymentMethod"
               value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
+              onChange={(e) => {
+                setPaymentMethod(e.target.value);
+                if (e.target.value === 'Online') {
+                  setShowScanner(true);
+                }
+              }}
               className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             >
-              <option value="None">None</option>
               <option value="Offline">Cash</option>
               <option value="Online">Online</option>
             </select>
           </div>
 
-          {/* Paid Amount */}
+          {/* Paying Amount */}
           <div>
-            <label htmlFor="paidAmount" className="mb-1 block text-sm font-medium text-gray-700">Paid Amount (₹)</label>
+            <label htmlFor="payingAmount" className="mb-1 block text-sm font-medium text-gray-700">Paying Amount (₹)</label>
             <input
-              id="paidAmount"
+              id="payingAmount"
               type="number"
               min="0"
               step="0.01"
-              value={paidAmount}
-              onChange={(e) => setPaidAmount(Number(e.target.value))}
+              value={payingAmount}
+              onChange={(e) => setPayingAmount(Number(e.target.value))}
               className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
@@ -209,6 +288,24 @@ const ReviewSave = () => {
             </select>
           </div>
         </div>
+
+        {/* Scanner Preview for Online Payment */}
+        {paymentMethod === 'Online' && scannerPhoto && (
+          <div className="mt-4 p-4 bg-gray-50 rounded border border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-semibold text-gray-700">Payment Proof</h4>
+              <button
+                type="button"
+                onClick={handleRemovePhoto}
+                className="flex h-6 w-6 items-center justify-center rounded text-gray-500 hover:bg-red-50 hover:text-red-600"
+                aria-label="Remove photo"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <img src={scannerPhoto} alt="Payment Proof" className="max-w-full max-h-48 rounded border border-gray-200" />
+          </div>
+        )}
       </section>
 
       <button
@@ -219,6 +316,70 @@ const ReviewSave = () => {
       >
         {loading ? 'Saving...' : 'Save Record'}
       </button>
+
+      {/* Scanner Modal */}
+      {showScanner && paymentMethod === 'Online' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowScanner(false);
+              }}
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded text-gray-500 hover:bg-red-50 hover:text-red-600"
+              aria-label="Close scanner"
+            >
+              <X size={20} />
+            </button>
+
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Payment Proof</h3>
+            
+            {!scannerPhoto ? (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">Capture a photo of your payment confirmation</p>
+                
+                <div className="flex flex-col gap-3">
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded border-2 border-dashed border-primary bg-primary/5 px-4 py-6 text-sm font-medium text-primary hover:bg-primary/10">
+                    <Camera size={18} />
+                    Capture Photo
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handlePhotoCapture}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <img src={scannerPhoto} alt="Payment Proof" className="max-w-full rounded border border-gray-200" />
+                
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    className="flex-1 rounded border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Change Photo
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setShowScanner(false)}
+                    className="flex-1 rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

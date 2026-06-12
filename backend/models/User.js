@@ -29,6 +29,10 @@ const UserSchema = new mongoose.Schema({
     enum: ['manager', 'seller'],
     required: true
   },
+  managerScannerPhoto: {
+    type: String,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

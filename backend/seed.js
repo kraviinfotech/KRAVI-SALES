@@ -22,6 +22,7 @@ async function seed() {
     // 1. Create default Manager
     const manager = new User({
       name: 'Admin Manager',
+      email: 'manager@example.com',
       mobile: '9876543210',
       password: 'manager123',
       role: 'manager'
@@ -32,6 +33,7 @@ async function seed() {
     // 2. Create default Seller user
     const sellerUser = new User({
       name: 'John Seller',
+      email: 'john@example.com',
       mobile: '9876543211',
       password: 'seller123',
       role: 'seller'
@@ -50,6 +52,7 @@ async function seed() {
     // 3. Create another seller for comparative performance charts
     const sellerUser2 = new User({
       name: 'Sarah Seller',
+      email: 'sarah@example.com',
       mobile: '9876543212',
       password: 'seller123',
       role: 'seller'

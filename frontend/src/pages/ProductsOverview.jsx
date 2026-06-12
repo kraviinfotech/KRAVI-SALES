@@ -80,7 +80,11 @@ const ProductsOverview = () => {
         }
 
         const product = productMap.get(name);
-        product.quantity += Number(item.quantity || 0);
+        if (item.unit === 'weight') {
+          product.quantity += Number(item.weight || 0);
+        } else {
+          product.quantity += Number(item.quantity || 0);
+        }
         product.sales += Number(item.amount || 0);
         product.recordIds.add(record._id);
       });
