@@ -51,11 +51,6 @@ const ReviewSave = () => {
     }
   }, [payingAmount, totalAmount]);
 
-  // Open scanner immediately when payment method is Online
-  useEffect(() => {
-    setShowScanner(paymentMethod === 'Online');
-  }, [paymentMethod]);
-
   // Fetch manager default scanner if available for sellers
   useEffect(() => {
     const loadDefaultScanner = async () => {
@@ -75,24 +70,26 @@ const ReviewSave = () => {
     loadDefaultScanner();
   }, []);
 
+  // Open scanner modal immediately when payment method is Online
+  useEffect(() => {
+    if (paymentMethod === 'Online' && !scannerPhoto) {
+      setShowScanner(true);
+    } else if (paymentMethod !== 'Online') {
+      setShowScanner(false);
+    }
+  }, [paymentMethod, scannerPhoto]);
+
   const handlePhotoCapture = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
         setScannerPhoto(event.target?.result);
+        setShowScanner(false);
       };
       reader.readAsDataURL(file);
     }
   };
-
-  // Auto-launch the camera input when Online scanner opens
-  useEffect(() => {
-    if (paymentMethod === 'Online' && !scannerPhoto && !defaultScannerPhoto && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-    setShowScanner(paymentMethod === 'Online' && !scannerPhoto && !defaultScannerPhoto);
-  }, [paymentMethod, scannerPhoto, defaultScannerPhoto]);
 
   const handleRemovePhoto = () => {
     setScannerPhoto(null);
@@ -320,7 +317,7 @@ const ReviewSave = () => {
       {/* Scanner Modal */}
       {showScanner && paymentMethod === 'Online' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+          <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg max-h-[90vh] overflow-y-auto">
             {/* Close button */}
             <button
               type="button"
@@ -333,16 +330,43 @@ const ReviewSave = () => {
               <X size={20} />
             </button>
 
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">Payment Proof</h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Payment Proof Upload</h3>
             
             {!scannerPhoto ? (
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">Capture a photo of your payment confirmation</p>
+                {/* Show Default Manager Scanner if Available */}
+                {defaultScannerPhoto ? (
+                  <div className="space-y-4">
+                    <div className="rounded border border-slate-300 bg-slate-50 p-3">
+                      <p className="mb-3 text-xs font-semibold uppercase text-slate-600">Manager's Default Payment Receipt</p>
+                      <img src={defaultScannerPhoto} alt="Manager payment receipt" className="max-h-48 w-full rounded object-contain border border-slate-200" />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setScannerPhoto(defaultScannerPhoto);
+                        setShowScanner(false);
+                      }}
+                      className="w-full rounded bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition"
+                    >
+                      Use This Receipt
+                    </button>
+
+                    <div className="relative flex items-center gap-3">
+                      <div className="flex-1 border-t border-gray-300"></div>
+                      <span className="text-xs font-medium text-gray-500">Or</span>
+                      <div className="flex-1 border-t border-gray-300"></div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-600 mb-4">Capture a photo of your payment confirmation</p>
+                )}
                 
                 <div className="flex flex-col gap-3">
-                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded border-2 border-dashed border-primary bg-primary/5 px-4 py-6 text-sm font-medium text-primary hover:bg-primary/10">
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded border-2 border-dashed border-blue-500 bg-blue-50 px-4 py-6 text-sm font-medium text-blue-600 hover:bg-blue-100 transition">
                     <Camera size={18} />
-                    Capture Photo
+                    Capture Your Own Proof
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -356,21 +380,24 @@ const ReviewSave = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                <img src={scannerPhoto} alt="Payment Proof" className="max-w-full rounded border border-gray-200" />
+                <div className="rounded border border-gray-200 bg-gray-50 p-3">
+                  <p className="mb-2 text-xs font-semibold text-gray-600">Payment Proof</p>
+                  <img src={scannerPhoto} alt="Payment Proof" className="max-w-full rounded border border-gray-200" />
+                </div>
                 
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={handleRemovePhoto}
-                    className="flex-1 rounded border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    onClick={() => setScannerPhoto(null)}
+                    className="flex-1 rounded border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
                   >
-                    Change Photo
+                    Change
                   </button>
                   
                   <button
                     type="button"
                     onClick={() => setShowScanner(false)}
-                    className="flex-1 rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark"
+                    className="flex-1 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
                   >
                     Confirm
                   </button>

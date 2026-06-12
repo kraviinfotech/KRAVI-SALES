@@ -67,9 +67,7 @@ const ResetPassword = () => {
   <button type="button" onClick={() => navigate('/login')} className="text-primary underline">
     Back to Login
   </button>
-  <Link to="/register" className="text-primary underline mt-2">
-    Register
-  </Link>
+
 </div>
       </form>
     </div>

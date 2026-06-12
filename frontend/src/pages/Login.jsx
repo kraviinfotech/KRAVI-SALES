@@ -18,7 +18,7 @@ const roleConfig = {
     buttonLabel: 'Login as Seller',
     icon: UserRound,
     buttonClass: 'bg-primary hover:bg-primary-dark',
-    registerLink: { to: '/register?role=seller', label: 'Register as a Seller' }
+    registerLink: null
   },
   manager: {
     title: 'Manager Login',
@@ -186,11 +186,13 @@ const roleConfig = {
               {loading ? 'Logging In...' : currentRole.buttonLabel}
             </button>
 
-            <div className="text-right">
-              <Link to={currentRole.registerLink.to} className="text-sm font-medium text-primary hover:underline">
-                {currentRole.registerLink.label}
-              </Link>
-            </div>
+            {currentRole.registerLink && (
+              <div className="text-right">
+                <Link to={currentRole.registerLink.to} className="text-sm font-medium text-primary hover:underline">
+                  {currentRole.registerLink.label}
+                </Link>
+              </div>
+            )}
           </form>
         </div>
       </div>

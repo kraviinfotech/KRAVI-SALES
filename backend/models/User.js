@@ -33,6 +33,10 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  passwordUpdatedAt: {
+    type: Date,
+    default: Date.now
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -41,12 +45,13 @@ const UserSchema = new mongoose.Schema({
   resetPasswordExpires: { type: Date }
 });
 
-// Hash password before saving
+// Hash password before saving and track password update time
 UserSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
+    this.passwordUpdatedAt = Date.now();
     next();
   } catch (err) {
     next(err);

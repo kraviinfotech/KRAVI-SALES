@@ -8,7 +8,7 @@ const Seller = require('../models/Seller');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 
-// POST /api/auth/register
+// POST /api/auth/register -> Managers only (Admin controls seller creation via /api/sellers)
 router.post(
   '/register',
   [
@@ -31,7 +31,12 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, mobile, password, role = 'seller' } = req.body;
+    const { name, email, mobile, password, role } = req.body;
+
+    // Only managers can register themselves
+    if (role !== 'manager' && role !== undefined) {
+      return res.status(403).json({ message: 'Sellers cannot self-register. Contact your administrator to create an account.' });
+    }
 
     // Check if email or mobile already exists
     const existingUser = await User.findOne({ $or: [{ email }, { mobile }] });
@@ -39,26 +44,9 @@ router.post(
       return res.status(400).json({ message: 'Email or mobile already registered' });
     }
 
-    // Create new user (password hashing handled by schema pre-save hook)
-    const newUser = new User({ name, email, mobile, password, role });
+    // Always create as manager (sellers are created via /api/sellers endpoint by admin)
+    const newUser = new User({ name, email, mobile, password, role: 'manager' });
     await newUser.save();
-
-    if (role === 'seller') {
-      // Create seller profile
-      const seller = new Seller({
-        userId: newUser._id,
-        name,
-        mobile
-      });
-      
-      try {
-        await seller.save();
-      } catch (saveErr) {
-        // Rollback user creation if profile creation fails
-        await User.findByIdAndDelete(newUser._id);
-        throw saveErr;
-      }
-    }
 
     const token = jwt.sign(
       { id: newUser._id, role: newUser.role },
@@ -154,31 +142,53 @@ router.post(
 router.post(
   '/forgot-password',
   [
+    body().custom((value, { req }) => {
+      if (!req.body.email && !req.body.mobile) {
+        throw new Error('Email or mobile number is required');
+      }
+      return true;
+    }),
     body('email')
-      .exists().withMessage('Email is required')
+      .optional()
       .isEmail().withMessage('Invalid email address')
-      .normalizeEmail()
+      .normalizeEmail(),
+    body('mobile')
+      .optional()
+      .isMobilePhone('any').withMessage('Invalid mobile number')
+      .trim()
   ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) {
-      // Do not reveal whether email exists
-      return res.json({ message: 'If the email is registered, a reset link will be sent.' });
+
+    const { email, mobile } = req.body;
+    const trimmedEmail = email ? email.trim().toLowerCase() : null;
+    const trimmedMobile = mobile ? mobile.trim() : null;
+
+    let user = null;
+    if (trimmedEmail && trimmedMobile) {
+      user = await User.findOne({ $or: [{ email: trimmedEmail }, { mobile: trimmedMobile }] });
+    } else if (trimmedEmail) {
+      user = await User.findOne({ email: trimmedEmail });
+    } else if (trimmedMobile) {
+      user = await User.findOne({ mobile: trimmedMobile });
     }
-    const crypto = require('crypto');
-    const token = crypto.randomBytes(32).toString('hex');
-    user.resetPasswordToken = token;
+
+    if (!user) {
+      return res.json({ message: 'If the email or mobile is registered, an OTP has been sent to the registered email.' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetPasswordToken = otp;
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
-    // In a real app, send email. Here we just log the link.
-    const resetLink = `${process.env.CLIENT_URL || 'http://localhost:5174'}/reset-password/${token}`;
-    console.log('Password reset link:', resetLink);
-    return res.json({ message: 'If the email is registered, a reset link will be sent.' });
+
+    // In a real app, send the OTP via email or SMS. Here we log it for development.
+    console.log(`Password reset OTP for ${user.email || user.mobile}: ${otp}`);
+
+    return res.json({ message: 'If the email or mobile is registered, an OTP has been sent to the registered email.' });
   }
 );
 
@@ -209,6 +219,11 @@ router.post(
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
+
+    if (user.role === 'seller') {
+      await Seller.findOneAndUpdate({ userId: user._id }, { password: newPassword }).catch(() => null);
+    }
+
     return res.json({ message: 'Password has been reset successfully' });
   }
 );
