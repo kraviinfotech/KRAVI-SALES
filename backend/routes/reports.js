@@ -84,12 +84,7 @@ router.get('/summary', async (req, res) => {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-    const totalSellers = await Seller.countDocuments({ managerId: req.user._id });
-    const totalRecords = await SalesRecord.countDocuments({ managerId: req.user._id });
-
-    const monthlySales = await SalesRecord.aggregate([
-      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id), visitDatetime: { $gte: startOfMonth } } },
-    const activeSellers = await Seller.find({}, '_id');
+    const activeSellers = await Seller.find({ managerId: req.user._id }, '_id');
     const activeSellerIds = activeSellers.map(s => s._id);
     const activeMatch = { sellerId: { $in: activeSellerIds } };
 
