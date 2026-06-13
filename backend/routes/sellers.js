@@ -45,7 +45,7 @@ router.post(
       await user.save();
 
       // Create seller profile linked to user and keep the password for admin view
-      const seller = new Seller({ userId: user._id, name, mobile, password });
+      const seller = new Seller({ userId: user._id, name, mobile, password, managerId: req.user._id });
       await seller.save();
 
       res.status(201).json({
@@ -70,7 +70,7 @@ router.post(
 router.get('/', async (req, res) => {
   try {
     // Populate user info (email) so frontend can display contact email
-    const sellers = await Seller.find().sort({ name: 1 }).populate('userId', 'email');
+    const sellers = await Seller.find({ managerId: req.user._id }).sort({ name: 1 }).populate('userId', 'email');
 
     // Return sellers with populated email at top-level for convenience
     const result = sellers.map(s => ({
@@ -90,6 +90,24 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/sellers/:id -> Get specific seller details (Owner manager only)
+router.get('/:id', async (req, res) => {
+  try {
+    const seller = await Seller.findOne({ _id: req.params.id, managerId: req.user._id }).populate('userId', 'email');
+    if (!seller) return res.status(404).json({ message: 'Seller not found' });
+    
+    res.json({
+      _id: seller._id,
+      name: seller.name,
+      mobile: seller.mobile,
+      email: seller.userId?.email || null
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error fetching seller' });
+  }
+});
+
 // PATCH /api/sellers/:id/password -> Manager can change seller's password (seller must have been created with /api/sellers endpoint)
 router.patch(
   '/:id/password',
@@ -104,7 +122,7 @@ router.patch(
 
     const { newPassword } = req.body;
     try {
-      const seller = await Seller.findById(req.params.id);
+      const seller = await Seller.findOne({ _id: req.params.id, managerId: req.user._id });
       if (!seller) return res.status(404).json({ message: 'Seller not found' });
 
       // All sellers must have been created with email and password via POST /api/sellers

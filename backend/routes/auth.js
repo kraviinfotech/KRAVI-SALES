@@ -285,9 +285,22 @@ router.patch(
 // GET /api/auth/manager-scanner -> return default manager scanner proof to authenticated users
 router.get('/manager-scanner', authMiddleware, async (req, res) => {
   try {
-    const manager = await User.findOne({ role: 'manager', managerScannerPhoto: { $exists: true, $ne: null } });
-    if (!manager) {
-      return res.status(404).json({ message: 'No manager scanner configured' });
+    let managerId;
+    if (req.user.role === 'manager') {
+      managerId = req.user._id;
+    } else {
+      // Find this seller's manager
+      const seller = await Seller.findOne({ userId: req.user._id });
+      if (!seller || !seller.managerId) {
+        return res.status(404).json({ message: 'Manager not found for this account' });
+      }
+      managerId = seller.managerId;
+    }
+
+    const manager = await User.findOne({ _id: managerId, managerScannerPhoto: { $exists: true, $ne: null } });
+    if (!manager || !manager.managerScannerPhoto) {
+      // Return 200 with null instead of 404 to handle missing scanner gracefully in frontend
+      return res.json({ scannerPhoto: null });
     }
 
     res.json({ scannerPhoto: manager.managerScannerPhoto });

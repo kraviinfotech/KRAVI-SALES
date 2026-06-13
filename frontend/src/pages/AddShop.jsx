@@ -41,6 +41,8 @@ const AddShop = () => {
   const navigate = useNavigate();
 
   const [shopName, setShopName] = useState(formData.shopName || '');
+  const [mobile, setMobile] = useState(formData.mobile || '');
+  
   const [shopAddress, setShopAddress] = useState(formData.shopAddress || '');
   const [landmark, setLandmark] = useState(formData.landmark || '');
   const [shopType, setShopType] = useState(formData.shopType || 'Retail');
@@ -133,6 +135,7 @@ const AddShop = () => {
     setFormData((prev) => ({
       ...prev,
       shopName,
+      mobile,
       shopAddress,
       landmark,
       shopType,
@@ -161,6 +164,19 @@ const AddShop = () => {
           value={shopName}
           onChange={(e) => setShopName(e.target.value)}
           placeholder="Gupta Store"
+          className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          required
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          {t.mobile}
+        </label>
+        <input
+          type="tel"
+          value={mobile}
+          onChange={(e) => setMobile(e.target.value)}
+          placeholder="123-456-7890"
           className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
           required
         />
