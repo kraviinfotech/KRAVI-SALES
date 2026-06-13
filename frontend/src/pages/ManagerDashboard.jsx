@@ -235,10 +235,6 @@ const ManagerDashboard = () => {
       .filter(r => r.seller.toLowerCase().includes(term))
       .sort((a, b) => b.totalSales - a.totalSales);
   }, [records, searchTerm]);
-    // Filter out unknown/deleted sellers and sort by sales
-    return Array.from(sellerMap.values())
-      .sort((a, b) => b.totalSales - a.totalSales);
-  }, [records, searchTerm]);
 
   const totals = sellerRows.reduce(
     (sum, row) => ({

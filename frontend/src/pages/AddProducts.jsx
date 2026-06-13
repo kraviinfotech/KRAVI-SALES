@@ -29,7 +29,7 @@ const AddProducts = () => {
         // 2. Seller's own history
         const historyRes = await API.get('/sales/my-records');
         
-        const names = new Set(suggestedProducts);
+        const names = new Set(['Surf Excel', 'Maggi', 'Parle-G', 'Britannia Biscuits', 'Soap', 'Shampoo']);
         masterNames.forEach(n => names.add(n));
         historyRes.data.forEach(record => record.items?.forEach(item => names.add(item.productName)));
         setSuggestedProducts(Array.from(names));
@@ -38,7 +38,7 @@ const AddProducts = () => {
       }
     };
     fetchAllSuggestions();
-  }, [suggestedProducts]);
+  }, []);
 
   // Ensure formData.items is initialized if empty
   useEffect(() => {
