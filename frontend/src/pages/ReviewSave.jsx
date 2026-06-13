@@ -17,7 +17,7 @@ const ReviewSave = () => {
 
   // Local state for payment details, initialized from formData
   const [paymentMethod, setPaymentMethod] = useState(formData.paymentMethod || 'Offline');
-  const [payingAmount, setPayingAmount] = useState(formData.paidAmount || 0);
+  const [payingAmount, setPayingAmount] = useState(formData.paidAmount || " ");
   const [paymentStatus, setPaymentStatus] = useState(formData.paymentStatus || 'Pending');
   const [error, setError] = useState(''); // Local error state for this component
   
@@ -104,23 +104,31 @@ const ReviewSave = () => {
     setError('');
 
     try {
-      await API.post('/sales/record', {
-        shopName,
-        shopAddress,
-        landmark,
-        shopType,
-        latitude,
-        longitude,
-        items,
-        paymentMethod,
-        paidAmount: payingAmount,
-        pendingAmount, // Send calculated pending amount
-        paymentStatus,
-        scannerPhoto: paymentMethod === 'Online' ? (scannerPhoto || defaultScannerPhoto) : null,
+      const data = new FormData();
+      data.append('shopName', shopName);
+      data.append('shopAddress', shopAddress);
+      data.append('landmark', landmark || '');
+      data.append('shopType', shopType);
+      data.append('latitude', latitude);
+      data.append('longitude', longitude);
+      data.append('items', JSON.stringify(items));
+      data.append('paymentMethod', paymentMethod);
+      data.append('paidAmount', paidAmount);
+      data.append('pendingAmount', pendingAmount);
+      data.append('paymentStatus', paymentStatus);
+      
+      if (formData.shopImage) {
+        data.append('shopImage', formData.shopImage);
+      }
+
+      await API.post('/sales/record', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       sessionStorage.removeItem('sellFormData'); // Clear persisted data
-      setFormData(prev => ({ ...prev, shopName: '', shopAddress: '', landmark: '', shopType: 'Retail', latitude: null, longitude: null, items: [{ productName: '', unit: 'quantity', quantity: 1, weight: '', price: '' }], paymentMethod: 'Offline', paidAmount: 0, paymentStatus: 'Pending' })); // Reset local state
+      setFormData(prev => ({ ...prev, shopName: '', shopAddress: '', landmark: '', shopType: 'Retail', latitude: null, longitude: null, items: [{ productName: '', quantity: 1, rate: '' }], paymentMethod: 'None', paidAmount: 0, paymentStatus: 'Pending', shopImage: null })); // Reset local state
       setSuccess(true);
       setShowScanner(false);
       setScannerPhoto(null);
@@ -251,7 +259,7 @@ const ReviewSave = () => {
             <input
               id="payingAmount"
               type="number"
-              min="0"
+              min=" "
               step="0.01"
               value={payingAmount}
               onChange={(e) => setPayingAmount(Number(e.target.value))}

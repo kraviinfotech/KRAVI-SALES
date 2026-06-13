@@ -24,6 +24,7 @@ const StartSelling = () => {
       paymentMethod: 'None', // Default payment method
       paidAmount: 0,
       paymentStatus: 'Pending', // Default payment status
+      shopImage: null,
     };
   });
 
