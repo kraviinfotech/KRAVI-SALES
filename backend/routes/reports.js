@@ -78,53 +78,7 @@ router.delete('/purge-unknown', async (req, res) => {
 });
 
 // GET /api/reports/summary -> Returns totalSellers, totalRecords, monthlyTotal, yearlyTotal
-router.get('/summary', async (req, res) => {
-  try {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-    const totalSellers = await Seller.countDocuments({ managerId: req.user._id });
-    const totalRecords = await SalesRecord.countDocuments({ managerId: req.user._id });
-
-    const monthlySales = await SalesRecord.aggregate([
-      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id), visitDatetime: { $gte: startOfMonth } } },
-    const activeSellers = await Seller.find({}, '_id');
-    const activeSellerIds = activeSellers.map(s => s._id);
-    const activeMatch = { sellerId: { $in: activeSellerIds } };
-
-    const totalSellers = activeSellers.length;
-    const totalRecords = await SalesRecord.countDocuments(activeMatch);
-
-    const monthlySales = await SalesRecord.aggregate([
-      { $match: { ...activeMatch, visitDatetime: { $gte: startOfMonth } } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-    ]);
-
-    const yearlySales = await SalesRecord.aggregate([
-      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id), visitDatetime: { $gte: startOfYear } } },
-      { $match: { ...activeMatch, visitDatetime: { $gte: startOfYear } } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-    ]);
-
-    const pendingSales = await SalesRecord.aggregate([
-      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id) } },
-      { $match: activeMatch },
-      { $group: { _id: null, total: { $sum: '$pendingAmount' } } }
-    ]);
-
-    res.json({
-      totalSellers,
-      totalRecords,
-      monthlyTotal: Number((monthlySales[0]?.total || 0).toFixed(2)),
-      yearlyTotal: Number((yearlySales[0]?.total || 0).toFixed(2)),
-      totalPending: Number((pendingSales[0]?.total || 0).toFixed(2))
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error retrieving summary' });
-  }
-});
 
 // GET /api/reports/weekly -> Group sales by day for the last 7 days
 router.get('/weekly', async (req, res) => {

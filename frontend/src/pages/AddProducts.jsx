@@ -40,10 +40,24 @@ const AddProducts = () => {
     fetchAllSuggestions();
   }, [suggestedProducts]);
 
-  // Ensure formData.items is initialized if empty
+  // Ensure formData.items is initialized and has required fields
   useEffect(() => {
     if (!formData.items || formData.items.length === 0) {
       setFormData(prev => ({ ...prev, items: [emptyItem] }));
+    } else {
+      // Normalize items that might be missing unit or using rate instead of price
+      const needsNormalization = formData.items.some(item => !item.unit || (item.rate && !item.price));
+      if (needsNormalization) {
+        setFormData(prev => ({
+          ...prev,
+          items: prev.items.map(item => ({
+            ...emptyItem,
+            ...item,
+            unit: item.unit || 'quantity',
+            price: item.price || item.rate || ''
+          }))
+        }));
+      }
     }
   }, [formData.items, setFormData]);
 
@@ -65,16 +79,22 @@ const AddProducts = () => {
   const handleNext = (event) => {
     event.preventDefault();
 
-    const validItems = formData.items
-      .map((item) => ({
-        productName: item.productName.trim(),
-        unit: item.unit,
-        price: Number(item.price)
-      }))
+    const validItems = (formData.items || [])
+      .filter(item => item && item.productName)
+      .map((item) => {
+        const unit = item.unit || 'quantity';
+        return {
+          productName: item.productName.trim(),
+          unit,
+          quantity: unit === 'quantity' ? (Number(item.quantity) || 1) : 1,
+          weight: unit === 'weight' ? (Number(item.weight) || 0) : 0,
+          price: Number(item.price || item.rate || 0)
+        };
+      })
       .filter((item) => {
         const hasValidName = item.productName;
-        const hasValidQuantity = item.unit === 'quantity' ? Number(item.quantity || 0) > 0 : true;
-        const hasValidWeight = item.unit === 'weight' ? Number(item.weight || 0) > 0 : true;
+        const hasValidQuantity = item.unit === 'quantity' ? item.quantity > 0 : true;
+        const hasValidWeight = item.unit === 'weight' ? item.weight > 0 : true;
         const hasValidPrice = item.price > 0;
         return hasValidName && hasValidQuantity && hasValidWeight && hasValidPrice;
       });
@@ -93,9 +113,10 @@ const AddProducts = () => {
     <form onSubmit={handleNext} className="space-y-4 max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-gray-200">
       <h2 className="text-xl font-bold mb-4">{t.title}</h2>
       {(formData.items || []).map((item, index) => {
+        const price = Number(item.price || item.rate || 0);
         const amount = item.unit === 'quantity'
-          ? (Number(item.quantity) || 0) * (Number(item.price) || 0)
-          : (Number(item.weight) || 0) * (Number(item.price) || 0);
+          ? (Number(item.quantity) || 0) * price
+          : (Number(item.weight) || 0) * price;
 
         return (
           <div key={index} className="space-y-4 rounded border border-gray-200 bg-gray-50 p-4">
@@ -197,7 +218,7 @@ const AddProducts = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={item.price || ''}
+                  value={item.price || item.rate || ''}
                   onChange={(event) => handleItemChange(index, 'price', event.target.value)}
                   placeholder="120"
                   className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
