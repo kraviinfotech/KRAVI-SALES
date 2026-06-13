@@ -218,7 +218,13 @@ const Reports = () => {
       if (!map[sid]) map[sid] = { sellerId: sid, name: r.sellerId?.name || 'Unknown', records: 0, shops: new Set(), items: 0, sales: 0, pending: 0 };
       map[sid].records += 1;
       map[sid].shops.add(r.shopName);
-      map[sid].items += r.items?.reduce((s, i) => s + Number(i.quantity || 0), 0) || 0;
+      map[sid].items += r.items?.reduce((s, i) => {
+        if (i.unit === 'weight') {
+          return s + 1; // Count weight-based items as 1
+        } else {
+          return s + Number(i.quantity || 0);
+        }
+      }, 0) || 0;
       map[sid].sales += Number(r.totalAmount || 0);
       map[sid].pending += Number(r.pendingAmount || 0);
     });

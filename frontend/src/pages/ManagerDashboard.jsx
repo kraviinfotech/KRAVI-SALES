@@ -227,6 +227,15 @@ const ManagerDashboard = () => {
       row.totalPending += Number(record.pendingAmount || 0);
     });
 
+    const rows = Array.from(sellerMap.values());
+    if (!searchTerm) return rows.sort((a, b) => b.totalSales - a.totalSales);
+    
+    const term = searchTerm.toLowerCase();
+    return rows
+      .filter(r => r.seller.toLowerCase().includes(term))
+      .sort((a, b) => b.totalSales - a.totalSales);
+  }, [records, searchTerm]);
+    // Filter out unknown/deleted sellers and sort by sales
     return Array.from(sellerMap.values())
       .sort((a, b) => b.totalSales - a.totalSales);
   }, [records, searchTerm]);
