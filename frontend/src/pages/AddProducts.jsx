@@ -67,9 +67,12 @@ const AddProducts = () => {
 
     const validItems = formData.items
       .map((item) => ({
+        ...item,
         productName: item.productName.trim(),
         unit: item.unit,
-        price: Number(item.price)
+        price: Number(item.price),
+        quantity: item.unit === 'quantity' ? Number(item.quantity || 0) : 1,
+        weight: item.unit === 'weight' ? Number(item.weight || 0) : 0
       }))
       .filter((item) => {
         const hasValidName = item.productName;

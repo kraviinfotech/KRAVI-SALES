@@ -191,10 +191,15 @@ const ManagerDashboard = () => {
   const sellerRows = useMemo(() => {
     const sellerMap = new Map();
 
-    records.forEach((record, index) => {
+    const filtered = records.filter(r => 
+      (r.sellerId?.name || 'Unknown Seller').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.shopName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    filtered.forEach((record, index) => {
       const sellerId = record.sellerId?._id;
       const sellerName = record.sellerId?.name || 'Unknown Seller';
-      const sellerKey = sellerId || `${sellerName}-${index}`;
+      const sellerKey = sellerId || 'unknown-seller';
 
       if (!sellerMap.has(sellerKey)) {
         sellerMap.set(sellerKey, {
@@ -232,9 +237,8 @@ const ManagerDashboard = () => {
   }, [records, searchTerm]);
     // Filter out unknown/deleted sellers and sort by sales
     return Array.from(sellerMap.values())
-      .filter(row => row.sellerId)
       .sort((a, b) => b.totalSales - a.totalSales);
-  }, [records]);
+  }, [records, searchTerm]);
 
   const totals = sellerRows.reduce(
     (sum, row) => ({
@@ -278,7 +282,7 @@ const ManagerDashboard = () => {
     },
     {
       label: 'Total Pending',
-      value: currencyFormatter.format(summary.totalPending || 0),
+      value: currencyFormatter.format(totals.totalPending || 0),
       accent: 'text-red-700',
       iconBg: 'bg-red-50',
       icon: IndianRupee
