@@ -69,14 +69,12 @@ const AddProducts = () => {
       .map((item) => ({
         productName: item.productName.trim(),
         unit: item.unit,
-        quantity: item.unit === 'quantity' ? Number(item.quantity) : 1,
-        weight: item.unit === 'weight' ? Number(item.weight) : 0,
         price: Number(item.price)
       }))
       .filter((item) => {
         const hasValidName = item.productName;
-        const hasValidQuantity = item.unit === 'quantity' ? item.quantity > 0 : true;
-        const hasValidWeight = item.unit === 'weight' ? item.weight > 0 : true;
+        const hasValidQuantity = item.unit === 'quantity' ? Number(item.quantity || 0) > 0 : true;
+        const hasValidWeight = item.unit === 'weight' ? Number(item.weight || 0) > 0 : true;
         const hasValidPrice = item.price > 0;
         return hasValidName && hasValidQuantity && hasValidWeight && hasValidPrice;
       });

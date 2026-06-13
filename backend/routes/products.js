@@ -23,7 +23,7 @@ router.post('/', authMiddleware, roleMiddleware('manager'), async (req, res) => 
   }
 
   try {
-    const product = new Product({ name, category, baseRate });
+    const product = new Product({ name, category: category || 'General', baseRate });
     await product.save();
     res.status(201).json(product);
   } catch (err) {

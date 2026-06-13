@@ -16,8 +16,10 @@ const ReviewSave = () => {
   const [success, setSuccess] = useState(false);
 
   // Local state for payment details, initialized from formData
-  const [paymentMethod, setPaymentMethod] = useState(formData.paymentMethod || 'Offline');
-  const [payingAmount, setPayingAmount] = useState(formData.paidAmount || " ");
+  const [paymentMethod, setPaymentMethod] = useState(
+    formData.paymentMethod && formData.paymentMethod !== 'None' ? formData.paymentMethod : 'Offline'
+  );
+  const [payingAmount, setPayingAmount] = useState(formData.paidAmount || 0);
   const [paymentStatus, setPaymentStatus] = useState(formData.paymentStatus || 'Pending');
   const [error, setError] = useState(''); // Local error state for this component
   
@@ -104,31 +106,66 @@ const ReviewSave = () => {
     setError('');
 
     try {
-      const data = new FormData();
-      data.append('shopName', shopName);
-      data.append('shopAddress', shopAddress);
-      data.append('landmark', landmark || '');
-      data.append('shopType', shopType);
-      data.append('latitude', latitude);
-      data.append('longitude', longitude);
-      data.append('items', JSON.stringify(items));
-      data.append('paymentMethod', paymentMethod);
-      data.append('paidAmount', paidAmount);
-      data.append('pendingAmount', pendingAmount);
-      data.append('paymentStatus', paymentStatus);
-      
-      if (formData.shopImage) {
-        data.append('shopImage', formData.shopImage);
-      }
-
-      await API.post('/sales/record', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      // Strictly clean items array based on the unit type
+      const cleanedItems = items.map(item => {
+        const cleaned = {
+          productName: item.productName,
+          unit: item.unit,
+          price: Number(item.price)
+        };
+        
+        if (item.unit === 'weight') {
+          cleaned.weight = Number(item.weight);
+        } else {
+          cleaned.quantity = Number(item.quantity || 1);
+        }
+        return cleaned;
       });
 
+      // Construct JSON payload instead of FormData
+      const payload = {
+        shopName,
+        shopAddress,
+        landmark: landmark || '',
+        shopType,
+        latitude,
+        longitude,
+        items: cleanedItems,
+        paymentMethod: paymentMethod === 'Online' ? 'Online' : 'Offline',
+        paidAmount: Number(payingAmount) || 0, // Use payingAmount and ensure it's a number
+        pendingAmount: Number(pendingAmount) || 0, // Ensure pendingAmount is a number
+        paymentStatus,
+        // Include scannerPhoto if payment method is Online, otherwise null
+        scannerPhoto: paymentMethod === 'Online' ? (scannerPhoto || defaultScannerPhoto || "") : ""
+      };
+
+      // Handle shopImage separately if it's a File object
+      if (formData.shopImage && formData.shopImage instanceof File) {
+        // Convert File to base64 string
+        const reader = new FileReader();
+        const base64Image = await new Promise((resolve) => {
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsDataURL(formData.shopImage);
+        });
+        payload.shopImage = base64Image;
+      }
+
+      await API.post('/sales/record', payload); // Send JSON payload
+
       sessionStorage.removeItem('sellFormData'); // Clear persisted data
-      setFormData(prev => ({ ...prev, shopName: '', shopAddress: '', landmark: '', shopType: 'Retail', latitude: null, longitude: null, items: [{ productName: '', quantity: 1, rate: '' }], paymentMethod: 'None', paidAmount: 0, paymentStatus: 'Pending', shopImage: null })); // Reset local state
+      setFormData({ // Reset to initial state, ensuring correct item structure
+        shopName: '',
+        shopAddress: '',
+        landmark: '',
+        shopType: 'Retail',
+        latitude: null,
+        longitude: null,
+        items: [{ productName: '', unit: 'quantity', quantity: 1, weight: '', price: '' }],
+        paymentMethod: 'Offline', // Default to Offline
+        paidAmount: 0,
+        paymentStatus: 'Pending',
+        shopImage: null
+      });
       setSuccess(true);
       setShowScanner(false);
       setScannerPhoto(null);
@@ -139,7 +176,7 @@ const ReviewSave = () => {
           const messages = err.response.data.errors.map(e => e.msg).join(' | ');
           setError(messages);
         } else {
-          setError(err.response?.data?.message || 'Record save nahi ho paaya. Please try again.');
+          setError(err.response?.data?.message || 'Record could not be saved. Please try again.');
         }
       } finally {
       setLoading(false);
@@ -259,7 +296,7 @@ const ReviewSave = () => {
             <input
               id="payingAmount"
               type="number"
-              min=" "
+                  min="0" // Set min to 0 for numeric input
               step="0.01"
               value={payingAmount}
               onChange={(e) => setPayingAmount(Number(e.target.value))}

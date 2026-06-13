@@ -28,15 +28,24 @@ const ManagerSellerDetail = () => {
         setSellerName(response.data.name);
       } catch (err) {
         console.error('Failed to fetch seller details:', err);
-        setError('Seller details load nahi ho paaye.');
+        setError('Seller details could not be loaded.');
       }
     };
+    
+    // When sellerId changes in URL, update the filter state immediately
+    setFilters(prev => ({
+      ...prev,
+      sellerId: decodeURIComponent(sellerId)
+    }));
+
     fetchSellerDetails();
   }, [sellerId]);
 
   useEffect(() => {
     const fetchRecords = async (currentFilters) => {
-      setLoading(true);
+      if (!sellerId) return;
+      
+      if (records.length === 0) setLoading(true);
       setError('');
       try {
         const queryParams = new URLSearchParams();
@@ -49,7 +58,7 @@ const ManagerSellerDetail = () => {
         setRecords(response.data);
       } catch (err) {
         console.error('Failed to fetch records:', err);
-        setError(err.response?.data?.message || 'Records load nahi ho paaye.');
+        setError(err.response?.data?.message || 'Records could not be loaded.');
       } finally {
         setLoading(false);
       }

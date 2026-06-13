@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api/axios';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -12,7 +12,8 @@ import {
   Plus,
   Search,
   TrendingUp,
-  Users
+  Users,
+  Trash2
 } from 'lucide-react';
 
 const numberFormatter = new Intl.NumberFormat('en-IN');
@@ -92,79 +93,100 @@ const ManagerDashboard = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchSummary = async () => {
-      try {
-        const response = await API.get('/reports/summary');
-        // Calculate total pending from backend summary if available, 
-        // or we can sum it from records. For now, let's use the API response.
-        setSummary({
-          ...(response.data || {}),
-          totalPending: response.data?.totalPending || 0
-        });
-      } catch (err) {
-        console.error(err);
-        if (err.response?.status === 403) {
-          setError('Access Denied: You are not authorized to view manager summary. Please login as a Manager.');
-        } else {
-          setError('Manager summary load nahi ho paayi.');
-        }
-      } finally {
-        setSummaryLoading(false);
+  const fetchSummary = useCallback(async (quiet = false) => {
+    if (!quiet) setSummaryLoading(true);
+    try {
+      const response = await API.get('/reports/summary');
+      setSummary({
+        ...(response.data || {}),
+        totalPending: response.data?.totalPending || 0
+      });
+    } catch (err) {
+      console.error(err);
+      if (err.response?.status === 403) {
+        setError('Access Denied: You are not authorized to view manager summary. Please login as a Manager.');
+      } else {
+        setError('Manager summary could not be loaded.');
       }
-    };
-
-    fetchSummary();
+    } finally {
+      setSummaryLoading(false);
+    }
   }, []);
 
-  useEffect(() => {
-    const fetchChartData = async () => {
-      setChartLoading(true);
+  const fetchChartData = useCallback(async (quiet = false) => {
+    // Only show loading if we have no data yet
+    if (!quiet && chartData.every(d => d.sales === 0)) setChartLoading(true);
+    
+    try {
+      const response = await API.get('/reports/weekly');
+      const data = response.data.map((item) => ({
+        name: item.day || item.date,
+        sales: Number(item.total || 0)
+      }));
 
-      try {
-        const response = await API.get('/reports/weekly');
-        const data = response.data.map((item) => ({
-          name: item.day || item.date,
-          sales: Number(item.total || 0)
-        }));
-
-        setChartData(data.length > 0 ? data : getBlankWeeklyChart());
-      } catch (err) {
-        console.error(err);
-        setChartData(getBlankWeeklyChart());
-      } finally {
-        setChartLoading(false);
-      }
-    };
-
-    fetchChartData();
+      setChartData(data.length > 0 ? data : getBlankWeeklyChart());
+    } catch (err) {
+      console.error(err);
+      setChartData(getBlankWeeklyChart());
+    } finally {
+      setChartLoading(false);
+    }
   }, []);
 
-  useEffect(() => {
-    const fetchRecords = async () => {
-      setRecordsLoading(true);
-      setError('');
+  const fetchRecords = useCallback(async (quiet = false) => {
+    // Only show loading if records are currently empty
+    if (!quiet && records.length === 0) setRecordsLoading(true);
+    setError('');
 
-      const selectedRange = activeTab === 'custom' ? appliedCustomRange : getRange(activeTab);
-      const queryParams = new URLSearchParams(selectedRange);
+    const selectedRange = activeTab === 'custom' ? appliedCustomRange : getRange(activeTab);
+    const queryParams = new URLSearchParams(selectedRange);
 
-      try {
-        const response = await API.get(`/reports/records?${queryParams.toString()}`);
-        setRecords(Array.isArray(response.data) ? response.data : []);
-      } catch (err) {
-        console.error(err);
-        if (err.response?.status === 403) {
-          setError('Access Denied: You are not authorized to view reports data. Please login as a Manager.');
-        } else {
-          setError('Reports data load nahi ho paaya.');
-        }
-      } finally {
-        setRecordsLoading(false);
+    try {
+      const response = await API.get(`/reports/records?${queryParams.toString()}`);
+      setRecords(Array.isArray(response.data) ? response.data.filter(r => r.sellerId) : []);
+    } catch (err) {
+      console.error(err);
+      if (err.response?.status === 403) {
+        setError('Access Denied: You are not authorized to view reports data. Please login as a Manager.');
+      } else {
+        setError('Reports data could not be loaded.');
       }
-    };
-
-    fetchRecords();
+    } finally {
+      setRecordsLoading(false);
+    }
   }, [activeTab, appliedCustomRange]);
+
+  const handleDeleteSellerRecords = async (sellerId, sellerName) => {
+    if (!sellerId) return;
+    if (!window.confirm(`Are you sure you want to delete ALL records for ${sellerName}? This cannot be undone.`)) return;
+    
+    try {
+      const response = await API.delete(`/reports/seller-records/${sellerId}`);
+      alert(response.data.message);
+      fetchRecords();
+      fetchSummary();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error deleting records.');
+    }
+  };
+
+  useEffect(() => {
+    fetchSummary();
+    fetchChartData();
+  }, [fetchSummary, fetchChartData]);
+
+  useEffect(() => {
+    fetchRecords();
+  }, [fetchRecords]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchSummary(true);
+      fetchChartData(true);
+      fetchRecords(true);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchSummary, fetchChartData, fetchRecords]);
 
   const sellerRows = useMemo(() => {
     const sellerMap = new Map();
@@ -200,12 +222,15 @@ const ManagerDashboard = () => {
       row.totalPending += Number(record.pendingAmount || 0);
     });
 
-    return Array.from(sellerMap.values()).sort((a, b) => b.totalSales - a.totalSales);
+    // Filter out unknown/deleted sellers and sort by sales
+    return Array.from(sellerMap.values())
+      .filter(row => row.sellerId)
+      .sort((a, b) => b.totalSales - a.totalSales);
   }, [records]);
 
   const totals = sellerRows.reduce(
     (sum, row) => ({
-      totalRecords: sum.totalRecords + row.totalRecords,
+      totalRecords: sum.totalRecords + (row.totalRecords || 0),
       totalShops: sum.totalShops + row.totalShops,
       totalItems: sum.totalItems + row.totalItems,
       totalSales: sum.totalSales + row.totalSales,
@@ -444,12 +469,13 @@ const ManagerDashboard = () => {
                 <th className="px-4 py-3 text-center">Total Items</th>
                 <th className="px-4 py-3 text-right">Total Sales</th>
                 <th className="px-4 py-3 text-right text-red-600">Total Pending</th>
+                <th className="px-4 py-3 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {recordsLoading ? (
+              {recordsLoading && records.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-4 py-12 text-center">
+                  <td colSpan="7" className="px-4 py-12 text-center">
                     <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500">
                       <Loader2 className="animate-spin text-blue-700" size={18} />
                       Loading reports...
@@ -458,8 +484,8 @@ const ManagerDashboard = () => {
                 </tr>
               ) : sellerRows.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-4 py-12 text-center text-sm font-semibold text-slate-500">
-                    Is period me koi sales record nahi mila.
+                  <td colSpan="7" className="px-4 py-12 text-center text-sm font-semibold text-slate-500">
+                    No sales records found for this period.
                   </td>
                 </tr>
               ) : (
@@ -486,6 +512,17 @@ const ManagerDashboard = () => {
                     <td className="px-4 py-3 text-right font-black text-red-600">
                       {currencyFormatter.format(row.totalPending)}
                     </td>
+                    <td className="px-4 py-3 text-center">
+                      {row.sellerId && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteSellerRecords(row.sellerId, row.seller); }}
+                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                          title="Delete records"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 );})
               )}
@@ -499,6 +536,7 @@ const ManagerDashboard = () => {
                   <td className="px-4 py-3 text-center">{numberFormatter.format(totals.totalItems)}</td>
                   <td className="px-4 py-3 text-right">{currencyFormatter.format(totals.totalSales)}</td>
                   <td className="px-4 py-3 text-right text-red-600">{currencyFormatter.format(totals.totalPending)}</td>
+                  <td></td>
                 </tr>
               </tfoot>
             )}
