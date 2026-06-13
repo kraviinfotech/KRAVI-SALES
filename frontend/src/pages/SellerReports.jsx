@@ -20,7 +20,7 @@ const SellerReports = () => {
         setRecords(response.data);
       } catch (err) {
         console.error(err);
-        setError('Reports load nahi ho paaye.');
+        setError('Reports could not be loaded.');
       } finally {
         setLoading(false);
       }

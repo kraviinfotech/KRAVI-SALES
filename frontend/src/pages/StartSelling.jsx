@@ -21,7 +21,7 @@ const StartSelling = () => {
       latitude: null,
       longitude: null,
       items: [{ productName: '', quantity: 1, rate: '' }],
-      paymentMethod: 'None', // Default payment method
+      paymentMethod: 'Offline',
       paidAmount: 0,
       paymentStatus: 'Pending', // Default payment status
       shopImage: null,

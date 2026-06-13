@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import API from '../api/axios';
 import { AlertCircle, Plus } from 'lucide-react';
@@ -31,9 +31,9 @@ const SellerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchTodayStats = async () => {
-      try {
+  const fetchTodayStats = useCallback(async (quiet = false) => {
+    if (!quiet) setLoading(true);
+    try {
         const response = await API.get('/sales/my-records');
         const today = new Date().toDateString();
         const todayRecords = response.data.filter((record) => new Date(record.visitDatetime).toDateString() === today);
@@ -58,10 +58,19 @@ const SellerDashboard = () => {
       } finally {
         setLoading(false);
       }
-    };
+  }, [t.errorLoading]);
 
+  useEffect(() => {
     fetchTodayStats();
-  }, []);
+  }, [fetchTodayStats]);
+
+  // Auto-refresh interval
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchTodayStats(true);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchTodayStats]);
 
   const summaryRows = [
     { label: t.totalVisits, value: loading ? '--' : String(stats.visits).padStart(2, '0') },

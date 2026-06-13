@@ -46,7 +46,8 @@ const ManagerRecords = () => {
     setLoading(true);
     try {
       const response = await API.get(`/reports/records?${searchParams.toString()}`);
-      setRecords(response.data);
+      // Filter out records where seller no longer exists
+      setRecords(Array.isArray(response.data) ? response.data.filter(r => r.sellerId) : []);
       setErrorMsg('');
     } catch (err) {
       console.error("Error fetching records:", err);
