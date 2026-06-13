@@ -31,6 +31,7 @@ const ReviewSave = () => {
   const { 
     shopName, 
     shopAddress, 
+    mobile,
     landmark, 
     shopType, 
     latitude, 
@@ -116,6 +117,7 @@ const ReviewSave = () => {
     try {
       const data = new FormData();
       data.append('shopName', shopName);
+      data.append('mobile', mobile || '');
       data.append('shopAddress', shopAddress);
       data.append('landmark', landmark || '');
       data.append('shopType', shopType);
@@ -188,6 +190,7 @@ const ReviewSave = () => {
         <h3 className="text-sm font-semibold text-gray-700 mb-2">Shop Details</h3>
         <div className="space-y-1 text-sm text-gray-900 bg-gray-50 p-4 rounded border border-gray-100">
           <p><span className="font-medium text-gray-600">Name:</span> {shopName || '-'}</p>
+          <p><span className="font-medium text-gray-600">Mobile:</span> {mobile || '-'}</p>
           <p><span className="font-medium text-gray-600">Address:</span> {shopAddress || '-'}</p>
           {landmark && <p><span className="font-medium text-gray-600">Landmark:</span> {landmark}</p>}
           <p><span className="font-medium text-gray-600">Type:</span> {shopType}</p>

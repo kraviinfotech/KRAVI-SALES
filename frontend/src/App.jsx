@@ -22,9 +22,10 @@ import ManagerRecords from './pages/ManagerRecords';
 import ProductsOverview from './pages/ProductsOverview';
 import ManagerSellerDetail from './pages/ManagerSellerDetail';
 import ManagerProfile from './pages/ManagerProfile';
-            
+
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import bgImage from "./images/bg.png"; 
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -42,7 +43,16 @@ const App = () => {
   const isManagerArea = user && user.role === 'manager' && location.pathname.startsWith('/manager');
 
   return (
-    <div className={isSellerArea || isManagerArea ? 'min-h-screen bg-slate-100' : 'flex flex-col min-h-screen bg-gray-50'}>
+    <div className={isSellerArea || isManagerArea ? 'min-h-screen bg-slate-100' : 'flex flex-col min-h-screen bg-gray-50'} style={
+      !(isSellerArea || isManagerArea)
+        ? {
+          backgroundImage: `url(${bgImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }
+        : {}
+    }>
       {!isSellerArea && !isManagerArea && <Navbar />}
       <main className={isSellerArea || isManagerArea ? 'min-h-screen' : 'flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8'}>
         <Routes>

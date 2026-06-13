@@ -6,6 +6,7 @@ const translations = {
   en: {
     title: "Add Shop Details",
     name: "Shop Name",
+    mobile: "Mobile Number",
     addr: "Address",
     land: "Landmark (Optional)",
     type: "Shop Type",
@@ -16,6 +17,7 @@ const translations = {
   hi: {
     title: "दुकान का विवरण जोड़ें",
     name: "दुकान का नाम",
+    mobile: "मोबाइल नंबर ",
     addr: "पता",
     land: "लैंडमार्क (वैकल्पिक)",
     type: "दुकान का प्रकार",
@@ -26,6 +28,7 @@ const translations = {
   mr: {
     title: "दुकानाचे तपशील जोडा",
     name: "दुकानाचे नाव",
+    mobile: "मोबाइल नंबर",
     addr: "पत्ता",
     land: "लँडमार्क (पर्यायी)",
     type: "दुकानाचे प्रकार",
@@ -42,11 +45,11 @@ const AddShop = () => {
 
   const [shopName, setShopName] = useState(formData.shopName || '');
   const [mobile, setMobile] = useState(formData.mobile || '');
-  
+
   const [shopAddress, setShopAddress] = useState(formData.shopAddress || '');
   const [landmark, setLandmark] = useState(formData.landmark || '');
   const [shopType, setShopType] = useState(formData.shopType || 'Retail');
-  
+
   const [shopImage, setShopImage] = useState(formData.shopImage || null);
   const [imagePreview, setImagePreview] = useState(null);
 
@@ -155,6 +158,7 @@ const AddShop = () => {
     >
       <h2 className="text-xl font-bold mb-4">{t.title}</h2>
 
+
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700">
           {t.name}
@@ -168,36 +172,39 @@ const AddShop = () => {
           required
         />
       </div>
+
+
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700">
           {t.mobile}
         </label>
+
         <input
           type="tel"
           value={mobile}
-          onChange={(e) => setMobile(e.target.value)}
-          placeholder="123-456-7890"
+          onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
+          placeholder="1234567890"
+          maxLength={10}
           className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
           required
         />
       </div>
 
-      
-        <div className="md:col-span-2">
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            {t.addr}
-          </label>
-          <textarea
-            value={shopAddress}
-            onChange={(e) => setShopAddress(e.target.value)}
-            placeholder="MG Road, Indore"
-            rows="3"
-            className="w-full resize-none rounded border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            required
-          />
-        </div>
-        
-      
+      <div className="md:col-span-2">
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          {t.addr}
+        </label>
+        <textarea
+          value={shopAddress}
+          onChange={(e) => setShopAddress(e.target.value)}
+          placeholder="MG Road, Indore"
+          rows="3"
+          className="w-full resize-none rounded border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          required
+        />
+      </div>
+
+
 
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -232,15 +239,15 @@ const AddShop = () => {
       {/* Location Section */}
       <div>
 
-      
+
         <label className="mb-1 block text-sm font-medium text-gray-700">
-            Location URL
-          </label>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          Location URL
+        </label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
 
-      
-        
+
+
 
           <input
             type="text"
@@ -250,67 +257,67 @@ const AddShop = () => {
             className="w-full rounded border border-gray-300 bg-gray-200 px-3 py-2 text-sm text-gray-500np cursor-not-allowed"
           />
           <button
-          type="button"
-          onClick={captureLocation}
-          className="w-full rounded bg-gray-600 py-2 text-sm font-medium text-white hover:bg-gray-700"
-        >
-          Capture Current Location
-        </button>
-
-      
-
-      </div>
-      <div>
-          {locationUrl && (
-          <a
-            href={locationUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 block text-sm text-blue-600 underline"
+            type="button"
+            onClick={captureLocation}
+            className="w-full rounded bg-gray-600 py-2 text-sm font-medium text-white hover:bg-gray-700"
           >
-            Open Location in Google Maps
-          </a>
-        )}
+            Capture Current Location
+          </button>
 
-        {locError && (
-          <p className="mt-2 text-sm text-red-500">
-            {locError}
-          </p>
-        )}
-      </div>
+
+
+        </div>
+        <div>
+          {locationUrl && (
+            <a
+              href={locationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 block text-sm text-blue-600 underline"
+            >
+              Open Location in Google Maps
+            </a>
+          )}
+
+          {locError && (
+            <p className="mt-2 text-sm text-red-500">
+              {locError}
+            </p>
+          )}
+        </div>
 
       </div>
       <div className="flex flex-col">
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            {t.img}
-          </label>
-          <div className="flex-1 min-h-[88px] relative border-2 border-dashed border-gray-300 rounded bg-gray-50 flex items-center justify-center overflow-hidden">
-            {imagePreview ? (
-              <div className="relative w-full h-full">
-                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ) : (
-              <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center justify-center text-gray-400 hover:text-primary transition-colors">
-                <Camera size={24} />
-                <span className="text-[10px] mt-1 uppercase font-bold">{t.upload}</span>
-                <input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </label>
-            )}
-          </div>
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          {t.img}
+        </label>
+        <div className="flex-1 min-h-[88px] relative border-2 border-dashed border-gray-300 rounded bg-gray-50 flex items-center justify-center overflow-hidden">
+          {imagePreview ? (
+            <div className="relative w-full h-full">
+              <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={removeImage}
+                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center justify-center text-gray-400 hover:text-primary transition-colors">
+              <Camera size={24} />
+              <span className="text-[10px] mt-1 uppercase font-bold">{t.upload}</span>
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </label>
+          )}
         </div>
+      </div>
 
       <button
         type="submit"

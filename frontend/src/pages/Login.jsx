@@ -95,15 +95,17 @@ const roleConfig = {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="mb-6 text-center">
+<div className="flex min-h-screen items-center justify-end px-15 py-8 bg-transparent">
+  <div className="w-full max-w-md mr-10">
+
+        <div className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm">
+          <div className="mb-6 text-center">
           <p className="text-sm font-bold uppercase tracking-wide text-indigo-600">SalesFlow</p>
           <h1 className="mt-1 text-2xl font-black text-gray-900">Login</h1>
         </div>
 
-        <div className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm">
-          <div className="mb-5 grid grid-cols-2 rounded-md border border-slate-200 bg-slate-50 p-1">
+          <div className="mb-5 grid grid-cols-2 rounded-md border border-slate-200  p-1">
+            
             <button
               type="button"
               onClick={() => handleRoleChange('seller')}
