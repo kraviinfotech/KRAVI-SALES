@@ -20,7 +20,7 @@ const StartSelling = () => {
       shopType: 'Retail',
       latitude: null,
       longitude: null,
-      items: [{ productName: '', quantity: 1, rate: '' }],
+      items: [{ productName: '', unit: 'quantity', quantity: 1, weight: '', price: '' }],
       paymentMethod: 'Offline',
       paidAmount: 0,
       paymentStatus: 'Pending', // Default payment status

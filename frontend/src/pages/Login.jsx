@@ -95,14 +95,14 @@ const roleConfig = {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-slate-50">
       <div className="w-full max-w-md">
-        <div className="mb-6 text-center">
-          <p className="text-sm font-bold uppercase tracking-wide text-indigo-600">SalesFlow</p>
-          <h1 className="mt-1 text-2xl font-black text-gray-900">Login</h1>
-        </div>
-
         <div className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm">
+          <div className="mb-8 text-center border-b border-slate-100 pb-4">
+            <p className="text-sm font-bold uppercase tracking-wide text-indigo-600">SalesFlow</p>
+            <h1 className="mt-1 text-2xl font-black text-gray-900">Login</h1>
+          </div>
+
           <div className="mb-5 grid grid-cols-2 rounded-md border border-slate-200 bg-slate-50 p-1">
             <button
               type="button"
