@@ -188,6 +188,7 @@ const ManagerDashboard = () => {
     return () => clearInterval(interval);
   }, [fetchSummary, fetchChartData, fetchRecords]);
 
+
   const sellerRows = useMemo(() => {
     const sellerMap = new Map();
 
@@ -212,20 +213,42 @@ const ManagerDashboard = () => {
           totalPending: 0
         });
       }
+      return sum + Number(item.quantity || 0);
+    }, 0);
 
-      const row = sellerMap.get(sellerKey);
-      row.totalRecords += 1;
-      row.totalShops += 1;
-      row.totalItems += (record.items || []).reduce((sum, item) => {
-        if (item.unit === 'weight') {
-          return sum + 1; // Count weight-based items as 1
-        } else {
-          return sum + Number(item.quantity || 0);
-        }
-      }, 0);
-      row.totalSales += Number(record.totalAmount || 0);
-      row.totalPending += Number(record.pendingAmount || 0);
-    });
+    row.totalSales += Number(record.totalAmount || 0);
+    row.totalPending += Number(record.pendingAmount || 0);
+  });
+
+  const rows = Array.from(sellerMap.values());
+
+  if (!searchTerm) {
+    return rows.sort((a, b) => b.totalSales - a.totalSales);
+  }
+
+  const term = searchTerm.toLowerCase();
+
+  return rows
+    .filter((r) => r.seller.toLowerCase().includes(term))
+    .sort((a, b) => b.totalSales - a.totalSales);
+}, [records, searchTerm]);
+
+const totals = sellerRows.reduce(
+  (sum, row) => ({
+    totalRecords: sum.totalRecords + (row.totalRecords || 0),
+    totalShops: sum.totalShops + (row.totalShops || 0),
+    totalItems: sum.totalItems + (row.totalItems || 0),
+    totalSales: sum.totalSales + (row.totalSales || 0),
+    totalPending: sum.totalPending + (row.totalPending || 0)
+  }),
+  {
+    totalRecords: 0,
+    totalShops: 0,
+    totalItems: 0,
+    totalSales: 0,
+    totalPending: 0
+  }
+);
 
     const rows = Array.from(sellerMap.values());
     if (!searchTerm) return rows.sort((a, b) => b.totalSales - a.totalSales);
@@ -552,7 +575,10 @@ const ManagerDashboard = () => {
         </div>
       </section>
     </div>
-  );
+);
+
 };
 
 export default ManagerDashboard;
+
+

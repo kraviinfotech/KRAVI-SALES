@@ -96,30 +96,6 @@ router.get('/summary', async (req, res) => {
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
 
-    const yearlySales = await SalesRecord.aggregate([
-      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id), visitDatetime: { $gte: startOfYear } } },
-      { $match: { ...activeMatch, visitDatetime: { $gte: startOfYear } } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-    ]);
-
-    const pendingSales = await SalesRecord.aggregate([
-      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id) } },
-      { $match: activeMatch },
-      { $group: { _id: null, total: { $sum: '$pendingAmount' } } }
-    ]);
-
-    res.json({
-      totalSellers,
-      totalRecords,
-      monthlyTotal: Number((monthlySales[0]?.total || 0).toFixed(2)),
-      yearlyTotal: Number((yearlySales[0]?.total || 0).toFixed(2)),
-      totalPending: Number((pendingSales[0]?.total || 0).toFixed(2))
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error retrieving summary' });
-  }
-});
 
 // GET /api/reports/weekly -> Group sales by day for the last 7 days
 router.get('/weekly', async (req, res) => {

@@ -21,7 +21,7 @@ const MyRecords = () => {
         setRecords(response.data);
       } catch (err) {
         console.error(err);
-        setError('Records could not be loaded.');
+        setError('Records load nahi ho paaye.');
       } finally {
         setLoading(false);
       }
@@ -50,14 +50,14 @@ const MyRecords = () => {
 
       {records.length === 0 ? (
         <div className="rounded-md border border-slate-200 bg-white px-4 py-10 text-center text-sm font-semibold text-slate-500">
-          No records saved yet.
+          Abhi koi record saved nahi hai.
         </div>
       ) : (
         records.map((record) => (
           <article key={record._id} className="border-b border-slate-200 py-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="truncate text-sm font-black text-slate-950">{record.shopName}</h2>
+                <h2 className="truncate text-sm font-black text-slate-950">{record.shopName} {record.mobile && <span className="font-normal text-slate-500">({record.mobile})</span>}</h2>
                 <p className="mt-2 text-[11px] font-semibold text-slate-600">
                   {format(new Date(record.visitDatetime), 'dd MMM yyyy, hh:mm a')}
                 </p>

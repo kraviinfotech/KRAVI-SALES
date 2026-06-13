@@ -17,6 +17,7 @@ router.post(
   [
     body('shopName').trim().notEmpty().withMessage('Shop name is required'),
     body('shopAddress').trim().notEmpty().withMessage('Shop address is required'),
+    body('mobile').optional().isString().withMessage('Invalid mobile number'),
     body('shopType').isIn(['Retail', 'Wholesale', 'Distributor', 'Other']).withMessage('Invalid shop type'),
     body('latitude').optional().isNumeric().withMessage('Latitude must be a number'),
     body('longitude').optional().isNumeric().withMessage('Longitude must be a number'),
@@ -42,7 +43,7 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { shopName, shopAddress, landmark, shopType, latitude, longitude, items, paymentMethod, paidAmount, pendingAmount, paymentStatus, scannerPhoto } = req.body;
+    const { shopName, shopAddress, mobile, landmark, shopType, latitude, longitude, items, paymentMethod, paidAmount, pendingAmount, paymentStatus, scannerPhoto } = req.body;
 
     try {
       // Find the seller profile of the logged-in user
@@ -92,6 +93,7 @@ router.post(
         sellerId: seller._id,
         managerId: managerId, // Link record to the manager who owns the seller
         shopName,
+        mobile: mobile || '',
         shopAddress,
         landmark: landmark || '',
         shopType,

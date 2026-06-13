@@ -90,7 +90,7 @@ const ManagerRecords = () => {
       alert('No data to export.');
       return;
     }
-    const headers = ['Date', 'Seller', 'Shop Name', 'Shop Type', 'Address', 'Landmark', 'Total Amount', 'Paid Amount', 'Pending Amount', 'Payment Status', 'Items Count', 'Items (Product x Qty @ Rate)'];
+    const headers = ['Date', 'Seller', 'Shop Name', 'Shop Mobile', 'Shop Type', 'Address', 'Landmark', 'Total Amount', 'Paid Amount', 'Pending Amount', 'Payment Status', 'Items Count', 'Items (Product x Qty @ Rate)'];
     const rows = records.map(r => {
       const itemsFormatted = r.items?.map(item => {
         if (item.unit === 'weight') {
@@ -104,6 +104,7 @@ const ManagerRecords = () => {
         new Date(r.visitDatetime).toISOString(),
         r.sellerId?.name || 'Unknown',
         `"${r.shopName.replace(/"/g, '""')}"`,
+        `"${(r.mobile || '').replace(/"/g, '""')}"`,
         r.shopType,
         `"${r.shopAddress.replace(/"/g, '""')}"`,
         `"${(r.landmark || '').replace(/"/g, '""')}"`,
