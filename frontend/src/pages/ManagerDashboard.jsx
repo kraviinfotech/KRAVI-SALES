@@ -189,21 +189,16 @@ const ManagerDashboard = () => {
   }, [fetchSummary, fetchChartData, fetchRecords]);
 
 
-  const sellerRows = useMemo(() => {
+  const { sellerRows, totals } = useMemo(() => {
     const sellerMap = new Map();
+    const term = searchTerm.toLowerCase();
 
-    const filtered = records.filter(r => 
-      (r.sellerId?.name || 'Unknown Seller').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.shopName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    filtered.forEach((record, index) => {
-      const sellerId = record.sellerId?._id;
+    records.forEach((record) => {
+      const sellerId = record.sellerId?._id || 'unknown';
       const sellerName = record.sellerId?.name || 'Unknown Seller';
-      const sellerKey = sellerId || 'unknown-seller';
 
-      if (!sellerMap.has(sellerKey)) {
-        sellerMap.set(sellerKey, {
+      if (!sellerMap.has(sellerId)) {
+        sellerMap.set(sellerId, {
           sellerId,
           seller: sellerName,
           totalRecords: 0,
@@ -213,62 +208,29 @@ const ManagerDashboard = () => {
           totalPending: 0
         });
       }
-      return sum + Number(item.quantity || 0);
-    }, 0);
 
-    row.totalSales += Number(record.totalAmount || 0);
-    row.totalPending += Number(record.pendingAmount || 0);
-  });
+      const row = sellerMap.get(sellerId);
+      row.totalRecords += 1;
+      row.totalShops += 1;
+      row.totalItems += record.items?.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0) || 0;
+      row.totalSales += Number(record.totalAmount || 0);
+      row.totalPending += Number(record.pendingAmount || 0);
+    });
 
-  const rows = Array.from(sellerMap.values());
-
-  if (!searchTerm) {
-    return rows.sort((a, b) => b.totalSales - a.totalSales);
-  }
-
-  const term = searchTerm.toLowerCase();
-
-  return rows
-    .filter((r) => r.seller.toLowerCase().includes(term))
-    .sort((a, b) => b.totalSales - a.totalSales);
-}, [records, searchTerm]);
-
-const totals = sellerRows.reduce(
-  (sum, row) => ({
-    totalRecords: sum.totalRecords + (row.totalRecords || 0),
-    totalShops: sum.totalShops + (row.totalShops || 0),
-    totalItems: sum.totalItems + (row.totalItems || 0),
-    totalSales: sum.totalSales + (row.totalSales || 0),
-    totalPending: sum.totalPending + (row.totalPending || 0)
-  }),
-  {
-    totalRecords: 0,
-    totalShops: 0,
-    totalItems: 0,
-    totalSales: 0,
-    totalPending: 0
-  }
-);
-
-    const rows = Array.from(sellerMap.values());
-    if (!searchTerm) return rows.sort((a, b) => b.totalSales - a.totalSales);
-    
-    const term = searchTerm.toLowerCase();
-    return rows
+    const rows = Array.from(sellerMap.values())
       .filter(r => r.seller.toLowerCase().includes(term))
       .sort((a, b) => b.totalSales - a.totalSales);
-  }, [records, searchTerm]);
 
-  const totals = sellerRows.reduce(
-    (sum, row) => ({
-      totalRecords: sum.totalRecords + (row.totalRecords || 0),
-      totalShops: sum.totalShops + row.totalShops,
-      totalItems: sum.totalItems + row.totalItems,
-      totalSales: sum.totalSales + row.totalSales,
-      totalPending: sum.totalPending + row.totalPending
-    }),
-    { totalRecords: 0, totalShops: 0, totalItems: 0, totalSales: 0, totalPending: 0 }
-  );
+    const calculatedTotals = rows.reduce((acc, curr) => ({
+      totalRecords: acc.totalRecords + curr.totalRecords,
+      totalShops: acc.totalShops + curr.totalShops,
+      totalItems: acc.totalItems + curr.totalItems,
+      totalSales: acc.totalSales + curr.totalSales,
+      totalPending: acc.totalPending + curr.totalPending
+    }), { totalRecords: 0, totalShops: 0, totalItems: 0, totalSales: 0, totalPending: 0 });
+
+    return { sellerRows: rows, totals: calculatedTotals };
+  }, [records, searchTerm]);
 
   const stats = [
     {
@@ -580,5 +542,3 @@ const totals = sellerRows.reduce(
 };
 
 export default ManagerDashboard;
-
-
