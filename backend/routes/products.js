@@ -47,13 +47,12 @@ router.post('/', authMiddleware, roleMiddleware('manager'), async (req, res) => 
   }
 
   try {
-    const product = new Product({
-      name,
-      category: category || 'General',
-      baseRate,
-      managerId: req.user._id
+    const product = new Product({ 
+      name, 
+      category: category || 'General', 
+      baseRate, 
+      managerId: req.user._id 
     });
-
     await product.save();
 
     res.status(201).json(product);

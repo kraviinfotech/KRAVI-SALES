@@ -78,6 +78,23 @@ router.delete('/purge-unknown', async (req, res) => {
 });
 
 // GET /api/reports/summary -> Returns totalSellers, totalRecords, monthlyTotal, yearlyTotal
+router.get('/summary', async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+    const activeSellers = await Seller.find({ managerId: req.user._id }, '_id');
+    const activeSellerIds = activeSellers.map(s => s._id);
+    const activeMatch = { sellerId: { $in: activeSellerIds } };
+
+    const totalSellers = activeSellers.length;
+    const totalRecords = await SalesRecord.countDocuments(activeMatch);
+
+    const monthlySales = await SalesRecord.aggregate([
+      { $match: { ...activeMatch, visitDatetime: { $gte: startOfMonth } } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
 
 
 // GET /api/reports/weekly -> Group sales by day for the last 7 days

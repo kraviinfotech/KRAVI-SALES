@@ -29,7 +29,7 @@ const AddProducts = () => {
         // 2. Seller's own history
         const historyRes = await API.get('/sales/my-records');
         
-        const names = new Set(suggestedProducts);
+        const names = new Set(['Surf Excel', 'Maggi', 'Parle-G', 'Britannia Biscuits', 'Soap', 'Shampoo']);
         masterNames.forEach(n => names.add(n));
         historyRes.data.forEach(record => record.items?.forEach(item => names.add(item.productName)));
         setSuggestedProducts(Array.from(names));
@@ -38,7 +38,7 @@ const AddProducts = () => {
       }
     };
     fetchAllSuggestions();
-  }, [suggestedProducts]);
+  }, []);
 
   // Ensure formData.items is initialized and has required fields
   useEffect(() => {
@@ -79,18 +79,15 @@ const AddProducts = () => {
   const handleNext = (event) => {
     event.preventDefault();
 
-    const validItems = (formData.items || [])
-      .filter(item => item && item.productName)
-      .map((item) => {
-        const unit = item.unit || 'quantity';
-        return {
-          productName: item.productName.trim(),
-          unit,
-          quantity: unit === 'quantity' ? (Number(item.quantity) || 1) : 1,
-          weight: unit === 'weight' ? (Number(item.weight) || 0) : 0,
-          price: Number(item.price || item.rate || 0)
-        };
-      })
+    const validItems = formData.items
+      .map((item) => ({
+        ...item,
+        productName: item.productName.trim(),
+        unit: item.unit,
+        price: Number(item.price),
+        quantity: item.unit === 'quantity' ? Number(item.quantity || 0) : 1,
+        weight: item.unit === 'weight' ? Number(item.weight || 0) : 0
+      }))
       .filter((item) => {
         const hasValidName = item.productName;
         const hasValidQuantity = item.unit === 'quantity' ? item.quantity > 0 : true;

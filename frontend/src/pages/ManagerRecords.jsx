@@ -46,7 +46,7 @@ const ManagerRecords = () => {
     setLoading(true);
     try {
       const response = await API.get(`/reports/records?${searchParams.toString()}`);
-      setRecords(response.data);
+      setRecords(Array.isArray(response.data) ? response.data : []);
       setErrorMsg('');
     } catch (err) {
       console.error("Error fetching records:", err);
@@ -67,7 +67,7 @@ const ManagerRecords = () => {
   useEffect(() => {
     const total = records.length;
     const active = records.filter(r => r.paymentStatus === 'Paid').length;
-    const inactive = records.filter(r => r.paymentStatus === 'Pending').length;
+    const inactive = records.filter(r => r.paymentStatus !== 'Paid').length;
     const newThisMonth = records.filter(r => {
       const date = new Date(r.visitDatetime);
       const now = new Date();
