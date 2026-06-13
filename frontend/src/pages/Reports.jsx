@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import API from '../api/axios';
 import ReportFilter from '../components/ReportFilter';
 import SalesTable from '../components/SalesTable';
 import StatCard from '../components/StatCard';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend, AreaChart, Area, ComposedChart, ScatterChart, Scatter, ZAxis } from 'recharts';
-import { ShoppingCart, Landmark, DollarSign, Loader2, Calendar, TrendingUp, Users, Package, PieChart as PieIcon, BarChart3, Presentation, CircleDot } from 'lucide-react';
+import { ShoppingCart, Landmark, DollarSign, Loader2, Calendar, TrendingUp, Users, Package, PieChart as PieIcon, BarChart3, Presentation, CircleDot, Trash2 } from 'lucide-react';
 
 const COLORS = ['#1D4ED8', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 const currencyFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
@@ -50,12 +50,18 @@ const Reports = () => {
   
   const [filters, setFilters] = useState({ sellerId: '', sellerName: '', shopName: '', shopType: '', status: '', from: '', to: '' });
 
-  // Fetch high-level summary
-  useEffect(() => {
-    API.get('/reports/summary')
-      .then(res => setSummary(res.data))
-      .catch(err => console.error('Summary fetch error:', err));
+  const fetchSummary = useCallback(async () => {
+    try {
+      const res = await API.get('/reports/summary');
+      setSummary(res.data);
+    } catch (err) {
+      console.error('Summary fetch error:', err);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   useEffect(() => {
     const fetchSellers = async () => {
@@ -69,8 +75,7 @@ const Reports = () => {
     fetchSellers();
   }, []);
 
-  useEffect(() => {
-    const fetchChartData = async () => {
+  const fetchChartData = useCallback(async () => {
       try {
         let endpoint = activeTab === 'monthly' ? '/reports/monthly' : activeTab === 'yearly' ? '/reports/yearly' : activeTab === 'daily' ? '/reports/daily' : '/reports/weekly';
         if (activeTab === 'custom') {
@@ -88,13 +93,11 @@ const Reports = () => {
         console.error(err);
         setChartData(getBlankChartData(activeTab)); // Ensure chartData is blank on error
       }
-    };
-
-    fetchChartData();
   }, [activeTab]);
 
-  const fetchFilteredRecords = async (currentFilters) => {
-    setLoading(true);
+  const fetchFilteredRecords = useCallback(async (currentFilters, quiet = false) => {
+    // Prevent UI from disappearing if data already exists
+    if (!quiet && records.length === 0) setLoading(true);
     try {
       const queryParams = new URLSearchParams();
       if (currentFilters.sellerId) queryParams.append('sellerId', currentFilters.sellerId);
@@ -122,27 +125,55 @@ const Reports = () => {
       }
 
       const response = await API.get(`/reports/records?${queryParams.toString()}`);
-      setRecords(response.data);
+      // Ensure response.data is an array and filter safely
+      const data = Array.isArray(response.data) ? response.data : [];
+      setRecords(data.filter(r => r && r.sellerId)); // Filter out records with no valid seller
     } catch (err) {
       console.error(err);
       setErrorMsg(err.response?.data?.message || err.message || 'Failed to load records');
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
 
   useEffect(() => {
+    fetchChartData();
     fetchFilteredRecords(filters);
   }, [filters, activeTab]);
+
+  // Auto-refresh interval
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchSummary();
+      fetchChartData();
+      fetchFilteredRecords(filters, true);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchSummary, fetchChartData, fetchFilteredRecords, filters]);
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
   };
 
+  const handleDeleteSellerRecords = async (sellerId, sellerName) => {
+    if (sellerId === 'unknown') return;
+    if (!window.confirm(`Are you sure you want to delete ALL records for ${sellerName}? This cannot be undone.`)) return;
+    
+    try {
+      const response = await API.delete(`/reports/seller-records/${sellerId}`);
+      alert(response.data.message);
+      fetchSummary();
+      fetchChartData();
+      fetchFilteredRecords(filters, true);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete records.');
+    }
+  };
+
   // Aggregations for Charts
   const sellerPerformance = useMemo(() => {
     const map = {};
-    records.forEach(r => {
+    (records || []).forEach(r => {
       const name = r.sellerId?.name || 'Unknown';
       if (!map[name]) map[name] = { name, sales: 0, records: 0 };
       map[name].sales += Number(r.totalAmount || 0);
@@ -153,7 +184,7 @@ const Reports = () => {
 
   const shopPerformance = useMemo(() => {
     const map = {};
-    records.forEach(r => {
+    (records || []).forEach(r => {
       if (!map[r.shopName]) map[r.shopName] = { name: r.shopName, sales: 0, visits: 0 };
       map[r.shopName].sales += Number(r.totalAmount || 0);
       map[r.shopName].visits += 1;
@@ -164,7 +195,7 @@ const Reports = () => {
   const categoryWiseData = useMemo(() => {
     // Mapping existing shop types to user requested categories as examples if data matches
     const map = {};
-    records.forEach(r => {
+    (records || []).forEach(r => {
       const cat = r.shopType || 'Other';
       if (!map[cat]) map[cat] = { name: cat, value: 0 };
       map[cat].value += Number(r.totalAmount || 0);
@@ -173,10 +204,10 @@ const Reports = () => {
   }, [records]);
 
   const stats = useMemo(() => {
-    const totalSales = records.reduce((sum, r) => sum + Number(r.totalAmount || 0), 0);
-    const totalItems = records.reduce((sum, r) => sum + (r.items?.reduce((is, i) => is + Number(i.quantity || 0), 0) || 0), 0);
-    const uniqueShops = new Set(records.map(r => r.shopName)).size;
-    return { totalSales, totalItems, uniqueShops, totalRecords: records.length };
+    const totalSales = (records || []).reduce((sum, r) => sum + Number(r.totalAmount || 0), 0);
+    const totalItems = (records || []).reduce((sum, r) => sum + (r.items?.reduce((is, i) => is + Number(i.quantity || 0), 0) || 0), 0);
+    const uniqueShops = new Set((records || []).map(r => r?.shopName).filter(Boolean)).size;
+    return { totalSales, totalItems, uniqueShops, totalRecords: (records || []).length };
   }, [records]);
 
   // Seller Table aggregation for specific sections
@@ -184,7 +215,7 @@ const Reports = () => {
     const map = {};
     records.forEach(r => {
       const sid = r.sellerId?._id || 'unknown';
-      if (!map[sid]) map[sid] = { name: r.sellerId?.name || 'Unknown', records: 0, shops: new Set(), items: 0, sales: 0, pending: 0 };
+      if (!map[sid]) map[sid] = { sellerId: sid, name: r.sellerId?.name || 'Unknown', records: 0, shops: new Set(), items: 0, sales: 0, pending: 0 };
       map[sid].records += 1;
       map[sid].shops.add(r.shopName);
       map[sid].items += r.items?.reduce((s, i) => s + Number(i.quantity || 0), 0) || 0;
@@ -409,6 +440,7 @@ const Reports = () => {
                 <th className="p-4 text-center">Items Sold</th>
                 <th className="p-4 text-right">Total Sales</th>
                 <th className="p-4 text-right text-red-600">Pending</th>
+                <th className="p-4 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -420,11 +452,22 @@ const Reports = () => {
                   <td className="p-4 text-sm text-center font-medium text-slate-600">{row.items}</td>
                   <td className="p-4 text-sm text-right font-black text-slate-900">{currencyFormatter.format(row.sales)}</td>
                   <td className="p-4 text-sm text-right font-black text-red-600">{currencyFormatter.format(row.pending)}</td>
+                  <td className="p-4 text-center">
+                    {row.sellerId !== 'unknown' && (
+                      <button 
+                        onClick={() => handleDeleteSellerRecords(row.sellerId, row.name)}
+                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                        title="Delete all records for this seller"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
               {sellerTableData.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="p-12 text-center text-slate-400 font-medium italic">No data available for this period.</td>
+                  <td colSpan="7" className="p-12 text-center text-slate-400 font-medium italic">No data available for this period.</td>
                 </tr>
               )}
             </tbody>
@@ -438,7 +481,7 @@ const Reports = () => {
           <Calendar size={18} className="text-slate-400" />
           <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">All Visit Logs</h3>
         </div>
-        {loading ? (
+        {loading && records.length === 0 ? (
           <div className="flex justify-center items-center py-20 bg-white rounded-xl border border-slate-200">
             <Loader2 className="animate-spin text-blue-700" size={32} />
           </div>

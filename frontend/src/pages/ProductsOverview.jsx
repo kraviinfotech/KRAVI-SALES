@@ -13,7 +13,6 @@ const ProductsOverview = () => {
   const [records, setRecords] = useState([]);
   const [masterProducts, setMasterProducts] = useState([]);
   const [newProductName, setNewProductName] = useState('');
-  const [newCategory, setNewCategory] = useState('General');
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAnimationActive] = useState(false);
   const [error, setError] = useState('');
@@ -22,10 +21,11 @@ const ProductsOverview = () => {
     const fetchRecords = async () => {
       try {
         const response = await API.get('/reports/records');
-        setRecords(response.data);
+        // Filter out records where seller no longer exists
+        setRecords(Array.isArray(response.data) ? response.data.filter(r => r.sellerId) : []);
       } catch (err) {
         console.error(err);
-        setError('Product totals load nahi ho paaye.');
+        setError('Product totals could not be loaded.');
       } finally {
         setLoading(false);
       }
@@ -47,10 +47,9 @@ const ProductsOverview = () => {
     if (!newProductName.trim()) return;
     setIsAnimationActive(true);
     try {
-      const res = await API.post('/products', { name: newProductName, category: newCategory });
+      const res = await API.post('/products', { name: newProductName });
       setMasterProducts(prev => [...prev, res.data].sort((a,b) => a.name.localeCompare(b.name)));
       setNewProductName('');
-      setNewCategory('General');
     } catch (err) {
       alert(err.response?.data?.message || err.message || 'Error adding product');
     } finally { setIsAnimationActive(false); }
@@ -129,16 +128,6 @@ const ProductsOverview = () => {
             placeholder="e.g. New Shampoo Variant"
             className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none"
           />
-          <select
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-2 text-sm focus:border-primary"
-          >
-            <option value="General">General</option>
-            <option value="Shampoo">Shampoo</option>
-            <option value="Biscuit">Biscuit</option>
-            <option value="Soap">Soap</option>
-          </select>
           <button
             type="submit"
             disabled={isAdding}
@@ -150,7 +139,7 @@ const ProductsOverview = () => {
         <div className="mt-4 flex flex-wrap gap-2">
           {masterProducts.map(p => (
             <span key={p._id} className="inline-flex items-center gap-1 bg-slate-100 px-2 py-1 rounded text-xs font-bold text-slate-600 border border-slate-200">
-              <span className="text-blue-600">[{p.category}]</span> {p.name}
+              {p.name}
               <button onClick={() => handleDeleteProduct(p._id)} className="text-slate-400 hover:text-red-600 ml-1">×</button>
             </span>
           ))}
@@ -188,7 +177,7 @@ const ProductsOverview = () => {
               ) : products.length === 0 ? (
                 <tr>
                   <td colSpan="4" className="px-4 py-10 text-center text-sm font-semibold text-slate-500">
-                    Abhi tak koi product sale record nahi mila.
+                    No product sale records found yet.
                   </td>
                 </tr>
               ) : (

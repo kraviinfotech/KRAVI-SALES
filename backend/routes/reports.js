@@ -10,6 +10,73 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 // Protect all routes under this router for manager role only
 router.use(authMiddleware, roleMiddleware('manager'));
 
+// DELETE /api/reports/clear-all -> सभी सेल्स रिकॉर्ड और आइटम्स डिलीट करें (सिर्फ Manager के लिए)
+router.delete('/clear-all', async (req, res) => {
+  try {
+    await SalesRecord.deleteMany({});
+    await SaleItem.deleteMany({});
+    res.json({ message: 'All sales records and items have been deleted successfully.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error while deleting records' });
+  }
+});
+
+// DELETE /api/reports/seller-records/:sellerId -> Remove all records for a specific seller
+router.delete('/seller-records/:sellerId', async (req, res) => {
+  try {
+    const { sellerId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(sellerId)) {
+      return res.status(400).json({ message: 'Invalid seller ID' });
+    }
+
+    const recordsToDelete = await SalesRecord.find({ sellerId }, '_id');
+    const ids = recordsToDelete.map(r => r._id);
+
+    if (ids.length === 0) {
+      return res.json({ message: 'No records found for this seller.' });
+    }
+
+    await SalesRecord.deleteMany({ _id: { $in: ids } });
+    await SaleItem.deleteMany({ recordId: { $in: ids } });
+
+    res.json({ message: `Successfully removed ${ids.length} records for the seller.` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error while deleting seller records' });
+  }
+});
+
+// DELETE /api/reports/purge-unknown -> Remove records belonging to deleted/unknown sellers
+router.delete('/purge-unknown', async (req, res) => {
+  try {
+    const activeSellers = await Seller.find({}, '_id');
+    const activeSellerIds = activeSellers.map(s => s._id);
+
+    const orphanedRecords = await SalesRecord.find({
+      $or: [
+        { sellerId: { $nin: activeSellerIds } },
+        { sellerId: { $exists: false } },
+        { sellerId: null }
+      ]
+    }, '_id');
+
+    const orphanedIds = orphanedRecords.map(r => r._id);
+
+    if (orphanedIds.length === 0) {
+      return res.json({ message: 'No orphaned records found.' });
+    }
+
+    await SalesRecord.deleteMany({ _id: { $in: orphanedIds } });
+    await SaleItem.deleteMany({ recordId: { $in: orphanedIds } });
+
+    res.json({ message: `Successfully removed ${orphanedIds.length} records of unknown sellers.` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error while purging unknown records' });
+  }
+});
+
 // GET /api/reports/summary -> Returns totalSellers, totalRecords, monthlyTotal, yearlyTotal
 router.get('/summary', async (req, res) => {
   try {
@@ -17,20 +84,25 @@ router.get('/summary', async (req, res) => {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-    const totalSellers = await Seller.countDocuments();
-    const totalRecords = await SalesRecord.countDocuments();
+    const activeSellers = await Seller.find({}, '_id');
+    const activeSellerIds = activeSellers.map(s => s._id);
+    const activeMatch = { sellerId: { $in: activeSellerIds } };
+
+    const totalSellers = activeSellers.length;
+    const totalRecords = await SalesRecord.countDocuments(activeMatch);
 
     const monthlySales = await SalesRecord.aggregate([
-      { $match: { visitDatetime: { $gte: startOfMonth } } },
+      { $match: { ...activeMatch, visitDatetime: { $gte: startOfMonth } } },
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
 
     const yearlySales = await SalesRecord.aggregate([
-      { $match: { visitDatetime: { $gte: startOfYear } } },
+      { $match: { ...activeMatch, visitDatetime: { $gte: startOfYear } } },
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
 
     const pendingSales = await SalesRecord.aggregate([
+      { $match: activeMatch },
       { $group: { _id: null, total: { $sum: '$pendingAmount' } } }
     ]);
 
@@ -58,12 +130,16 @@ router.get('/weekly', async (req, res) => {
       last7Days.push(d);
     }
 
+    const activeSellers = await Seller.find({}, '_id');
+    const activeSellerIds = activeSellers.map(s => s._id);
+    const activeMatch = { sellerId: { $in: activeSellerIds } };
+
     const startOfWeek = last7Days[0];
     const endOfWeek = new Date();
     endOfWeek.setHours(23, 59, 59, 999);
 
     const weeklySales = await SalesRecord.aggregate([
-      { $match: { visitDatetime: { $gte: startOfWeek, $lte: endOfWeek } } },
+      { $match: { ...activeMatch, visitDatetime: { $gte: startOfWeek, $lte: endOfWeek } } },
       {
         $group: {
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$visitDatetime', timezone: 'UTC' } },
@@ -100,8 +176,12 @@ router.get('/monthly', async (req, res) => {
     const startOfMonth = new Date(year, month - 1, 1);
     const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
 
+    const activeSellers = await Seller.find({}, '_id');
+    const activeSellerIds = activeSellers.map(s => s._id);
+    const activeMatch = { sellerId: { $in: activeSellerIds } };
+
     const monthlySales = await SalesRecord.aggregate([
-      { $match: { visitDatetime: { $gte: startOfMonth, $lte: endOfMonth } } },
+      { $match: { ...activeMatch, visitDatetime: { $gte: startOfMonth, $lte: endOfMonth } } },
       {
         $group: {
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$visitDatetime', timezone: 'UTC' } },
@@ -136,8 +216,13 @@ router.get('/today', async (req, res) => {
     start.setHours(0, 0, 0, 0);
     const end = new Date();
     end.setHours(23, 59, 59, 999);
+
+    const activeSellers = await Seller.find({}, '_id');
+    const activeSellerIds = activeSellers.map(s => s._id);
+    const activeMatch = { sellerId: { $in: activeSellerIds } };
+
     const result = await SalesRecord.aggregate([
-      { $match: { visitDatetime: { $gte: start, $lte: end } } },
+      { $match: { ...activeMatch, visitDatetime: { $gte: start, $lte: end } } },
       { $group: { _id: null, totalSales: { $sum: '$totalAmount' } } }
     ]);
     res.json({ totalSales: Number((result[0]?.totalSales || 0).toFixed(2)) });
@@ -150,7 +235,12 @@ router.get('/today', async (req, res) => {
 // GET /api/reports/shop-wise - Sales aggregated by shop name
 router.get('/shop-wise', async (req, res) => {
   try {
+    const activeSellers = await Seller.find({}, '_id');
+    const activeSellerIds = activeSellers.map(s => s._id);
+    const activeMatch = { sellerId: { $in: activeSellerIds } };
+
     const data = await SalesRecord.aggregate([
+      { $match: activeMatch },
       { $group: { _id: '$shopName', totalSales: { $sum: '$totalAmount' }, visits: { $sum: 1 } } },
       { $project: { shopName: '$_id', totalSales: { $round: ['$totalSales', 2] }, visits: 1, _id: 0 } }
     ]);
@@ -254,8 +344,12 @@ router.get('/yearly', async (req, res) => {
     const startOfYear = new Date(year, 0, 1);
     const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
 
+    const activeSellers = await Seller.find({}, '_id');
+    const activeSellerIds = activeSellers.map(s => s._id);
+    const activeMatch = { sellerId: { $in: activeSellerIds } };
+
     const yearlySales = await SalesRecord.aggregate([
-      { $match: { visitDatetime: { $gte: startOfYear, $lte: endOfYear } } },
+      { $match: { ...activeMatch, visitDatetime: { $gte: startOfYear, $lte: endOfYear } } },
       {
         $group: {
           _id: { $dateToString: { format: '%Y-%m', date: '$visitDatetime', timezone: 'UTC' } },
