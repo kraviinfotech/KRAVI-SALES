@@ -84,6 +84,11 @@ router.get('/summary', async (req, res) => {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
+    const totalSellers = await Seller.countDocuments({ managerId: req.user._id });
+    const totalRecords = await SalesRecord.countDocuments({ managerId: req.user._id });
+
+    const monthlySales = await SalesRecord.aggregate([
+      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id), visitDatetime: { $gte: startOfMonth } } },
     const activeSellers = await Seller.find({}, '_id');
     const activeSellerIds = activeSellers.map(s => s._id);
     const activeMatch = { sellerId: { $in: activeSellerIds } };
@@ -97,11 +102,13 @@ router.get('/summary', async (req, res) => {
     ]);
 
     const yearlySales = await SalesRecord.aggregate([
+      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id), visitDatetime: { $gte: startOfYear } } },
       { $match: { ...activeMatch, visitDatetime: { $gte: startOfYear } } },
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
 
     const pendingSales = await SalesRecord.aggregate([
+      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id) } },
       { $match: activeMatch },
       { $group: { _id: null, total: { $sum: '$pendingAmount' } } }
     ]);
@@ -139,6 +146,7 @@ router.get('/weekly', async (req, res) => {
     endOfWeek.setHours(23, 59, 59, 999);
 
     const weeklySales = await SalesRecord.aggregate([
+      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id), visitDatetime: { $gte: startOfWeek, $lte: endOfWeek } } },
       { $match: { ...activeMatch, visitDatetime: { $gte: startOfWeek, $lte: endOfWeek } } },
       {
         $group: {
@@ -181,6 +189,7 @@ router.get('/monthly', async (req, res) => {
     const activeMatch = { sellerId: { $in: activeSellerIds } };
 
     const monthlySales = await SalesRecord.aggregate([
+      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id), visitDatetime: { $gte: startOfMonth, $lte: endOfMonth } } },
       { $match: { ...activeMatch, visitDatetime: { $gte: startOfMonth, $lte: endOfMonth } } },
       {
         $group: {
@@ -222,6 +231,7 @@ router.get('/today', async (req, res) => {
     const activeMatch = { sellerId: { $in: activeSellerIds } };
 
     const result = await SalesRecord.aggregate([
+      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id), visitDatetime: { $gte: start, $lte: end } } },
       { $match: { ...activeMatch, visitDatetime: { $gte: start, $lte: end } } },
       { $group: { _id: null, totalSales: { $sum: '$totalAmount' } } }
     ]);
@@ -240,6 +250,7 @@ router.get('/shop-wise', async (req, res) => {
     const activeMatch = { sellerId: { $in: activeSellerIds } };
 
     const data = await SalesRecord.aggregate([
+      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id) } },
       { $match: activeMatch },
       { $group: { _id: '$shopName', totalSales: { $sum: '$totalAmount' }, visits: { $sum: 1 } } },
       { $project: { shopName: '$_id', totalSales: { $round: ['$totalSales', 2] }, visits: 1, _id: 0 } }
@@ -255,6 +266,16 @@ router.get('/shop-wise', async (req, res) => {
 router.get('/product-wise', async (req, res) => {
   try {
     const data = await SaleItem.aggregate([
+      {
+        $lookup: {
+          from: 'salesrecords',
+          localField: 'recordId',
+          foreignField: '_id',
+          as: 'record'
+        }
+      },
+      { $unwind: '$record' },
+      { $match: { 'record.managerId': new mongoose.Types.ObjectId(req.user._id) } },
       { $group: { _id: '$productName', totalQty: { $sum: '$quantity' }, totalRevenue: { $sum: { $multiply: ['$quantity', '$rate'] } } } },
       { $project: { productName: '$_id', quantitySold: '$totalQty', revenue: { $round: ['$totalRevenue', 2] }, _id: 0 } },
       { $sort: { revenue: -1 } }
@@ -269,7 +290,7 @@ router.get('/product-wise', async (req, res) => {
 // GET /api/reports/location - List of shop locations with coordinates
 router.get('/location', async (req, res) => {
   try {
-    const records = await SalesRecord.find({}, 'shopName latitude longitude shopAddress').lean();
+    const records = await SalesRecord.find({ managerId: req.user._id }, 'shopName latitude longitude shopAddress').lean();
     res.json(records);
   } catch (err) {
     console.error(err);
@@ -281,6 +302,7 @@ router.get('/location', async (req, res) => {
 router.get('/payments', async (req, res) => {
   try {
     const data = await SalesRecord.aggregate([
+      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id) } },
       { $group: { _id: '$paymentStatus', totalPaid: { $sum: '$paidAmount' }, totalPending: { $sum: '$pendingAmount' } } },
       { $project: { status: '$_id', totalPaid: { $round: ['$totalPaid', 2] }, totalPending: { $round: ['$totalPending', 2] }, _id: 0 } }
     ]);
@@ -297,7 +319,7 @@ router.get('/target-achievement', async (req, res) => {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    const sellers = await Seller.find().lean();
+    const sellers = await Seller.find({ managerId: req.user._id }).lean();
     const results = [];
     for (const seller of sellers) {
       const sales = await SalesRecord.aggregate([
@@ -329,7 +351,12 @@ router.get('/attendance', async (req, res) => {
       return res.status(501).json({ message: 'Attendance module not implemented' });
     }
 
-    const records = await Attendance.find(query).lean();
+    // Filter attendance by manager's sellers
+    const managerSellers = await Seller.find({ managerId: req.user._id }).select('_id');
+    const sellerIds = managerSellers.map(s => s._id);
+    query.sellerId = query.sellerId ? { $and: [{ $eq: query.sellerId }, { $in: sellerIds }] } : { $in: sellerIds };
+
+    const records = await Attendance.find(query).sort({ date: -1 }).lean();
     res.json(records);
   } catch (err) {
     console.error(err);
@@ -349,6 +376,7 @@ router.get('/yearly', async (req, res) => {
     const activeMatch = { sellerId: { $in: activeSellerIds } };
 
     const yearlySales = await SalesRecord.aggregate([
+      { $match: { managerId: new mongoose.Types.ObjectId(req.user._id), visitDatetime: { $gte: startOfYear, $lte: endOfYear } } },
       { $match: { ...activeMatch, visitDatetime: { $gte: startOfYear, $lte: endOfYear } } },
       {
         $group: {
@@ -378,7 +406,7 @@ router.get('/yearly', async (req, res) => {
 // GET /api/reports/sellers-performance -> Aggregate seller performance metrics
 router.get('/sellers-performance', async (req, res) => {
   try {
-    const sellers = await Seller.find().lean();
+    const sellers = await Seller.find({ managerId: req.user._id }).lean();
     const performanceData = [];
 
     for (const seller of sellers) {
@@ -418,14 +446,17 @@ router.get('/sellers-performance', async (req, res) => {
 router.get('/records', async (req, res) => {
   try {
     const { sellerId, from, to, shopType, shopName, status, sellerName } = req.query;
-    const query = {};
+    const query = { managerId: req.user._id };
 
     if (sellerId && mongoose.Types.ObjectId.isValid(sellerId)) {
       query.sellerId = sellerId;
     }
     
     if (sellerName) {
-      const matchingSellers = await Seller.find({ name: { $regex: sellerName, $options: 'i' } }).select('_id');
+      const matchingSellers = await Seller.find({ 
+        managerId: req.user._id, 
+        name: { $regex: sellerName, $options: 'i' } 
+      }).select('_id');
       const sellerIds = matchingSellers.map(s => s._id);
       query.sellerId = { $in: sellerIds };
     }

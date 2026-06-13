@@ -47,18 +47,16 @@ router.post(
     try {
       // Find the seller profile of the logged-in user
       let seller = await Seller.findOne({ userId: req.user._id });
-      if (!seller) {
-        const user = await User.findById(req.user._id);
-        if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-        }
-        seller = new Seller({
-          userId: user._id,
-          name: user.name,
-          mobile: user.mobile
+
+      // Enforce multi-tenancy: Sellers must belong to a manager
+      if (!seller || !seller.managerId) {
+        return res.status(403).json({ 
+          message: 'Seller profile not found or not associated with a manager. Please contact your manager.' 
         });
-        await seller.save();
       }
+
+      // Capture managerId from seller profile for easier manager-specific reporting
+      const managerId = seller.managerId;
 
       // Prepare items - handle both new (unit/weight/price) and old (quantity/rate) structures
       let totalAmount = 0;
@@ -92,6 +90,7 @@ router.post(
       // Create SalesRecord
       const record = new SalesRecord({
         sellerId: seller._id,
+        managerId: managerId, // Link record to the manager who owns the seller
         shopName,
         shopAddress,
         landmark: landmark || '',
@@ -143,22 +142,9 @@ router.post(
 router.get('/my-records', async (req, res) => {
   try {
     let seller = await Seller.findOne({ userId: req.user._id });
+
     if (!seller) {
-      const user = await User.findById(req.user._id);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-      try {
-        seller = new Seller({
-          userId: user._id,
-          name: user.name,
-          mobile: user.mobile
-        });
-        await seller.save();
-      } catch (sellerErr) {
-        console.error('Failed to create seller profile:', sellerErr);
-        return res.status(500).json({ message: 'Unable to create seller profile. Please contact support.' });
-      }
+      return res.status(404).json({ message: 'Seller profile not found' });
     }
 
     // Find records for this seller, sort newest first
