@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import API from '../api/axios';
+import API from '../../api/axios';
 import { Loader2, ArrowUpDown, Award, AlertCircle } from 'lucide-react';
 
 const SellerPerformance = () => {

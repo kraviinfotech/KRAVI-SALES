@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import API from '../api/axios';
+import API from '../../api/axios';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 

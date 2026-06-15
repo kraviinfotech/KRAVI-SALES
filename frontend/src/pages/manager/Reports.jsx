@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import API from '../api/axios';
-import ReportFilter from '../components/ReportFilter';
-import SalesTable from '../components/SalesTable';
-import StatCard from '../components/StatCard';
+import API from '../../api/axios';
+import ReportFilter from '../../components/ReportFilter';
+import SalesTable from '../../components/SalesTable';
+import StatCard from '../../components/StatCard';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend, AreaChart, Area, ComposedChart, ScatterChart, Scatter, ZAxis } from 'recharts';
 import { ShoppingCart, Landmark, DollarSign, Loader2, Calendar, TrendingUp, Users, Package, PieChart as PieIcon, BarChart3, Presentation, CircleDot, Trash2 } from 'lucide-react';
 

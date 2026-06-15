@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import API from '../api/axios';
+import API from '../../api/axios';
 import { Loader2, Mail, Phone, ShieldCheck, UserCircle, Camera, Trash2 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 const numberFormatter = new Intl.NumberFormat('en-IN');
 

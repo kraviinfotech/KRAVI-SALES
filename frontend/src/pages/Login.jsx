@@ -95,15 +95,15 @@ const roleConfig = {
   };
 
   return (
-<div className="min-h-screen flex items-center justify-center lg:justify-end px-4 lg:pr-8 py-8 bg-transparent">
+<div className="min-h-screen flex items-start justify-center px-4 pt-28 pb-8 bg-transparent sm:items-center sm:py-8 lg:justify-end lg:pl-4 lg:pr-16">
          <div className="w-full max-w-md">
-        <div className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm ">
-          <div className="mb-8 text-center border-b border-slate-100 pb-4">
+        <div className="rounded-lg border border-white bg-white/95 p-6 shadow-[0_22px_60px_rgba(37,99,235,0.14)] ring-1 ring-blue-100/60">
+          <div className="mb-8 text-center border-b border-blue-100/70 pb-4">
             <p className="text-sm font-bold uppercase tracking-wide text-indigo-600">SalesFlow</p>
             <h1 className="mt-1 text-2xl font-black text-gray-900">Login</h1>
           </div>
 
-          <div className="mb-5 grid grid-cols-2 rounded-md border border-slate-200 bg-slate-50 p-1">
+          <div className="mb-5 grid grid-cols-2 rounded-md border border-slate-200 bg-white/90 p-1">
             <button
               type="button"
               onClick={() => handleRoleChange('seller')}
@@ -131,7 +131,7 @@ const roleConfig = {
           </div>
 
           <div className="mb-6 flex items-center gap-3">
-            <div className="rounded-md bg-blue-50 p-2 text-primary">
+            <div className="rounded-md bg-blue-50/70 p-2 text-primary">
               <Icon size={22} />
             </div>
             <div>
@@ -155,7 +155,7 @@ const roleConfig = {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="e.g. email@example.com or 9876543210"
-                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm shadow-inner shadow-blue-100/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 autoComplete="off"
                 required
               />
@@ -167,7 +167,7 @@ const roleConfig = {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm shadow-inner shadow-blue-100/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 autoComplete="new-password"
                 required
               />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useOutletContext,  } from 'react-router-dom';
-import API from '../api/axios';
+import API from '../../api/axios';
 import { AlertCircle, CheckCircle2, Camera, X } from 'lucide-react';
 
 const currencyFormatter = new Intl.NumberFormat('en-IN', {
@@ -36,8 +36,7 @@ const ReviewSave = () => {
     shopType, 
     latitude, 
     longitude, 
-    items,
-    shopImage 
+    items
   } = formData;
 
   const totalAmount = useMemo(() => (items || []).reduce((sum, item) => {
@@ -115,29 +114,40 @@ const ReviewSave = () => {
     setError('');
 
     try {
-      const data = new FormData();
-      data.append('shopName', shopName);
-      data.append('mobile', mobile || '');
-      data.append('shopAddress', shopAddress);
-      data.append('landmark', landmark || '');
-      data.append('shopType', shopType);
-      data.append('latitude', latitude);
-      data.append('longitude', longitude);
-      data.append('items', JSON.stringify(items));
-      data.append('paymentMethod', paymentMethod);
-      data.append('paidAmount', payingAmount);
-      data.append('pendingAmount', Number(pendingAmount) || 0);
-      data.append('paymentStatus', paymentStatus);
-      
-      if (shopImage) {
-        data.append('shopImage', shopImage);
+      const salesItems = (items || []).map((item) => {
+        const unit = item.unit === 'weight' ? 'weight' : 'quantity';
+        const price = Number(item.price || item.rate || 0);
+        const baseItem = {
+          productName: (item.productName || '').trim(),
+          unit,
+          price
+        };
+
+        return unit === 'weight'
+          ? { ...baseItem, weight: Number(item.weight || 0) }
+          : { ...baseItem, quantity: Number(item.quantity || 0) };
+      });
+
+      const payload = {
+        shopName: shopName?.trim() || '',
+        mobile: mobile || '',
+        shopAddress: shopAddress?.trim() || '',
+        landmark: landmark || '',
+        shopType,
+        latitude,
+        longitude,
+        items: salesItems,
+        paymentMethod,
+        paidAmount: Number(payingAmount) || 0,
+        pendingAmount: Number(pendingAmount) || 0,
+        paymentStatus
+      };
+
+      if (typeof scannerPhoto === 'string' && scannerPhoto.trim()) {
+        payload.scannerPhoto = scannerPhoto;
       }
 
-      await API.post('/sales/record', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await API.post('/sales/record', payload);
 
       sessionStorage.removeItem('sellFormData'); // Clear persisted data
       setFormData(prev => ({ ...prev, shopName: '', shopAddress: '', landmark: '', shopType: 'Retail', latitude: null, longitude: null, items: [{ productName: '', quantity: 1, rate: '' }], paymentMethod: 'None', paidAmount: 0, paymentStatus: 'Pending', shopImage: null })); // Reset local state

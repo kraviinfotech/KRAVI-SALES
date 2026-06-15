@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+.public-background {
+  background-color: #eaf4ff;
+  background-position: left top;
+  background-repeat: no-repeat;
+  background-size: auto 100%;
+}
+
+@media (min-width: 768px) {
+  .public-background {
+    background-position: center;
+    background-size: 100% 100%;
+  }
+}
+
 /* Custom scrollbars and premium UI detail */
 ::-webkit-scrollbar {
   width: 6px;
