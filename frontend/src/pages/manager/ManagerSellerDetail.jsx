@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import API from '../api/axios';
-import SalesTable from '../components/SalesTable';
-import ReportFilter from '../components/ReportFilter';
+import API from '../../api/axios';
+import SalesTable from '../../components/SalesTable';
+import ReportFilter from '../../components/ReportFilter';
 import { Loader2, User, AlertCircle } from 'lucide-react';
 
 const ManagerSellerDetail = () => {

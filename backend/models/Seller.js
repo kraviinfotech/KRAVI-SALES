@@ -7,6 +7,11 @@ const SellerSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  managerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    index: true
+  },
   name: {
     type: String,
     required: true,

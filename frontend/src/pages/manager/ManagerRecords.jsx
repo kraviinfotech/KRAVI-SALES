@@ -3,9 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
-import API from '../api/axios';
-import ReportFilter from '../components/ReportFilter';
-import SalesTable from '../components/SalesTable';
+import API from '../../api/axios';
+import ReportFilter from '../../components/ReportFilter';
+import SalesTable from '../../components/SalesTable';
 import { Loader2, Plus, FileSpreadsheet, FileText, Printer, Download, Search, ClipboardList, CheckCircle2, XCircle, Calendar, DollarSign } from 'lucide-react';
 
 const ManagerRecords = () => {

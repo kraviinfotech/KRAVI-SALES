@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
-import API from '../api/axios';
+import API from '../../api/axios';
 import { AlertCircle, Plus } from 'lucide-react';
 
 const translations = {

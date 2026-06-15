@@ -43,6 +43,7 @@ async function seed() {
     // Create seller profile
     const seller = new Seller({
       userId: sellerUser._id,
+      managerId: manager._id,
       name: 'John Seller',
       mobile: '9876543211'
     });
@@ -61,6 +62,7 @@ async function seed() {
 
     const seller2 = new Seller({
       userId: sellerUser2._id,
+      managerId: manager._id,
       name: 'Sarah Seller',
       mobile: '9876543212'
     });
@@ -124,6 +126,7 @@ async function seed() {
 
         const salesRecord = new SalesRecord({
           sellerId: selectedSeller._id,
+          managerId: manager._id,
           shopName: `${shop.name}`,
           shopAddress: shop.address,
           landmark: shop.landmark,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Plus, X } from 'lucide-react';
-import API from '../api/axios';
+import API from '../../api/axios';
 
 const translations = {
   en: { title: "Add Products", pName: "Product Name", qty: "Quantity (pcs)", weight: "Weight (kg)", price: "Price per Unit", rate: "Rate", amt: "Amount", add: "Add More Product", next: "Next", unit: "Unit Type", qtyBtn: "By Quantity", weightBtn: "By Weight" },
@@ -68,6 +68,20 @@ const AddProducts = () => {
     }));
   };
 
+  const handleUnitChange = (index, unit) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.map((item, itemIndex) => {
+        if (itemIndex !== index) return item;
+
+        const { quantity, weight, ...rest } = item;
+        return unit === 'weight'
+          ? { ...rest, unit: 'weight', weight: weight || '' }
+          : { ...rest, unit: 'quantity', quantity: quantity || 1 };
+      })
+    }));
+  };
+
   const handleAddMore = () => {
     setFormData(prev => ({ ...prev, items: [...prev.items, { ...emptyItem }] }));
   };
@@ -80,18 +94,22 @@ const AddProducts = () => {
     event.preventDefault();
 
     const validItems = formData.items
-      .map((item) => ({
-        ...item,
-        productName: item.productName.trim(),
-        unit: item.unit,
-        price: Number(item.price),
-        quantity: item.unit === 'quantity' ? Number(item.quantity || 0) : 1,
-        weight: item.unit === 'weight' ? Number(item.weight || 0) : 0
-      }))
+      .map((item) => {
+        const unit = item.unit === 'weight' ? 'weight' : 'quantity';
+        const baseItem = {
+          productName: item.productName.trim(),
+          unit,
+          price: Number(item.price || item.rate || 0)
+        };
+
+        return unit === 'weight'
+          ? { ...baseItem, weight: Number(item.weight || 0) }
+          : { ...baseItem, quantity: Number(item.quantity || 0) };
+      })
       .filter((item) => {
         const hasValidName = item.productName;
         const hasValidQuantity = item.unit === 'quantity' ? item.quantity > 0 : true;
-        const hasValidWeight = item.unit === 'weight' ? item.weight > 0 : true;
+        const hasValidWeight = item.unit === 'weight' ? item.weight >= 0.1 : true;
         const hasValidPrice = item.price > 0;
         return hasValidName && hasValidQuantity && hasValidWeight && hasValidPrice;
       });
@@ -154,7 +172,7 @@ const AddProducts = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => handleItemChange(index, 'unit', 'quantity')}
+                  onClick={() => handleUnitChange(index, 'quantity')}
                   className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
                     item.unit === 'quantity'
                       ? 'bg-primary text-white'
@@ -165,7 +183,7 @@ const AddProducts = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleItemChange(index, 'unit', 'weight')}
+                  onClick={() => handleUnitChange(index, 'weight')}
                   className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
                     item.unit === 'weight'
                       ? 'bg-primary text-white'
