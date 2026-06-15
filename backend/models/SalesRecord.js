@@ -6,6 +6,12 @@ const SalesRecordSchema = new mongoose.Schema({
     ref: 'Seller',
     required: true
   },
+  managerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
   shopName: {
     type: String,
     required: true,

@@ -47,7 +47,7 @@ router.post(
 
     try {
       // Find the seller profile of the logged-in user
-      let seller = await Seller.findOne({ userId: req.user._id });
+      const seller = await Seller.findOne({ userId: req.user._id }).select('_id managerId');
 
       // Enforce multi-tenancy: Sellers must belong to a manager
       if (!seller || !seller.managerId) {
@@ -143,14 +143,16 @@ router.post(
 // GET /api/sales/my-records -> Get logged-in seller's past records with items populated
 router.get('/my-records', async (req, res) => {
   try {
-    let seller = await Seller.findOne({ userId: req.user._id });
+    const seller = await Seller.findOne({ userId: req.user._id }).select('_id managerId');
 
-    if (!seller) {
-      return res.status(404).json({ message: 'Seller profile not found' });
+    if (!seller || !seller.managerId) {
+      return res.status(403).json({
+        message: 'Seller profile not found or not associated with a manager'
+      });
     }
 
-    // Find records for this seller, sort newest first
-    const records = await SalesRecord.find({ sellerId: seller._id })
+    // Find only records owned by the logged-in seller and their assigned manager.
+    const records = await SalesRecord.find({ sellerId: seller._id, managerId: seller.managerId })
       .sort({ visitDatetime: -1 })
       .lean();
 
