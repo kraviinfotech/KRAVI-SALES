@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import API from '../api/axios';
+import API from '../../api/axios';
 import { AlertCircle, Loader2, Package } from 'lucide-react';
 
 const numberFormatter = new Intl.NumberFormat('en-IN');

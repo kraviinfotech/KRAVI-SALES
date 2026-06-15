@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import API from '../api/axios';
+import API from '../../api/axios';
 import { UserPlus, Loader2, AlertCircle, CheckCircle2, Phone, User, Lock, ListCollapse, Eye, EyeOff } from 'lucide-react';
 
 const AddSeller = () => {

@@ -7,21 +7,21 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import SellerDashboard from './pages/SellerDashboard';
-import ManagerDashboard from './pages/ManagerDashboard';
-import MyRecords from './pages/MyRecords';
-import StartSelling from './pages/StartSelling';
-import AddShop from './pages/AddShop';
-import AddProducts from './pages/AddProducts';
-import ReviewSave from './pages/ReviewSave';
-import SellerReports from './pages/SellerReports';
-import SellerProfile from './pages/SellerProfile';
-import AddSeller from './pages/AddSeller';
-import Reports from './pages/Reports';
-import ManagerRecords from './pages/ManagerRecords';
-import ProductsOverview from './pages/ProductsOverview';
-import ManagerSellerDetail from './pages/ManagerSellerDetail';
-import ManagerProfile from './pages/ManagerProfile';
+import SellerDashboard from './pages/seller/SellerDashboard';
+import MyRecords from './pages/seller/MyRecords';
+import StartSelling from './pages/seller/StartSelling';
+import AddShop from './pages/seller/AddShop';
+import AddProducts from './pages/seller/AddProducts';
+import ReviewSave from './pages/seller/ReviewSave';
+import SellerReports from './pages/seller/SellerReports';
+import SellerProfile from './pages/seller/SellerProfile';
+import ManagerDashboard from './pages/manager/ManagerDashboard';
+import AddSeller from './pages/manager/AddSeller';
+import Reports from './pages/manager/Reports';
+import ManagerRecords from './pages/manager/ManagerRecords';
+import ProductsOverview from './pages/manager/ProductsOverview';
+import ManagerSellerDetail from './pages/manager/ManagerSellerDetail';
+import ManagerProfile from './pages/manager/ManagerProfile';
 
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -41,20 +41,24 @@ const App = () => {
       location.pathname.startsWith(path)
     );
   const isManagerArea = user && user.role === 'manager' && location.pathname.startsWith('/manager');
+  const isLoginPage = location.pathname === '/login';
 
   return (
-    <div className={isSellerArea || isManagerArea ? 'min-h-screen bg-slate-100' : 'flex flex-col min-h-screen bg-gray-50'} style={
+    <div className={isSellerArea || isManagerArea ? 'min-h-screen bg-slate-100' : 'public-background flex flex-col min-h-screen bg-gray-50'} style={
       !(isSellerArea || isManagerArea)
         ? {
           backgroundImage: `url(${bgImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
         }
         : {}
     }>
       {!isSellerArea && !isManagerArea && <Navbar />}
-      <main className={isSellerArea || isManagerArea ? 'min-h-screen' : 'flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8'}>
+      <main className={
+        isSellerArea || isManagerArea
+          ? 'min-h-screen'
+          : isLoginPage
+            ? 'flex-1 w-full'
+            : 'flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8'
+      }>
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={!user ? <Login /> : <Navigate to={user.role === 'manager' ? '/manager' : '/dashboard'} replace />} />

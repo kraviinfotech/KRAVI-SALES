@@ -11,6 +11,36 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 // Protect all routes in this file for sellers only
 router.use(authMiddleware, roleMiddleware('seller'));
 
+const findOrRepairSellerProfile = async (user) => {
+  let seller = await Seller.findOne({ userId: user._id });
+
+  if (seller?.managerId) {
+    return seller;
+  }
+
+  const managers = await User.find({ role: 'manager' }).select('_id').sort({ createdAt: 1 }).limit(2);
+  if (managers.length !== 1) {
+    return seller;
+  }
+
+  const managerId = managers[0]._id;
+
+  if (!seller) {
+    seller = new Seller({
+      userId: user._id,
+      managerId,
+      name: user.name,
+      mobile: user.mobile,
+      password: null
+    });
+  } else {
+    seller.managerId = managerId;
+  }
+
+  await seller.save();
+  return seller;
+};
+
 // POST /api/sales/record -> Create sales record and items
 router.post(
   '/record',
@@ -22,12 +52,39 @@ router.post(
     body('latitude').optional().isNumeric().withMessage('Latitude must be a number'),
     body('longitude').optional().isNumeric().withMessage('Longitude must be a number'),
     body('items').isArray({ min: 1 }).withMessage('At least one item is required'),
-    body('items.*.productName').trim().notEmpty().withMessage('Product name is required'),
-    body('items.*.unit').optional().isIn(['quantity', 'weight']).withMessage('Unit must be quantity or weight'),
-    body('items.*.quantity').optional().isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
-    body('items.*.weight').optional().isFloat({ min: 0.1 }).withMessage('Weight must be greater than 0.1'),
-    body('items.*.price').optional().isFloat({ min: 0.01 }).withMessage('Price must be greater than 0'),
-    body('items.*.rate').optional().isFloat({ min: 0.01 }).withMessage('Rate must be greater than 0'),
+    body('items').custom((items) => {
+      if (!Array.isArray(items)) return true;
+
+      items.forEach((item) => {
+        const unit = item.unit || 'quantity';
+        const price = Number(item.price ?? item.rate);
+
+        if (!String(item.productName || '').trim()) {
+          throw new Error('Product name is required');
+        }
+
+        if (!['quantity', 'weight'].includes(unit)) {
+          throw new Error('Unit must be quantity or weight');
+        }
+
+        if (!(price > 0)) {
+          throw new Error('Price must be greater than 0');
+        }
+
+        if (unit === 'weight') {
+          if (!(Number(item.weight) >= 0.1)) {
+            throw new Error('Weight must be greater than 0.1');
+          }
+          return;
+        }
+
+        if (!Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1) {
+          throw new Error('Quantity must be at least 1');
+        }
+      });
+
+      return true;
+    }),
     // New optional fields
     body('checkInTime').optional().isISO8601().toDate(),
     body('checkOutTime').optional().isISO8601().toDate(),
@@ -35,7 +92,7 @@ router.post(
     body('paidAmount').optional().isFloat({ min: 0 }).toFloat(),
     body('pendingAmount').optional().isFloat({ min: 0 }).toFloat(),
     body('paymentStatus').optional().isIn(['Paid', 'Partial', 'Pending']).withMessage('Invalid payment status'),
-    body('scannerPhoto').optional().isString().withMessage('Scanner photo must be a string')
+    body('scannerPhoto').optional({ values: 'falsy' }).isString().withMessage('Scanner photo must be a string')
   ],
   async (req, res) => {
     const errors = validationResult(req);
