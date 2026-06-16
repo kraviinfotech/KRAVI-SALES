@@ -7,6 +7,7 @@ import AdminLayout from './components/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
+import AdminLogin from './pages/Admin/Login';
 import Register from './pages/Register';
 import SellerDashboard from './pages/seller/SellerDashboard';
 import MyRecords from './pages/seller/MyRecords';
@@ -23,7 +24,12 @@ import ManagerRecords from './pages/manager/ManagerRecords';
 import ProductsOverview from './pages/manager/ProductsOverview';
 import ManagerSellerDetail from './pages/manager/ManagerSellerDetail';
 import ManagerProfile from './pages/manager/ManagerProfile';
-import AdminDashboard from './pages/AdminDashboard';
+import AdminDashboard from './pages/Admin/Dashboard';
+import AdminCompanies from './pages/Admin/Companies';
+import AdminPlans from './pages/Admin/Plans';
+import AdminPayments from './pages/Admin/Payments';
+import AdminReports from './pages/Admin/Reports';
+import AdminSettings from './pages/Admin/Settings';
 
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -65,6 +71,7 @@ const App = () => {
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={!user ? <Login /> : <Navigate to={user.role === 'admin' ? '/admin' : user.role === 'manager' ? '/manager' : '/dashboard'} replace />} />
+          <Route path="/admin/login" element={!user ? <AdminLogin /> : <Navigate to={user.role === 'admin' ? '/admin' : user.role === 'manager' ? '/manager' : '/dashboard'} replace />} />
           <Route path="/register" element={!user ? <Register /> : <Navigate to={user.role === 'admin' ? '/admin' : user.role === 'manager' ? '/manager' : '/dashboard'} replace />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
@@ -107,13 +114,18 @@ const App = () => {
           </Route>
 
           {/* Admin Routes */}
-          <Route path="/admin/*" element={
+          <Route element={
             <ProtectedRoute allowedRole="admin">
               <AdminLayout />
             </ProtectedRoute>
           }>
-            <Route index element={<AdminDashboard />} />
-            <Route path="*" element={<AdminDashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/companies" element={<AdminCompanies />} />
+            <Route path="/admin/plans" element={<AdminPlans />} />
+            <Route path="/admin/payments" element={<AdminPayments />} />
+            <Route path="/admin/reports" element={<AdminReports />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/*" element={<AdminDashboard />} />
           </Route>
 
           {/* Fallback */}
