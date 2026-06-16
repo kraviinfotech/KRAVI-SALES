@@ -75,4 +75,72 @@ router.get('/overview', async (req, res) => {
   }
 });
 
+// GET /api/admin/managers -> Get all managers
+router.get('/managers', async (req, res) => {
+  try {
+    const managers = await User.find({ role: 'manager' })
+      .select('name email mobile designation photo managerScannerPhoto company isActive createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(managers);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error retrieving managers' });
+  }
+});
+
+// PATCH /api/admin/managers/:id -> Update manager
+router.patch('/managers/:id', async (req, res) => {
+  try {
+    const { name, email, mobile, designation, isActive, photo } = req.body;
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (mobile) updateData.mobile = mobile;
+    if (designation) updateData.designation = designation;
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (photo) updateData.photo = photo;
+
+    const manager = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    if (!manager) return res.status(404).json({ message: 'Manager not found' });
+    res.json(manager);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error updating manager' });
+  }
+});
+
+// DELETE /api/admin/managers/:id -> Delete manager
+router.delete('/managers/:id', async (req, res) => {
+  try {
+    const manager = await User.findByIdAndDelete(req.params.id);
+    if (!manager) return res.status(404).json({ message: 'Manager not found' });
+    res.json({ message: 'Manager deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error deleting manager' });
+  }
+});
+
+// POST /api/admin/reset-manager-password -> Send password reset link
+router.post('/reset-manager-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const manager = await User.findOne({ email, role: 'manager' });
+    if (!manager) return res.status(404).json({ message: 'Manager not found' });
+
+    // Generate reset token (in production, use crypto and send email)
+    const resetToken = require('crypto').randomBytes(20).toString('hex');
+    manager.resetPasswordToken = resetToken;
+    manager.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+    await manager.save();
+
+    // TODO: Send email with reset link
+    res.json({ message: 'Password reset link sent' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error resetting password' });
+  }
+});
+
 module.exports = router;

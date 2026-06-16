@@ -18,7 +18,7 @@ const RevenueCard = ({ title, amount, icon: Icon, colorClass }) => (
 
 const Payments = () => {
   const [activeFilter, setActiveFilter] = useState('All');
-  const [stats, setStats] = useState({ totalRevenue: 0, monthlyRevenue: 0, pendingPayments: 0, yearlyRevenue: 0 });
+  const [stats, setStats] = useState({ totalRevenue: 0, monthlyRevenue: 0, pendingPayments: 0, upcomingRenewals: 0 });
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -30,18 +30,18 @@ const Payments = () => {
           totalRevenue: res.data.totalRevenue || 0,
           monthlyRevenue: res.data.monthlyRevenue || 0,
           pendingPayments: res.data.pendingPayments || 0,
-          yearlyRevenue: res.data.yearlyRevenue || 0
+          upcomingRenewals: res.data.upcomingRenewals || 0
         });
 
-        // Admin payments page intentionally shows only subscription payment rows.
         const subscriptionTx = (res.data.subscriptionTransactions || []).map(t => ({
           id: t._id,
           company: t.name,
           amount: t.amount,
           plan: t.plan || 'Subscription',
-          date: t.createdAt,
           method: t.paymentMethod || 'Subscription',
-          status: t.paymentStatus || 'Active'
+          invoice: t.invoice || `INV-${t._id?.slice(-6)}`,
+          status: t.paymentStatus || 'Pending',
+          date: t.createdAt
         }));
 
         setTransactions(subscriptionTx);
@@ -54,9 +54,7 @@ const Payments = () => {
     const colors = {
       Paid: 'bg-green-100 text-green-700',
       Active: 'bg-green-100 text-green-700',
-      Pending: 'bg-orange-100 text-orange-700',
-      Trial: 'bg-blue-100 text-blue-700',
-      Expired: 'bg-red-100 text-red-700',
+      Pending: 'bg-yellow-100 text-yellow-700',
       Failed: 'bg-red-100 text-red-700'
     };
     return <span className={`px-3 py-1 rounded-full text-xs font-bold ${colors[status] || 'bg-gray-100 text-gray-700'}`}>{status}</span>;
@@ -252,9 +250,9 @@ const Payments = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <RevenueCard title="Total Revenue" amount={stats.totalRevenue || 0} icon={TrendingUp} colorClass="bg-green-50 text-green-600" />
-        <RevenueCard title="Current Month" amount={stats.monthlyRevenue || 0} icon={Clock} colorClass="bg-purple-50 text-[#6C3EF4]" />
+        <RevenueCard title="Monthly Revenue" amount={stats.monthlyRevenue || 0} icon={Clock} colorClass="bg-purple-50 text-[#6C3EF4]" />
         <RevenueCard title="Pending Payments" amount={stats.pendingPayments || 0} icon={AlertCircle} colorClass="bg-orange-50 text-orange-600" />
-        <RevenueCard title="Yearly Revenue" amount={stats.yearlyRevenue || 0} icon={CheckCircle2} colorClass="bg-blue-50 text-blue-600" />
+        <RevenueCard title="Upcoming Renewals" amount={stats.upcomingRenewals || 0} icon={CheckCircle2} colorClass="bg-blue-50 text-blue-600" />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -265,13 +263,13 @@ const Payments = () => {
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 text-gray-500 uppercase font-bold text-[10px] tracking-wider">
               <tr>
-                <th className="px-6 py-4">Transaction ID</th>
-                <th className="px-6 py-4">Company Name</th>
+                <th className="px-6 py-4">Company</th>
                 <th className="px-6 py-4">Amount</th>
                 <th className="px-6 py-4">Plan</th>
-                <th className="px-6 py-4">Payment Method</th>
-                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Method</th>
                 <th className="px-6 py-4">Invoice</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -281,16 +279,21 @@ const Payments = () => {
                 <tr><td colSpan={8} className="px-6 py-4">No transactions</td></tr>
               ) : transactions.map((t) => (
                 <tr key={t.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-mono font-medium">{t.id}</td>
                   <td className="px-6 py-4 font-semibold">{t.company}</td>
                   <td className="px-6 py-4 font-bold text-gray-800">₹{t.amount}</td>
                   <td className="px-6 py-4 text-gray-500">{t.plan}</td>
                   <td className="px-6 py-4 text-gray-600">{t.method}</td>
+                  <td className="px-6 py-4 text-gray-600 font-medium">{t.invoice}</td>
                   <td className="px-6 py-4">{getStatusBadge(t.status)}</td>
-                  <td className="px-6 py-4">
-                    <button onClick={() => handleExportInvoice(t)} className="text-[#6C3EF4] flex items-center gap-1 font-semibold hover:underline">
-                      <Download size={14} /> PDF
-                    </button>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => handleExportInvoice(t)} className="text-[#6C3EF4] flex items-center gap-1 font-semibold hover:underline">
+                        <Download size={14} /> Invoice
+                      </button>
+                      <button onClick={() => window.alert(JSON.stringify(t, null, 2))} className="text-gray-700 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition-colors">
+                        View
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

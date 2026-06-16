@@ -33,6 +33,23 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  photo: {
+    type: String,
+    default: null
+  },
+  designation: {
+    type: String,
+    default: 'Manager'
+  },
+  company: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company',
+    default: null
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
   passwordUpdatedAt: {
     type: Date,
     default: Date.now
