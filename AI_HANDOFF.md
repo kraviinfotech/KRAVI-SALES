@@ -19,9 +19,13 @@ For detailed information, please refer to the following documents:
 - Multi-step sales entry with geolocation capture.
 - Real-time analytics charts using Recharts.
 - Automatic Scanner Modal: Opens when "Online" payment is selected; allows using manager's default image or capturing a new one.
+- Admin Panel Scaffolding.
+- Frontend Role-Based Access Control (ProtectedRoute).
 - Password Reset flow with OTP (currently logged to console in dev).
 
 ## Pending Features / Technical Debt
+- **Admin Role (In Progress)**: Implementation of Super Admin dashboard and Manager management.
+- **Registration Policy Enforcement**: Public self-registration has been removed. Seed script for first admin is required.
 - **Image Storage**: (High Priority) Moving from Base64 in MongoDB to Cloudinary.
 - **Master Catalog Management**: Managers can add/delete products, but Sellers' autocomplete only partially uses this list.
 - **Attendance Module**: Referenced in `reports.js` but the model/logic is not yet fully implemented.
@@ -40,6 +44,8 @@ For detailed information, please refer to the following documents:
 3. Use `localStorage` to inspect the `user` object and `token`.
 
 ## Notes for Future AI
+- **Admin Login**: Admins use the Manager Login Page. The frontend redirects `admin` role to `/admin`.
+- **No Self-Registration**: Public registration is disabled. Users must be created by their superior (Admin -> Manager -> Seller).
 - **Localization**: When adding new fields to `AddShop` or `AddProducts`, you MUST update the `translations` object at the top of the file to maintain EN/HI/MR support.
 - **Z-Index**: The Scanner Modal in `ReviewSave` uses `z-50`. Ensure any new modals do not conflict.
 - **Multi-Tenancy**: Always ensure `managerId` is included when querying `SalesRecords` or `Sellers` in the backend.

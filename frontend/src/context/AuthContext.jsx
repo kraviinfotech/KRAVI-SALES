@@ -25,7 +25,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (creds) => {
     try {
       const { email, mobile, password } = creds;
-      const response = await API.post('/auth/login', { email, mobile, password });
+      // Normalize email before sending to backend (backend expects lowercase)
+      const payload = {
+        email: email ? email.trim().toLowerCase() : undefined,
+        mobile: mobile ? mobile.trim() : undefined,
+        password
+      };
+      const response = await API.post('/auth/login', payload);
       const { token, user: userData } = response.data;
 
       localStorage.setItem('token', token);

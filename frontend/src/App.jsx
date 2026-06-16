@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import SellerLayout from './components/SellerLayout';
 import ManagerLayout from './components/ManagerLayout';
+import AdminLayout from './components/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
@@ -22,6 +23,7 @@ import ManagerRecords from './pages/manager/ManagerRecords';
 import ProductsOverview from './pages/manager/ProductsOverview';
 import ManagerSellerDetail from './pages/manager/ManagerSellerDetail';
 import ManagerProfile from './pages/manager/ManagerProfile';
+import AdminDashboard from './pages/AdminDashboard';
 
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -41,19 +43,20 @@ const App = () => {
       location.pathname.startsWith(path)
     );
   const isManagerArea = user && user.role === 'manager' && location.pathname.startsWith('/manager');
+  const isAdminArea = user && user.role === 'admin' && location.pathname.startsWith('/admin');
   const isLoginPage = location.pathname === '/login';
 
   return (
-    <div className={isSellerArea || isManagerArea ? 'min-h-screen bg-slate-100' : 'public-background flex flex-col min-h-screen bg-gray-50'} style={
-      !(isSellerArea || isManagerArea)
+    <div className={isSellerArea || isManagerArea || isAdminArea ? 'min-h-screen bg-slate-100' : 'public-background flex flex-col min-h-screen bg-gray-50'} style={
+      !(isSellerArea || isManagerArea || isAdminArea)
         ? {
           backgroundImage: `url(${bgImage})`,
         }
         : {}
     }>
-      {!isSellerArea && !isManagerArea && <Navbar />}
+      {!isSellerArea && !isManagerArea && !isAdminArea && <Navbar />}
       <main className={
-        isSellerArea || isManagerArea
+        isSellerArea || isManagerArea || isAdminArea
           ? 'min-h-screen'
           : isLoginPage
             ? 'flex-1 w-full'
@@ -61,12 +64,12 @@ const App = () => {
       }>
         <Routes>
           {/* Public Routes */}
-          <Route path="/login" element={!user ? <Login /> : <Navigate to={user.role === 'manager' ? '/manager' : '/dashboard'} replace />} />
-          <Route path="/register" element={!user ? <Register /> : <Navigate to={user.role === 'manager' ? '/manager' : '/dashboard'} replace />} />
+          <Route path="/login" element={!user ? <Login /> : <Navigate to={user.role === 'admin' ? '/admin' : user.role === 'manager' ? '/manager' : '/dashboard'} replace />} />
+          <Route path="/register" element={!user ? <Register /> : <Navigate to={user.role === 'admin' ? '/admin' : user.role === 'manager' ? '/manager' : '/dashboard'} replace />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-          <Route path="/" element={<Navigate to={user ? (user.role === 'manager' ? '/manager' : '/dashboard') : '/login'} replace />} />
+          <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : user.role === 'manager' ? '/manager' : '/dashboard') : '/login'} replace />} />
 
           {/* Seller Routes */}
           <Route element={
@@ -103,8 +106,18 @@ const App = () => {
             <Route path="/manager/seller/:sellerId" element={<ManagerSellerDetail />} />
           </Route>
 
+          {/* Admin Routes */}
+          <Route path="/admin/*" element={
+            <ProtectedRoute allowedRole="admin">
+              <AdminLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<AdminDashboard />} />
+            <Route path="*" element={<AdminDashboard />} />
+          </Route>
+
           {/* Fallback */}
-          <Route path="*" element={<Navigate to={user ? (user.role === 'manager' ? '/manager' : '/dashboard') : '/login'} replace />} />
+          <Route path="*" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : user.role === 'manager' ? '/manager' : '/dashboard') : '/login'} replace />} />
         </Routes>
       </main>
     </div>

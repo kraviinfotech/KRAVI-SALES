@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext';
 const Register = () => {
   const [searchParams] = useSearchParams();
   const roleParam = searchParams.get('role');
-  // Only managers can register through this form
-  const initialRole = 'manager';
+  // Allow role selection via query param (admin via manager login)
+  const initialRole = roleParam === 'admin' ? 'admin' : 'manager';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
@@ -42,7 +42,8 @@ const Register = () => {
     }
     setLoading(true);
     try {
-      await register({ name, email, mobile, password, role: 'manager' });
+      const roleToRegister = initialRole === 'admin' ? 'admin' : 'manager';
+      await register({ name, email, mobile, password, role: roleToRegister });
       alert('Registration successful! Please login to continue.');
       navigate('/login?role=manager', { replace: true });
     } catch (err) {
@@ -56,7 +57,7 @@ const Register = () => {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-8">
       <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-300 max-w-md w-full">
         <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-          Create Manager Account
+          {initialRole === 'admin' ? 'Create Admin Account' : 'Create Manager Account'}
         </h2>
 
         {error && (
@@ -131,7 +132,7 @@ const Register = () => {
             disabled={loading}
             className="w-full rounded bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-75 mt-2"
           >
-            {loading ? 'Creating account...' : 'Register as Manager'}
+            {loading ? 'Creating account...' : (initialRole === 'admin' ? 'Register as Admin' : 'Register as Manager')}
           </button>
         </form>
 

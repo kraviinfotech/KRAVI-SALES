@@ -7,6 +7,7 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const mobilePattern = /^\d{10}$/;
 
 const roleRoutes = {
+  admin: '/admin',
   manager: '/manager',
   seller: '/dashboard'
 };
@@ -26,7 +27,8 @@ const roleConfig = {
     buttonLabel: 'Login as Manager',
     icon: ShieldCheck,
     buttonClass: 'bg-slate-900 hover:bg-slate-800',
-    registerLink: { to: '/register?role=manager', label: 'Register as a Manager' }
+    registerLink: { to: '/register?role=manager', label: 'Register as a Manager' },
+    registerAdminLink: { to: '/register?role=admin', label: 'Register as Admin' }
   }
 };
 
@@ -80,7 +82,12 @@ const roleConfig = {
         password
       });
 
-      if (userData.role !== selectedRole) {
+      // Admins use the Manager login tab but redirect to /admin
+      const isAuthorized = 
+        (selectedRole === 'seller' && userData.role === 'seller') ||
+        (selectedRole === 'manager' && (userData.role === 'manager' || userData.role === 'admin'));
+
+      if (!isAuthorized) {
         logout();
         setError(`Please use a ${selectedRole === 'manager' ? 'manager' : 'seller'} account for this form.`);
         return;
@@ -188,9 +195,16 @@ const roleConfig = {
 
             {currentRole.registerLink && (
               <div className="text-right">
-                <Link to={currentRole.registerLink.to} className="text-sm font-medium text-primary hover:underline">
-                  {currentRole.registerLink.label}
-                </Link>
+                <div className="flex flex-col items-end gap-2">
+                  <Link to={currentRole.registerLink.to} className="text-sm font-medium text-primary hover:underline">
+                    {currentRole.registerLink.label}
+                  </Link>
+                  {currentRole.registerAdminLink && (
+                    <Link to={currentRole.registerAdminLink.to} className="text-sm font-medium text-indigo-700 hover:underline">
+                      {currentRole.registerAdminLink.label}
+                    </Link>
+                  )}
+                </div>
               </div>
             )}
           </form>
