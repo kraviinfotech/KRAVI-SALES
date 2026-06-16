@@ -55,6 +55,13 @@ router.get('/', async (req, res) => {
       { $group: { _id: null, total: { $sum: { $ifNull: ['$planData.price', 0] } } } }
     ]);
 
+    const upcomingExpires = new Date();
+    upcomingExpires.setDate(upcomingExpires.getDate() + 30);
+
+    const upcomingRenewalsCount = await Company.countDocuments({
+      expiryDate: { $gte: now, $lte: upcomingExpires }
+    });
+
     const subscriptionTransactions = await Company.aggregate([
       { $sort: { createdAt: -1 } },
       {
@@ -79,6 +86,7 @@ router.get('/', async (req, res) => {
           amount: { $ifNull: ['$planData.price', 0] },
           paymentMethod: { $literal: 'Subscription' },
           paymentStatus: '$status',
+          invoice: { $concat: ['INV-', { $substr: ['$_id', -6, 6] }] },
           createdAt: 1
         }
       }
@@ -88,7 +96,7 @@ router.get('/', async (req, res) => {
       totalRevenue: totalRevenueAgg[0]?.total || 0,
       monthlyRevenue: monthlyRevenueAgg[0]?.total || 0,
       pendingPayments: monthlyRevenueAgg[0]?.pending || 0,
-      yearlyRevenue: yearlyRevenueAgg[0]?.total || 0,
+      upcomingRenewals: upcomingRenewalsCount,
       subscriptionTransactions
     });
   } catch (err) {

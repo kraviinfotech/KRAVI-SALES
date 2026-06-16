@@ -15,6 +15,7 @@ const AdminLayout = () => {
   const navItems = [
     { icon: LayoutDashboard, label: 'Overview', path: '/admin' },
     { icon: Users, label: 'Companies', path: '/admin/companies' },
+    { icon: Users, label: 'Managers', path: '/admin/managers' },
     { icon: CreditCard, label: 'Plans', path: '/admin/plans' },
     { icon: Settings, label: 'Payments', path: '/admin/payments' },
     { icon: Settings, label: 'Reports', path: '/admin/reports' },
