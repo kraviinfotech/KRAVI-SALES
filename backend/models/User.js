@@ -26,7 +26,7 @@ const UserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['manager', 'seller'],
+    enum: ['admin', 'manager', 'seller'],
     required: true
   },
   managerScannerPhoto: {

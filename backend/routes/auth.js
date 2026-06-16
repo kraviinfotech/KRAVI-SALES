@@ -8,22 +8,15 @@ const Seller = require('../models/Seller');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 
-// POST /api/auth/register -> Managers only (Admin controls seller creation via /api/sellers)
+// POST /api/auth/register -> allow creating manager or admin accounts from frontend
 router.post(
   '/register',
   [
-    body('name').exists().withMessage('Name is required').trim(),
-    body('email')
-      .exists().withMessage('Email is required')
-      .isEmail().withMessage('Invalid email address')
-      .normalizeEmail(),
-    body('mobile')
-      .exists().withMessage('Mobile number is required')
-      .isMobilePhone('any').withMessage('Invalid mobile number')
-      .trim(),
-    body('password')
-      .exists().withMessage('Password is required')
-      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+    body('name').exists().withMessage('Name is required').trim().notEmpty(),
+    body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
+    body('mobile').isMobilePhone('any').withMessage('Valid mobile is required').trim(),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('role').optional().isIn(['admin', 'manager', 'seller']).withMessage('Invalid role')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -31,40 +24,29 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, mobile, password, role } = req.body;
+    try {
+      const { name, email, mobile, password } = req.body;
+      // Normalize email
+      const normalizedEmail = email ? email.trim().toLowerCase() : null;
+      const normalizedMobile = mobile ? mobile.trim() : null;
 
-    // Only managers can register themselves
-    if (role !== 'manager' && role !== undefined) {
-      return res.status(403).json({ message: 'Sellers cannot self-register. Contact your administrator to create an account.' });
-    }
-
-    // Check if email or mobile already exists
-    const existingUser = await User.findOne({ $or: [{ email }, { mobile }] });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email or mobile already registered' });
-    }
-
-    // Always create as manager (sellers are created via /api/sellers endpoint by admin)
-    const newUser = new User({ name, email, mobile, password, role: 'manager' });
-    await newUser.save();
-
-    const token = jwt.sign(
-      { id: newUser._id, role: newUser.role },
-      process.env.JWT_SECRET || 'super_secret_sales_tracker_key_2026',
-      { expiresIn: '30d' }
-    );
-
-    res.json({
-      token,
-      user: {
-        _id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-        mobile: newUser.mobile,
-        role: newUser.role,
-        managerScannerPhoto: newUser.managerScannerPhoto || null
+      // Prevent duplicates
+      const existing = await User.findOne({ $or: [{ email: normalizedEmail }, { mobile: normalizedMobile }] });
+      if (existing) {
+        return res.status(400).json({ message: 'Email or mobile already registered' });
       }
-    });
+
+      // Role: if query or body sets role=admin, allow creation (frontend controls this)
+      const role = req.body.role === 'admin' ? 'admin' : 'manager';
+
+      const user = new User({ name, email: normalizedEmail, mobile: normalizedMobile, password, role });
+      await user.save();
+
+      return res.status(201).json({ message: 'User registered successfully', user: { _id: user._id, name: user.name, email: user.email, role: user.role } });
+    } catch (err) {
+      console.error('Register error:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
   }
 );
 
@@ -93,7 +75,13 @@ router.post(
 
     const { email, mobile, password } = req.body;
     const trimmedMobile = mobile ? mobile.trim() : null;
-    const trimmedEmail = email ? email.trim() : null;
+    // Normalize email to lowercase to match schema storage
+    const trimmedEmail = email ? email.trim().toLowerCase() : null;
+
+    // Dev logging to help diagnose missing users (safe for local dev)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Auth login attempt - email:', trimmedEmail, 'mobile:', trimmedMobile);
+    }
 
     // Find user by mobile or email
     let user = null;
@@ -104,6 +92,9 @@ router.post(
     }
 
     if (!user) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth lookup: user not found for', trimmedEmail || trimmedMobile);
+      }
       if (trimmedMobile) {
         return res.status(400).json({ message: 'Mobile number not registered' });
       }
@@ -311,3 +302,21 @@ router.get('/manager-scanner', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
+
+// Development helper: lookup user by email (only in non-production)
+// GET /api/auth/debug-user?email=foo@example.com
+router.get('/debug-user', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ message: 'Not found' });
+  }
+  const email = req.query.email ? req.query.email.trim().toLowerCase() : null;
+  if (!email) return res.status(400).json({ message: 'Email query required' });
+  try {
+    const user = await User.findOne({ email }).select('-password -resetPasswordToken -resetPasswordExpires');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    return res.json({ user });
+  } catch (err) {
+    console.error('Debug-user error:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});

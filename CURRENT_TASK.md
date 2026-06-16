@@ -1,24 +1,29 @@
-# Current Task: Image Storage Migration & Schema Consolidation
+# Current Task: Admin Authentication & Role Management
 
 ## Objective
-Address technical debt by migrating from Base64 MongoDB storage to Cloudinary/S3 and ensuring the `SalesRecord` schema matches the route implementation.
+Implement the three-tier SaaS hierarchy (Admin > Manager > Seller), update route protection, and finalize the role-based redirection from a shared login page.
 
 ## Files Involved
-- `backend/routes/sales.js`
-- `backend/models/SalesRecord.js`
-- `frontend/src/pages/ReviewSave.jsx`
 - `backend/routes/auth.js`
+- `backend/models/User.js`
+- `frontend/src/pages/Login.jsx`
+- `backend/middleware/roleMiddleware.js`
 
 ## Dependencies
-Cloudinary Node SDK, Multer (for file handling).
+None.
 
 ## Remaining Steps
-1. [ ] **Model Sync**: Update `backend/models/SalesRecord.js` to include `managerId`, `shopAddress`, `mobile`, and `landmark` fields which are currently used in routes but missing from schema.
-2. [ ] **Cloudinary Setup**: Configure backend environment variables for Cloudinary.
-3. [ ] **Refactor Image Upload**: Modify `POST /api/sales/record` and `PATCH /api/auth/me/scanner` to upload to Cloudinary instead of storing Base64 strings.
-4. [ ] **Frontend Update**: Update `ReviewSave.jsx` to handle the multipart form-data for actual file uploads rather than Base64 strings.
+1. [x] **Update User Model**: Include `admin` in role enum.
+2. [x] **Remove Public Registration**: Delete public `/register` endpoint to prevent self-registration.
+3. [x] **Update Login Redirection**: Allow admins to login via Manager page and redirect to `/admin`.
+4. [x] **Seed Script**: Create `seedAdmin.js` to create the initial Super Admin account.
+5. [x] **Admin Dashboards**: Create basic scaffolding for `/admin` routes and views.
+6. [x] **Frontend Route Protection**: Implement `ProtectedRoute` for RBAC.
+7. [ ] **Admin-Only Routes**: Implement backend routes for Admins to create and manage Managers.
 
 ## Testing Checklist
-- [x] Login as Seller A: Verify Seller B's records are not visible.
-- [x] Login as Manager X: Verify they cannot see Sellers or Records belonging to Manager Y.
-- [ ] Verify images load from external URL instead of DB string.
+- [x] Public registration is disabled.
+- [x] Seller cannot login via Manager tab.
+- [x] Manager redirected to `/manager`.
+- [x] Admin redirected to `/admin` when using Manager login tab.
+- [ ] Route Guard: Verify Seller/Manager cannot access `/admin` even if URL is typed manually.

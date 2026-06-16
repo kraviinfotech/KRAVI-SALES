@@ -10,64 +10,26 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/salestrack
 async function seed() {
   try {
     await mongoose.connect(MONGO_URI);
-    console.log('Connected to database for seeding...');
+    console.log('Connected to database for seeding (idempotent mode)...');
 
-    // Clear existing data
-    await User.deleteMany({});
-    await Seller.deleteMany({});
-    await SalesRecord.deleteMany({});
-    await SaleItem.deleteMany({});
-    console.log('Cleared existing collections.');
+    // This seed script is now idempotent and safe for real databases.
+    // It will only create the initial Super Admin if one does not exist.
+    const adminEmail = 'admin@gmail.com';
+    const existingAdmin = await User.findOne({ email: adminEmail });
+    if (existingAdmin) {
+      console.log('Admin already exists:', existingAdmin.email);
+      process.exit(0);
+    }
 
-    // 1. Create default Manager
-    const manager = new User({
-      name: 'Admin Manager',
-      email: 'manager@example.com',
-      mobile: '9876543210',
-      password: 'manager123',
-      role: 'manager'
+    const admin = new User({
+      name: 'Super Admin',
+      email: adminEmail,
+      mobile: '9999999999',
+      password: 'adminpass@123',
+      role: 'admin'
     });
-    await manager.save();
-    console.log('Default Manager created: name="Admin Manager", mobile="9876543210", password="manager123"');
-
-    // 2. Create default Seller user
-    const sellerUser = new User({
-      name: 'John Seller',
-      email: 'john@example.com',
-      mobile: '9876543211',
-      password: 'seller123',
-      role: 'seller'
-    });
-    await sellerUser.save();
-
-    // Create seller profile
-    const seller = new Seller({
-      userId: sellerUser._id,
-      managerId: manager._id,
-      name: 'John Seller',
-      mobile: '9876543211'
-    });
-    await seller.save();
-    console.log('Default Seller created: name="John Seller", mobile="9876543211", password="seller123"');
-
-    // 3. Create another seller for comparative performance charts
-    const sellerUser2 = new User({
-      name: 'Sarah Seller',
-      email: 'sarah@example.com',
-      mobile: '9876543212',
-      password: 'seller123',
-      role: 'seller'
-    });
-    await sellerUser2.save();
-
-    const seller2 = new Seller({
-      userId: sellerUser2._id,
-      managerId: manager._id,
-      name: 'Sarah Seller',
-      mobile: '9876543212'
-    });
-    await seller2.save();
-    console.log('Second Seller created: name="Sarah Seller", mobile="9876543212", password="seller123"');
+    await admin.save();
+    console.log('Created Super Admin:', adminEmail);
 
     // 4. Create Mock Sales Records for the last 10 days
     const mockShops = [
