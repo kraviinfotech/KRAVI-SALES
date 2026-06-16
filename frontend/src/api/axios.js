@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  // Prefer explicit VITE_API_URL; fall back to local backend (5001 used during development)
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
 });
 
 // Request interceptor to automatically add authorization header
@@ -14,6 +15,24 @@ API.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to log server errors for easier debugging
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Attach friendly logging so devs can see server stack in browser console
+    if (error.response) {
+      console.error('API Error:', {
+        url: error.config && error.config.url,
+        status: error.response.status,
+        data: error.response.data,
+      });
+    } else {
+      console.error('API Network/Error:', error.message);
+    }
     return Promise.reject(error);
   }
 );

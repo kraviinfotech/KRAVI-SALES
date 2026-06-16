@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext';
 
 /**
  * ProtectedRoute component to handle Role-Based Access Control (RBAC)
- * @param {Array} allowedRoles - Array of strings (e.g., ['admin', 'manager'])
+ * @param {String|Array} allowedRole - String or array of allowed roles (e.g., 'admin' or ['admin', 'manager'])
  */
-const ProtectedRoute = ({ children, allowedRoles }) => {
+const ProtectedRoute = ({ children, allowedRole, allowedRoles }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -23,7 +23,10 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  // Support both allowedRole (string) and allowedRoles (array)
+  const roles = allowedRoles ? (Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]) : (allowedRole ? (typeof allowedRole === 'string' ? [allowedRole] : allowedRole) : []);
+
+  if (roles.length > 0 && !roles.includes(user.role)) {
     // If unauthorized for this specific role, send them to their allowed dashboard
     const roleRedirects = {
       admin: '/admin',
