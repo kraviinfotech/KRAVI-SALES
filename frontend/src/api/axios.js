@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const API = axios.create({
-  // Prefer explicit VITE_API_URL; fall back to local backend (5001 used during development)
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
+  // Prefer explicit VITE_API_URL; fall back to local backend (5000 used during development)
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 });
 
 // Request interceptor to automatically add authorization header
