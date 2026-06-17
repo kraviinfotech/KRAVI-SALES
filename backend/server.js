@@ -10,7 +10,6 @@ const reportsRoutes = require('./routes/reports');
 const productRoutes = require('./routes/products');
 const settingsRoutes = require('./routes/settings');
 const adminRoutes = require('./routes/admin');
-const companiesRoutes = require('./routes/companies');
 const plansRoutes = require('./routes/plans');
 const paymentsRoutes = require('./routes/payments');
 
@@ -29,7 +28,6 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/companies', companiesRoutes);
 app.use('/api/plans', plansRoutes);
 app.use('/api/payments', paymentsRoutes);
 
@@ -47,7 +45,7 @@ app.use((err, req, res, next) => {
 });
 
 // Database Connection and Server Boot
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/salestracker';
 
 mongoose

@@ -25,11 +25,11 @@ import ProductsOverview from './pages/manager/ProductsOverview';
 import ManagerSellerDetail from './pages/manager/ManagerSellerDetail';
 import ManagerProfile from './pages/manager/ManagerProfile';
 import AdminDashboard from './pages/Admin/Dashboard';
-import AdminCompanies from './pages/Admin/Companies';
+
 import AdminManagers from './pages/Admin/Managers';
 import AdminPlans from './pages/Admin/Plans';
 import AdminPayments from './pages/Admin/Payments';
-import AdminReports from './pages/Admin/Reports';
+
 import AdminSettings from './pages/Admin/Settings';
 
 import ForgotPassword from './pages/ForgotPassword';
@@ -121,9 +121,10 @@ const App = () => {
             </ProtectedRoute>
           }>
             <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/companies" element={<AdminCompanies />} />            <Route path="/admin/managers" element={<AdminManagers />} />            <Route path="/admin/plans" element={<AdminPlans />} />
+          
+            <Route path="/admin/managers" element={<AdminManagers />} />
+            <Route path="/admin/plans" element={<AdminPlans />} />
             <Route path="/admin/payments" element={<AdminPayments />} />
-            <Route path="/admin/reports" element={<AdminReports />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/admin/*" element={<AdminDashboard />} />
           </Route>
