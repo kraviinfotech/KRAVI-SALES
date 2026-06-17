@@ -4,6 +4,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import API from '../../api/axios';
+import { applyPdfHeaderAndFooter } from '../../utils/pdfHelper';
+import { useAuth } from '../../context/AuthContext';
 import ReportFilter from '../../components/ReportFilter';
 import SalesTable from '../../components/SalesTable';
 import { Loader2, Plus, FileSpreadsheet, FileText, Printer, Download, Search, ClipboardList, CheckCircle2, XCircle, Calendar, DollarSign } from 'lucide-react';
@@ -11,6 +13,7 @@ import { Loader2, Plus, FileSpreadsheet, FileText, Printer, Download, Search, Cl
 const ManagerRecords = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
   const [records, setRecords] = useState([]);
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -134,18 +137,13 @@ const ManagerRecords = () => {
     handleDownloadCSV();
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (records.length === 0) {
       alert('No data to export.');
       return;
     }
 
     const doc = new jsPDF('landscape');
-    doc.setFontSize(18);
-    doc.text('Sales Records Report', 14, 15);
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 14, 22);
 
     const tableColumn = ["Date", "Seller", "Shop Name", "Shop Type", "Total Amount", "Paid", "Pending", "Status"];
     const tableRows = records.map(r => [
@@ -162,11 +160,13 @@ const ManagerRecords = () => {
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
-      startY: 28,
+      startY: 35,
       theme: 'grid',
       headStyles: { fillColor: [29, 78, 216] }, // Blue-700
       styles: { fontSize: 9 }
     });
+
+    await applyPdfHeaderAndFooter(doc, 'Sales Records Report', user);
 
     doc.save(`Sales_Records_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
