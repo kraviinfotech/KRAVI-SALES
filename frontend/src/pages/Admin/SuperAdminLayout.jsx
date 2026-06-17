@@ -11,12 +11,12 @@ const SuperAdminLayout = ({ children, onLogout }) => {
 
   const menuItems = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/admin' },
-    { name: 'Companies', icon: <Building2 size={20} />, path: '/admin/companies' },
+    
     { name: 'Managers', icon: <Users size={20} />, path: '/admin/managers' },
     { name: 'Subscription Plans', icon: <Layers size={20} />, path: '/admin/plans' },
     { name: 'Subscriptions', icon: <CreditCard size={20} />, path: '/admin/subscriptions' },
     { name: 'Payments', icon: <CreditCard size={20} />, path: '/admin/payments' },
-    { name: 'Reports', icon: <FileText size={20} />, path: '/admin/reports' },
+    
     { name: 'Settings', icon: <Settings size={20} />, path: '/admin/settings' },
     { name: 'Profile', icon: <UserCircle size={20} />, path: '/admin/profile' },
   ];

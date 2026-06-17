@@ -1,55 +1,43 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import API from '../../api/axios';
+import React, { useState, useEffect, useMemo } from 'react';
+import axios from '../api/axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { AlertCircle, Loader2, Download } from 'lucide-react';
-
-const currencyFormatter = new Intl.NumberFormat('en-IN', {
-  style: 'currency',
-  currency: 'INR',
-  maximumFractionDigits: 0
-});
+import { Download, LoaderCircle, CircleAlert } from 'lucide-react';
 
 const SellerReports = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+
+  const currencyFormatter = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  });
 
   useEffect(() => {
     const fetchRecords = async () => {
       try {
-        const response = await API.get('/sales/my-records');
+        const response = await axios.get("/sales/my-records");
         setRecords(response.data);
       } catch (err) {
         console.error(err);
-        setError('Reports could not be loaded.');
+        setError("Reports load nahi ho paayi.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchRecords();
   }, []);
 
-  const stats = useMemo(() => {
-    return records.reduce(
-      (total, record) => {
-        const itemCount = (record.items || []).reduce((sum, item) => {
-          if (item.unit === 'weight') {
-            return sum + 1; // Count weight-based items as 1
-          } else {
-            return sum + Number(item.quantity || 0);
-          }
-        }, 0);
-        return {
-          visits: total.visits + 1,
-          sales: total.sales + Number(record.totalAmount || 0),
-          items: total.items + itemCount
-        };
-      },
-      { visits: 0, sales: 0, items: 0 }
-    );
-  }, [records]);
+  const summary = useMemo(() => records.reduce((acc, record) => {
+    const recordItems = (record.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    return {
+      visits: acc.visits + 1,
+      sales: acc.sales + Number(record.totalAmount || 0),
+      items: acc.items + recordItems
+    };
+  }, { visits: 0, sales: 0, items: 0 }), [records]);
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
@@ -72,9 +60,9 @@ const SellerReports = () => {
       startY: 45,
       head: [['Metric', 'Total Value']],
       body: [
-        ['Total Shop Visits', stats.visits],
-        ['Total Sales Amount', currencyFormatter.format(stats.sales)],
-        ['Total Items Sold', stats.items],
+        ['Total Shop Visits', summary.visits],
+        ['Total Sales Amount', currencyFormatter.format(summary.sales)],
+        ['Total Items Sold', summary.items],
       ],
       theme: 'striped',
       headStyles: { fillColor: [37, 99, 235], fontSize: 12 },
@@ -88,7 +76,7 @@ const SellerReports = () => {
   if (loading) {
     return (
       <div className="flex min-h-[420px] items-center justify-center">
-        <Loader2 className="mr-2 animate-spin text-blue-700" size={22} />
+        <LoaderCircle className="mr-2 animate-spin text-blue-700" size={22} />
         <span className="text-sm font-semibold text-slate-500">Loading reports...</span>
       </div>
     );
@@ -98,7 +86,7 @@ const SellerReports = () => {
     <div className="space-y-3">
       {error && (
         <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-          <AlertCircle size={14} />
+          <CircleAlert size={14} />
           <span>{error}</span>
         </div>
       )}
@@ -114,18 +102,19 @@ const SellerReports = () => {
             DOWNLOAD PDF
           </button>
         </div>
-        <div className="mt-4 space-y-3">
+        
+        <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="font-semibold text-slate-700">Total Visits</span>
-            <span className="font-black text-slate-950">{stats.visits}</span>
+            <span className="font-black text-slate-950">{summary.visits}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="font-semibold text-slate-700">Total Sales</span>
-            <span className="font-black text-slate-950">{currencyFormatter.format(stats.sales)}</span>
+            <span className="font-black text-slate-950">{currencyFormatter.format(summary.sales)}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="font-semibold text-slate-700">Total Items</span>
-            <span className="font-black text-slate-950">{stats.items}</span>
+            <span className="font-black text-slate-950">{summary.items}</span>
           </div>
         </div>
       </div>
