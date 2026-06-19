@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
+      sessionStorage.removeItem(`subscriptionPromptSeen_${userData._id}`);
       setUser(userData);
 
       return userData;
@@ -84,8 +85,18 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateSession = ({ token, user: nextUser }) => {
+    if (token) {
+      localStorage.setItem('token', token);
+    }
+    if (nextUser) {
+      localStorage.setItem('user', JSON.stringify(nextUser));
+      setUser(nextUser);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateSession }}>
       {children}
     </AuthContext.Provider>
   );

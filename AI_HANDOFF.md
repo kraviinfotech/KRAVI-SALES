@@ -4,7 +4,7 @@
 This document serves as the primary entry point and master context file for any AI assistant or developer working on the SalesFlow project. It provides a high-level overview, current status, and directs to other detailed documentation.
 
 ## Current Project Status
-The application is a functional MVP. Authentication and core sales tracking are stable. The "Scanner Proof" feature for online payments was recently completed and tested.
+The application is a functional MVP. Authentication and core sales tracking are stable. Currently integrating SaaS monetization features, specifically Manager-tier subscriptions.
 
 ## Core Documentation Links
 For detailed information, please refer to the following documents:
@@ -22,6 +22,7 @@ For detailed information, please refer to the following documents:
 - Admin Panel Scaffolding.
 - Frontend Role-Based Access Control (ProtectedRoute).
 - Password Reset flow with OTP (currently logged to console in dev).
+ - **Premium Subscription Modal**: A modern, high-conversion UI for managers to choose plans (Free, 3 Months, 1 Year).
 
 ## Pending Features / Technical Debt
 - **Admin Role (In Progress)**: Implementation of Super Admin dashboard and Manager management.
@@ -31,12 +32,14 @@ For detailed information, please refer to the following documents:
 - **Attendance Module**: Referenced in `reports.js` but the model/logic is not yet fully implemented.
 - **Input Validation**: Frontend validation is basic; relies heavily on backend `express-validator`.
 - **Schema Mismatch**: `SalesRecord.js` model is missing fields (managerId, address) that the logic currently writes to the database.
+ - **Subscription Persistence**: The subscription status is currently hardcoded as `false` in the frontend; needs backend integration.
 
 ## Important Files & Purposes
 - `frontend/src/api/axios.js`: Centralized API client with auth headers.
 - `frontend/src/pages/ReviewSave.jsx`: Contains the complex logic for total calculation and the scanner modal.
 - `backend/routes/reports.js`: Heavy use of MongoDB Aggregation pipelines.
 - `SCANNER_FEATURE_GUIDE.md`: Detailed technical breakdown of the payment proof feature.
+ - `frontend/src/components/SubscriptionModal.jsx`: "Smart" modal that auto-triggers for Managers using `sessionStorage`.
 
 ## Development Workflow
 1. Backend runs on `http://localhost:5000`.
@@ -48,5 +51,6 @@ For detailed information, please refer to the following documents:
 - **No Self-Registration**: Public registration is disabled. Users must be created by their superior (Admin -> Manager -> Seller).
 - **Localization**: When adding new fields to `AddShop` or `AddProducts`, you MUST update the `translations` object at the top of the file to maintain EN/HI/MR support.
 - **Z-Index**: The Scanner Modal in `ReviewSave` uses `z-50`. Ensure any new modals do not conflict.
+ - **Modal Persistence**: `SubscriptionModal` uses `sessionStorage` to ensure it only appears once per login session for managers.
 - **Multi-Tenancy**: Always ensure `managerId` is included when querying `SalesRecords` or `Sellers` in the backend.
 - **FormData**: `ReviewSave.jsx` now uses `FormData` for posts to `/sales/record` to support future file uploads.

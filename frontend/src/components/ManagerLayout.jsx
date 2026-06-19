@@ -1,25 +1,89 @@
-import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { CreditCard, Loader2, LockKeyhole } from 'lucide-react';
 import Sidebar from './Sidebar';
+import SubscriptionModal from './SubscriptionModal';
 import { useAuth } from '../context/AuthContext';
+import API from '../api/axios';
 
 const ManagerLayout = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [loadingStatus, setLoadingStatus] = useState(true);
+  const [showSubscription, setShowSubscription] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
   };
 
+  useEffect(() => {
+    let active = true;
+    const loadStatus = async () => {
+      setLoadingStatus(true);
+      try {
+        const res = await API.get('/subscriptions/my-status');
+        if (active) setSubscriptionStatus(res.data);
+      } catch (err) {
+        if (active) {
+          setSubscriptionStatus({
+            canUseApp: false,
+            message: err.response?.data?.message || 'Subscription status could not be verified.'
+          });
+        }
+      } finally {
+        if (active) setLoadingStatus(false);
+      }
+    };
+
+    loadStatus();
+    return () => {
+      active = false;
+    };
+  }, [location.state?.subscriptionActivated]);
+
+  const isPaymentPage = location.pathname.startsWith('/manager/payment');
+  const isBlocked = !loadingStatus && subscriptionStatus && !subscriptionStatus.canUseApp && !isPaymentPage;
+
   return (
     <div className="min-h-screen bg-slate-100">
       <Sidebar onLogout={handleLogout} />
       <div className="md:pl-80">
         <main className="min-h-screen px-4 py-16 sm:px-6 md:py-6 lg:px-8">
-          <Outlet />
+          {loadingStatus && !isPaymentPage ? (
+            <div className="flex min-h-[70vh] items-center justify-center gap-2 text-sm font-bold text-slate-500">
+              <Loader2 size={18} className="animate-spin" />
+              Checking subscription...
+            </div>
+          ) : isBlocked ? (
+            <div className="mx-auto flex min-h-[70vh] max-w-2xl items-center justify-center">
+              <div className="w-full rounded-lg border border-red-200 bg-white p-6 text-center shadow-sm">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-red-50 text-red-600">
+                  <LockKeyhole size={24} />
+                </div>
+                <h1 className="mt-4 text-2xl font-black text-slate-950">Subscription required</h1>
+                <p className="mt-2 text-sm font-medium text-slate-600">
+                  {subscriptionStatus.message || 'Your free trial or paid subscription has expired. Renew a plan to continue using manager features.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowSubscription(true)}
+                  className="mx-auto mt-6 flex h-11 items-center justify-center gap-2 rounded-md bg-slate-900 px-5 text-sm font-black text-white hover:bg-slate-800"
+                >
+                  <CreditCard size={18} />
+                  Plan Subscription
+                </button>
+              </div>
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </main>
       </div>
+      <SubscriptionModal open={showSubscription} onClose={() => setShowSubscription(false)} />
+      <SubscriptionModal />
     </div>
   );
 };

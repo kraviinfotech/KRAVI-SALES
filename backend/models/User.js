@@ -50,6 +50,14 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  subscriptionTier: {
+    type: String,
+    default: null
+  },
+  subscriptionExpiry: {
+    type: Date,
+    default: null
+  },
   passwordUpdatedAt: {
     type: Date,
     default: Date.now

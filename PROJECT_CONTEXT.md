@@ -28,6 +28,7 @@ To digitize the manual "order book" process for field sales, provide managers wi
 ## Authentication & Authorization
 - **Flow**: User logs in with Email/Mobile + Password -> Server returns JWT -> Token stored in `localStorage` -> Axios interceptor adds `Authorization: Bearer <token>` to all requests.
 - **Roles**:
+  - `admin`: Super Admin. Can manage Manager accounts and monitor platform health.
   - `manager`: Can create sellers, view all reports, manage master product lists, and set default payment scanners.
   - `seller`: Can record shop visits, add products to orders, and view personal sales history.
 

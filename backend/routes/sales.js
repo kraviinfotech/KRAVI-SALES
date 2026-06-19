@@ -7,9 +7,10 @@ const Seller = require('../models/Seller');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
+const subscriptionMiddleware = require('../middleware/subscriptionMiddleware');
 
 // Protect all routes in this file for sellers only
-router.use(authMiddleware, roleMiddleware('seller'));
+router.use(authMiddleware, roleMiddleware('seller'), subscriptionMiddleware);
 
 const findOrRepairSellerProfile = async (user) => {
   let seller = await Seller.findOne({ userId: user._id });

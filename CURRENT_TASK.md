@@ -1,16 +1,18 @@
-# Current Task: Admin Authentication & Role Management
+# Current Task: Subscription & Monetization Integration
 
 ## Objective
-Implement the three-tier SaaS hierarchy (Admin > Manager > Seller), update route protection, and finalize the role-based redirection from a shared login page.
+Transition the application into a SaaS model by implementing subscription-based access for Manager accounts and integrating a payment flow.
 
 ## Files Involved
 - `backend/routes/auth.js`
 - `backend/models/User.js`
 - `frontend/src/pages/Login.jsx`
 - `backend/middleware/roleMiddleware.js`
+ - `frontend/src/components/SubscriptionModal.jsx`
+ - `frontend/src/components/PricingCard.jsx`
 
 ## Dependencies
-None.
+ - `framer-motion` (for modal animations)
 
 ## Remaining Steps
 1. [x] **Update User Model**: Include `admin` in role enum.
@@ -19,11 +21,15 @@ None.
 4. [x] **Seed Script**: Create `seedAdmin.js` to create the initial Super Admin account.
 5. [x] **Admin Dashboards**: Create basic scaffolding for `/admin` routes and views.
 6. [x] **Frontend Route Protection**: Implement `ProtectedRoute` for RBAC.
-7. [ ] **Admin-Only Routes**: Implement backend routes for Admins to create and manage Managers.
+7. [x] **Premium Subscription Modal**: Design and implement a premium 3-tier pricing modal for Managers.
+8. [ ] **Subscription Backend**: Add fields to `User` model to track `subscriptionTier` and `subscriptionExpiry`.
+9. [ ] **Payment Integration**: Implement backend logic and frontend forms for Stripe/Razorpay integration.
+10. [ ] **Admin Management**: Finalize backend routes for Admins to manage Manager subscriptions manually.
 
 ## Testing Checklist
 - [x] Public registration is disabled.
 - [x] Seller cannot login via Manager tab.
 - [x] Manager redirected to `/manager`.
 - [x] Admin redirected to `/admin` when using Manager login tab.
-- [ ] Route Guard: Verify Seller/Manager cannot access `/admin` even if URL is typed manually.
+ - [x] Subscription Modal: Verified to appear only for Managers without active plans.
+ - [ ] Route Guard: Verify Seller/Manager cannot access `/admin` even if URL is typed manually.

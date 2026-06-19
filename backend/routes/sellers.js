@@ -6,9 +6,10 @@ const User = require('../models/User');
 const Seller = require('../models/Seller');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
+const subscriptionMiddleware = require('../middleware/subscriptionMiddleware');
 
 // Protect all routes in this file for managers only
-router.use(authMiddleware, roleMiddleware('manager'));
+router.use(authMiddleware, roleMiddleware('manager'), subscriptionMiddleware);
 
 // POST /api/sellers -> Create seller user and profile (Admin only - email and password mandatory)
 router.post(
@@ -28,6 +29,17 @@ router.post(
     const { name, email, mobile, password } = req.body;
 
     try {
+      const sellerLimit = Number(req.subscription?.planId?.maxSellers || req.subscription?.planId?.managers || 0);
+      if (sellerLimit > 0) {
+        const sellerCount = await Seller.countDocuments({ managerId: req.user._id });
+        if (sellerCount >= sellerLimit) {
+          return res.status(402).json({
+            code: 'PLAN_LIMIT_REACHED',
+            message: `Your current plan allows ${sellerLimit} sellers. Please upgrade your subscription to add more sellers.`
+          });
+        }
+      }
+
       // Check for existing seller by mobile
       const existingSeller = await Seller.findOne({ mobile });
       if (existingSeller) {
