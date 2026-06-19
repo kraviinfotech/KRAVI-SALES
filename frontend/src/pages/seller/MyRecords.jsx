@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import API from '../../api/axios';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useOutletContext } from 'react-router-dom';
+import { translations } from '../../utils/translations';
 
 const currencyFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -10,6 +12,8 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
 });
 
 const MyRecords = () => {
+  const { lang } = useOutletContext() || { lang: 'en' };
+  const t = translations[lang] || translations['en'];
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -21,20 +25,20 @@ const MyRecords = () => {
         setRecords(response.data);
       } catch (err) {
         console.error(err);
-        setError('Records load nahi ho paaye.');
+        setError(t.recordsError);
       } finally {
         setLoading(false);
       }
     };
 
     fetchRecords();
-  }, []);
+  }, [t.recordsError]);
 
   if (loading) {
     return (
       <div className="flex min-h-[420px] items-center justify-center">
         <Loader2 className="mr-2 animate-spin text-blue-700" size={22} />
-        <span className="text-sm font-semibold text-slate-500">Loading records...</span>
+        <span className="text-sm font-semibold text-slate-500">{t.loadingRecords}</span>
       </div>
     );
   }
@@ -50,7 +54,7 @@ const MyRecords = () => {
 
       {records.length === 0 ? (
         <div className="rounded-md border border-slate-200 bg-white px-4 py-10 text-center text-sm font-semibold text-slate-500">
-          Abhi koi record saved nahi hai.
+          {t.noRecords}
         </div>
       ) : (
         records.map((record) => (

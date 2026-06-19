@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import API from '../../api/axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AlertCircle, Loader2, Download } from 'lucide-react';
+import { translations } from '../../utils/translations';
 
 const currencyFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -11,6 +13,8 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
 });
 
 const SellerReports = () => {
+  const { lang } = useOutletContext() || { lang: 'en' };
+  const t = translations[lang] || translations['en'];
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -22,14 +26,14 @@ const SellerReports = () => {
         setRecords(response.data);
       } catch (err) {
         console.error(err);
-        setError('Reports could not be loaded.');
+        setError(t.reportsError);
       } finally {
         setLoading(false);
       }
     };
 
     fetchRecords();
-  }, []);
+  }, [t.reportsError]);
 
   const stats = useMemo(() => {
     return records.reduce(
@@ -51,35 +55,53 @@ const SellerReports = () => {
     );
   }, [records]);
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const doc = new jsPDF();
     
+    // Add Logo
+    try {
+      const response = await fetch('/logo.png');
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      await new Promise((resolve) => {
+        reader.onloadend = () => {
+          const base64data = reader.result;
+          doc.addImage(base64data, 'PNG', 14, 10, 30, 30);
+          resolve();
+        };
+      });
+    } catch (err) {
+      console.warn('Could not load logo for PDF', err);
+    }
+    
     // Add Title and Header
-    doc.setFontSize(20);
+    doc.setFontSize(22);
     doc.setTextColor(37, 99, 235); // Blue-700
-    doc.text("Sales Summary Report", 14, 22);
+    doc.text("Sales Summary Report", 50, 25);
     
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 14, 30);
+    doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 50, 33);
     
     // Decorative Line
     doc.setDrawColor(226, 232, 240);
-    doc.line(14, 35, 196, 35);
+    doc.line(14, 45, 196, 45);
 
     // Summary Table
     autoTable(doc, {
-      startY: 45,
+      startY: 55,
       head: [['Metric', 'Total Value']],
       body: [
         ['Total Shop Visits', stats.visits],
         ['Total Sales Amount', currencyFormatter.format(stats.sales)],
         ['Total Items Sold', stats.items],
       ],
-      theme: 'striped',
-      headStyles: { fillColor: [37, 99, 235], fontSize: 12 },
-      bodyStyles: { fontSize: 11 },
-      columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } }
+      theme: 'grid',
+      headStyles: { fillColor: [37, 99, 235], fontSize: 12, textColor: 255, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 11, textColor: 50 },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      columnStyles: { 1: { halign: 'right', fontStyle: 'bold', textColor: [37, 99, 235] } }
     });
 
     doc.save(`Sales_Summary_${new Date().toISOString().slice(0, 10)}.pdf`);
@@ -89,7 +111,7 @@ const SellerReports = () => {
     return (
       <div className="flex min-h-[420px] items-center justify-center">
         <Loader2 className="mr-2 animate-spin text-blue-700" size={22} />
-        <span className="text-sm font-semibold text-slate-500">Loading reports...</span>
+        <span className="text-sm font-semibold text-slate-500">{t.loadingReports}</span>
       </div>
     );
   }
@@ -105,26 +127,26 @@ const SellerReports = () => {
 
       <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-          <h2 className="text-xs font-black text-slate-950 uppercase tracking-wider">Sales Summary</h2>
+          <h2 className="text-xs font-black text-slate-950 uppercase tracking-wider">{t.salesSummary}</h2>
           <button
             onClick={handleDownloadPDF}
             className="flex items-center gap-2 bg-blue-700 text-white px-3 py-1.5 rounded-md text-[11px] font-black hover:bg-blue-800 transition-colors shadow-sm"
           >
             <Download size={14} />
-            DOWNLOAD PDF
+            {t.downloadPDF}
           </button>
         </div>
         <div className="mt-4 space-y-3">
           <div className="flex items-center justify-between text-sm">
-            <span className="font-semibold text-slate-700">Total Visits</span>
+            <span className="font-semibold text-slate-700">{t.totalVisits}</span>
             <span className="font-black text-slate-950">{stats.visits}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="font-semibold text-slate-700">Total Sales</span>
+            <span className="font-semibold text-slate-700">{t.totalSales}</span>
             <span className="font-black text-slate-950">{currencyFormatter.format(stats.sales)}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="font-semibold text-slate-700">Total Items</span>
+            <span className="font-semibold text-slate-700">{t.totalItems}</span>
             <span className="font-black text-slate-950">{stats.items}</span>
           </div>
         </div>

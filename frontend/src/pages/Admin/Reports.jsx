@@ -3,8 +3,11 @@ import axios from '../../api/axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { FileText, Download, BarChart3, PieChart, TrendingUp, Layers } from 'lucide-react';
+import { applyPdfHeaderAndFooter } from '../../utils/pdfHelper';
+import { useAuth } from '../../context/AuthContext';
 
 const Reports = () => {
+  const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState('Revenue Report');
   const [summary, setSummary] = useState({
     totalSellers: 0,
@@ -104,17 +107,13 @@ const Reports = () => {
     exportCsvFile(`admin_report_${reportName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`, records);
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (records.length === 0) {
       setInfoMessage('Generate a report first before exporting PDF.');
       return;
     }
 
     const doc = new jsPDF('landscape');
-    doc.setFontSize(18);
-    doc.text(`${reportName}`, 14, 15);
-    doc.setFontSize(10);
-    doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 14, 22);
 
     const tableColumn = ['Date', 'Seller', 'Shop Name', 'Shop Type', 'Total', 'Paid', 'Pending', 'Status'];
     const tableRows = records.map((r) => [
@@ -131,11 +130,13 @@ const Reports = () => {
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
-      startY: 28,
+      startY: 35,
       theme: 'grid',
       headStyles: { fillColor: [108, 62, 244] },
       styles: { fontSize: 9 }
     });
+
+    await applyPdfHeaderAndFooter(doc, reportName, user);
 
     doc.save(`${reportName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
   };

@@ -3,22 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BarChart3, ClipboardList, Home, LogOut, LockKeyhole } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
-
-const bottomLinks = [
-  { label: 'Home', to: '/dashboard', icon: Home },
-  { label: 'Records', to: '/my-records', icon: ClipboardList },
-  { label: 'Reports', to: '/seller/reports', icon: BarChart3 }
-];
-
-const routeTitles = [
-  { match: '/sell/shop', title: 'Shop Details' },
-  { match: '/sell/products', title: 'Add Product' },
-  { match: '/sell/review', title: 'Review' },
-  { match: '/my-records', title: 'My Records' },
-  { match: '/seller/reports', title: 'Reports' },
-  { match: '/seller/profile', title: 'Profile' },
-  { match: '/dashboard', title: 'Dashboard' }
-];
+import { translations } from '../utils/translations';
 
 const SellerLayout = () => {
   const location = useLocation();
@@ -27,6 +12,25 @@ const SellerLayout = () => {
   const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
   const [checkingSubscription, setCheckingSubscription] = useState(true);
+  
+  const t = translations[lang || 'en'] || translations['en'];
+
+  const bottomLinks = [
+    { label: t.navHome, to: '/dashboard', icon: Home },
+    { label: t.navRecords, to: '/my-records', icon: ClipboardList },
+    { label: t.navReports, to: '/seller/reports', icon: BarChart3 }
+  ];
+
+  const routeTitles = [
+    { match: '/sell/shop', title: t.pageShopDetails },
+    { match: '/sell/products', title: t.pageAddProduct },
+    { match: '/sell/review', title: t.pageReview },
+    { match: '/my-records', title: t.pageMyRecords },
+    { match: '/seller/reports', title: t.pageReports },
+    { match: '/seller/profile', title: t.pageProfile },
+    { match: '/dashboard', title: t.pageDashboard }
+  ];
+
   const title = routeTitles.find((route) => location.pathname.startsWith(route.match))?.title || 'SalesFlow';
   const canGoBack = location.pathname !== '/dashboard';
   const showBottomNav = !location.pathname.startsWith('/sell');
@@ -96,7 +100,7 @@ const SellerLayout = () => {
             )}
             {!canGoBack && (
               <div className="hidden sm:block">
-                <p className="text-[9px] font-bold text-slate-400 uppercase leading-none">Welcome</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase leading-none">{t.welcomeTitle}</p>
                 <p className="text-[11px] font-black text-slate-900 leading-tight truncate max-w-[80px]">{user?.name}</p>
               </div>
             )}
@@ -105,13 +109,13 @@ const SellerLayout = () => {
           <h1 className="flex-1 text-center text-lg font-bold text-slate-900">{title}</h1>
           
           <div className="flex items-center gap-1 border-l pl-3 ml-3 border-slate-200">
-            {['en', 'hi', 'mr'].map((l) => (
+            {[{ code: 'en', label: 'English' }, { code: 'hi', label: 'हिन्दी' }, { code: 'mr', label: 'मराठी' }].map(({ code, label }) => (
               <button
-                key={l}
-                onClick={() => toggleLang(l)}
-                className={`text-[10px] font-black w-6 h-6 rounded flex items-center justify-center uppercase ${lang === l ? 'bg-blue-700 text-white' : 'text-slate-400 hover:bg-slate-100'}`}
+                key={code}
+                onClick={() => toggleLang(code)}
+                className={`px-2 py-1 text-[11px] font-black rounded flex items-center justify-center transition-colors ${lang === code ? 'bg-blue-700 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
               >
-                {l}
+                {label}
               </button>
             ))}
           </div>
@@ -131,7 +135,7 @@ const SellerLayout = () => {
       <div className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 pb-24">
         {checkingSubscription ? (
           <div className="flex min-h-[60vh] items-center justify-center text-sm font-bold text-slate-500">
-            Checking subscription...
+            {t.checkingSubscription}
           </div>
         ) : subscriptionStatus && !subscriptionStatus.canUseApp ? (
           <div className="flex min-h-[60vh] items-center justify-center">
@@ -139,9 +143,9 @@ const SellerLayout = () => {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-red-50 text-red-600">
                 <LockKeyhole size={24} />
               </div>
-              <h2 className="mt-4 text-xl font-black text-slate-950">Access paused</h2>
+              <h2 className="mt-4 text-xl font-black text-slate-950">{t.accessPaused}</h2>
               <p className="mt-2 text-sm font-medium text-slate-600">
-                {subscriptionStatus.message || 'Your manager subscription has expired. Please ask your manager to renew the plan.'}
+                {subscriptionStatus.message || t.subscriptionExpired}
               </p>
             </div>
           </div>

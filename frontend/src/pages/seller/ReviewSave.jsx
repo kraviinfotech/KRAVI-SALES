@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate, useOutletContext,  } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import API from '../../api/axios';
 import { AlertCircle, CheckCircle2, Camera, X } from 'lucide-react';
+import { translations } from '../../utils/translations';
 
 const currencyFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -10,7 +11,8 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
 });
 
 const ReviewSave = () => {
-  const { formData, setFormData } = useOutletContext();
+  const { formData, setFormData, lang } = useOutletContext();
+  const t = translations[lang || 'en'] || translations['en'];
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -187,7 +189,7 @@ const ReviewSave = () => {
 
   return (
     <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
-      <h2 className="text-xl font-bold border-b pb-2">Review Record</h2>
+      <h2 className="text-xl font-bold border-b pb-2">{t.reviewSaveTitle}</h2>
       
       {error && (
         <div className="flex items-center gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
@@ -342,7 +344,7 @@ const ReviewSave = () => {
         disabled={loading}
         className="w-full rounded bg-primary py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-75 mt-4"
       >
-        {loading ? 'Saving...' : 'Save Record'}
+        {loading ? t.saving : t.saveRecord}
       </button>
 
       {/* Scanner Modal */}
