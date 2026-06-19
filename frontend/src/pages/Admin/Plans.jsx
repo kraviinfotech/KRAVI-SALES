@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Edit3, Filter, Layers, Trash2 } from 'lucide-react';
+import { Check, Crown, Edit3, Filter, Layers, Trash2 } from 'lucide-react';
 import API from '../../api/axios';
 
 const durationLabel = (plan) => {
@@ -10,49 +10,72 @@ const durationLabel = (plan) => {
 
 const PlanCard = ({ plan, onEdit, onDelete }) => {
   const sellerLimit = Number(plan.maxSellers || plan.managers || 0);
+  const isRecommended = plan.isRecommended || Number(plan.durationMonths) === 3 || Number(plan.durationDays) === 90 || plan.name?.toLowerCase().includes('3 month') || plan.name?.toLowerCase().includes('3-month');
+  const pricingLabel = Number(plan.durationMonths) === 12 ? '/year' : Number(plan.durationMonths) > 0 ? '/month' : plan.durationDays ? '/plan' : '/plan';
 
   return (
-    <div className={`rounded-lg border-2 bg-white p-6 transition-all hover:shadow-xl ${plan.isActive ? 'border-[#6C3EF4]' : 'border-gray-100'}`}>
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h3 className="text-xl font-bold text-gray-800">{plan.name}</h3>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-3xl font-black text-gray-900">Rs. {Number(plan.price || 0).toLocaleString('en-IN')}</span>
-            <span className="text-sm font-medium text-gray-500">/{durationLabel(plan)}</span>
+    <div className={`group relative flex min-h-[440px] flex-col overflow-visible rounded-[1.75rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg ${isRecommended ? 'ring-1 ring-violet-100' : ''}`}>
+      {isRecommended && (
+        <div className="absolute right-4 top-0 z-10 -translate-y-1/2 flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-violet-700 shadow-sm shadow-violet-900/10">
+          <Crown size={14} className="text-amber-400" />
+          Recommended
+        </div>
+      )}
+      <div className="relative rounded-t-[1.75rem] border-b border-slate-200 bg-white px-6 py-7 text-slate-900">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-2xl font-black tracking-tight text-slate-950">{plan.name}</h3>
+            <p className="mt-2 text-sm text-slate-500">{durationLabel(plan)} access with premium features</p>
+          </div>
+          <div className="text-slate-400">
+            <Crown size={28} />
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className={`rounded-full px-3 py-1 text-xs font-bold ${plan.isActive ? 'bg-purple-100 text-[#6C3EF4]' : 'bg-gray-100 text-gray-500'}`}>
+
+        <div className="mt-8">
+          <div className="flex items-end gap-2">
+            <span className="text-5xl font-black text-slate-950">Rs. {Number(plan.price || 0).toLocaleString('en-IN')}</span>
+            <span className="pb-1 text-sm font-semibold text-slate-500">{pricingLabel}</span>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-slate-500">Use this plan across sellers, reports, and manager tools.</p>
+        </div>
+      </div>
+
+      <div className="flex-1 px-6 py-6">
+        <div className="mb-5 flex flex-wrap items-center gap-3">
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${plan.isActive ? 'bg-violet-50 text-violet-700' : 'bg-slate-100 text-slate-600'}`}>
             {plan.isActive ? 'Active' : 'Inactive'}
           </span>
-          {plan.isTrial && <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">Free Trial</span>}
+          {plan.isTrial && <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Free Trial</span>}
         </div>
-      </div>
 
-      <div className="mb-8 space-y-4">
-        <div className="flex items-center gap-3 text-sm text-gray-600">
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-50 text-[#6C3EF4]"><Check size={12} /></div>
-          Max {sellerLimit > 0 ? sellerLimit : 'Unlimited'} Sellers
-        </div>
-        <div className="flex items-center gap-3 text-sm text-gray-600">
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-50 text-[#6C3EF4]"><Check size={12} /></div>
-          {plan.storageGb || 0} GB Storage
-        </div>
-        {(plan.features || []).map((feature) => (
-          <div key={feature} className="flex items-center gap-3 text-sm text-gray-600">
-            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-50 text-[#6C3EF4]"><Check size={12} /></div>
-            {feature}
+        <div className="space-y-4 text-sm text-slate-700">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-50 text-violet-700"><Check size={16} /></div>
+            <span>Max {sellerLimit > 0 ? sellerLimit : 'Unlimited'} Sellers</span>
           </div>
-        ))}
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-50 text-violet-700"><Check size={16} /></div>
+            <span>{plan.storageGb || 0} GB Storage</span>
+          </div>
+          {(plan.features || []).map((feature) => (
+            <div key={feature} className="flex items-start gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-50 text-violet-700 mt-1"><Check size={16} /></div>
+              <span>{feature}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="flex gap-2 border-t border-gray-50 pt-6">
-        <button onClick={onEdit} className="flex flex-1 items-center justify-center gap-2 rounded-md border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 transition-all hover:bg-gray-50">
-          <Edit3 size={16} /> Edit
-        </button>
-        <button onClick={onDelete} className="rounded-md border border-red-100 px-4 py-2.5 text-red-500 transition-all hover:bg-red-50">
-          <Trash2 size={16} />
-        </button>
+      <div className="rounded-b-[1.75rem] border-t border-slate-200 bg-slate-50 px-6 py-5">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <button onClick={onEdit} className="rounded-full bg-white px-4 py-3 text-sm font-semibold text-violet-700 shadow-sm transition hover:bg-violet-50">
+            Edit Plan
+          </button>
+          <button onClick={onDelete} className="rounded-full bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-100">
+            Delete
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -177,7 +200,7 @@ const Plans = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-4">
         {loading ? (
           <div>Loading plans...</div>
         ) : filteredPlans.length === 0 ? (
