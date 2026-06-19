@@ -4,9 +4,10 @@ const Product = require('../models/Product');
 const Seller = require('../models/Seller');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
+const subscriptionMiddleware = require('../middleware/subscriptionMiddleware');
 
 // GET /api/products
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, subscriptionMiddleware, async (req, res) => {
   try {
     let managerId;
 
@@ -37,7 +38,7 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // POST /api/products
-router.post('/', authMiddleware, roleMiddleware('manager'), async (req, res) => {
+router.post('/', authMiddleware, roleMiddleware('manager'), subscriptionMiddleware, async (req, res) => {
   const { name, category, baseRate } = req.body;
 
   if (!name) {
@@ -72,7 +73,7 @@ router.post('/', authMiddleware, roleMiddleware('manager'), async (req, res) => 
 });
 
 // DELETE /api/products/:id
-router.delete('/:id', authMiddleware, roleMiddleware('manager'), async (req, res) => {
+router.delete('/:id', authMiddleware, roleMiddleware('manager'), subscriptionMiddleware, async (req, res) => {
   try {
     const product = await Product.findOneAndDelete({
       _id: req.params.id,

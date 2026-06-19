@@ -7,8 +7,14 @@ const User = require('../models/User');
 const Seller = require('../models/Seller');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
+const {
+  assignTrialSubscription,
+  buildSubscriptionStatus,
+  getManagerIdForUser,
+  signUserToken
+} = require('../utils/subscriptionUtils');
 
-// POST /api/auth/register -> allow creating manager or admin accounts from frontend
+// POST /api/auth/register -> public manager registration with admin-configured trial
 router.post(
   '/register',
   [
@@ -16,7 +22,7 @@ router.post(
     body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
     body('mobile').isMobilePhone('any').withMessage('Valid mobile is required').trim(),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-    body('role').optional().isIn(['admin', 'manager', 'seller']).withMessage('Invalid role')
+    body('role').optional().isIn(['manager']).withMessage('Public registration is only available for managers')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -36,11 +42,15 @@ router.post(
         return res.status(400).json({ message: 'Email or mobile already registered' });
       }
 
-      // Role: if query or body sets role=admin, allow creation (frontend controls this)
-      const role = req.body.role === 'admin' ? 'admin' : 'manager';
+      const role = 'manager';
 
       const user = new User({ name, email: normalizedEmail, mobile: normalizedMobile, password, role });
       await user.save();
+
+      // Automatically assign the admin-configured free/trial plan to new Managers
+      if (role === 'manager') {
+        await assignTrialSubscription(user._id);
+      }
 
       return res.status(201).json({ message: 'User registered successfully', user: { _id: user._id, name: user.name, email: user.email, role: user.role } });
     } catch (err) {
@@ -109,11 +119,13 @@ router.post(
       return res.status(400).json({ message: 'Incorrect password' });
     }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET || 'super_secret_sales_tracker_key_2026',
-      { expiresIn: '30d' }
-    );
+    let subscriptionStatus = null;
+    const managerId = await getManagerIdForUser(user);
+    if (managerId) {
+      subscriptionStatus = await buildSubscriptionStatus(managerId);
+    }
+
+    const token = signUserToken(user, subscriptionStatus);
 
     res.json({
       token,
@@ -123,8 +135,11 @@ router.post(
         email: user.email,
         mobile: user.mobile,
         role: user.role,
-        managerScannerPhoto: user.managerScannerPhoto || null
-      }
+        managerScannerPhoto: user.managerScannerPhoto || null,
+        subscriptionTier: user.subscriptionTier || null,
+        subscriptionExpiry: user.subscriptionExpiry || null
+      },
+      subscriptionStatus
     });
   }
 );
@@ -229,7 +244,9 @@ router.get('/me', authMiddleware, async (req, res) => {
       email,
       mobile,
       role,
-      managerScannerPhoto: managerScannerPhoto || null
+      managerScannerPhoto: managerScannerPhoto || null,
+      subscriptionTier: req.user.subscriptionTier || null,
+      subscriptionExpiry: req.user.subscriptionExpiry || null
     }
   });
 });
@@ -301,8 +318,6 @@ router.get('/manager-scanner', authMiddleware, async (req, res) => {
   }
 });
 
-module.exports = router;
-
 // Development helper: lookup user by email (only in non-production)
 // GET /api/auth/debug-user?email=foo@example.com
 router.get('/debug-user', async (req, res) => {
@@ -320,3 +335,5 @@ router.get('/debug-user', async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 });
+
+module.exports = router;

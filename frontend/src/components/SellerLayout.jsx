@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart3, ClipboardList, Home, UserCircle, LogOut, Languages } from 'lucide-react';
+import { ArrowLeft, BarChart3, ClipboardList, Home, LogOut, LockKeyhole } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import API from '../api/axios';
 
 const bottomLinks = [
   { label: 'Home', to: '/dashboard', icon: Home },
@@ -24,6 +25,8 @@ const SellerLayout = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [checkingSubscription, setCheckingSubscription] = useState(true);
   const title = routeTitles.find((route) => location.pathname.startsWith(route.match))?.title || 'SalesFlow';
   const canGoBack = location.pathname !== '/dashboard';
   const showBottomNav = !location.pathname.startsWith('/sell');
@@ -42,6 +45,31 @@ const SellerLayout = () => {
     setLang(newLang);
     localStorage.setItem('lang', newLang);
   };
+
+  useEffect(() => {
+    let active = true;
+    const loadStatus = async () => {
+      setCheckingSubscription(true);
+      try {
+        const res = await API.get('/subscriptions/my-status');
+        if (active) setSubscriptionStatus(res.data);
+      } catch (err) {
+        if (active) {
+          setSubscriptionStatus({
+            canUseApp: false,
+            message: err.response?.data?.message || 'Your manager subscription is not active.'
+          });
+        }
+      } finally {
+        if (active) setCheckingSubscription(false);
+      }
+    };
+
+    loadStatus();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -101,10 +129,28 @@ const SellerLayout = () => {
       </div>
 
       <div className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 pb-24">
-        <Outlet context={{ lang }} />
+        {checkingSubscription ? (
+          <div className="flex min-h-[60vh] items-center justify-center text-sm font-bold text-slate-500">
+            Checking subscription...
+          </div>
+        ) : subscriptionStatus && !subscriptionStatus.canUseApp ? (
+          <div className="flex min-h-[60vh] items-center justify-center">
+            <div className="w-full max-w-md rounded-lg border border-red-200 bg-white p-6 text-center shadow-sm">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-red-50 text-red-600">
+                <LockKeyhole size={24} />
+              </div>
+              <h2 className="mt-4 text-xl font-black text-slate-950">Access paused</h2>
+              <p className="mt-2 text-sm font-medium text-slate-600">
+                {subscriptionStatus.message || 'Your manager subscription has expired. Please ask your manager to renew the plan.'}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <Outlet context={{ lang }} />
+        )}
       </div>
 
-      {showBottomNav && (
+      {showBottomNav && subscriptionStatus?.canUseApp && (
         <nav className="fixed bottom-0 w-full bg-white border-t border-slate-200 z-30">
           <div className="flex h-16 max-w-5xl mx-auto justify-around items-center">
             {bottomLinks.map((link) => {

@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const Company = require('../models/Company');
+const Payment = require('../models/Payment');
+const Subscription = require('../models/Subscription');
 const auth = require('../middleware/authMiddleware');
 const role = require('../middleware/roleMiddleware');
 
-// Admin-only endpoint: this route returns only manager subscription payment data.
-// Sales payment records are intentionally kept in manager/report routes and not surfaced here.
 router.use(auth, role('admin'));
 
 router.get('/', async (req, res) => {
@@ -13,90 +12,68 @@ router.get('/', async (req, res) => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
-
-    const totalRevenueAgg = await Company.aggregate([
-      {
-        $lookup: {
-          from: 'plans',
-          localField: 'plan',
-          foreignField: 'name',
-          as: 'planData'
-        }
-      },
-      { $unwind: { path: '$planData', preserveNullAndEmptyArrays: true } },
-      { $group: { _id: null, total: { $sum: { $ifNull: ['$planData.price', 0] } } } }
-    ]);
-
-    const monthlyRevenueAgg = await Company.aggregate([
-      { $match: { createdAt: { $gte: startOfMonth } } },
-      {
-        $lookup: {
-          from: 'plans',
-          localField: 'plan',
-          foreignField: 'name',
-          as: 'planData'
-        }
-      },
-      { $unwind: { path: '$planData', preserveNullAndEmptyArrays: true } },
-      { $group: { _id: null, total: { $sum: { $ifNull: ['$planData.price', 0] } }, pending: { $sum: { $cond: [{ $eq: ['$status', 'Pending'] }, { $ifNull: ['$planData.price', 0] }, 0] } } } }
-    ]);
-
-    const yearlyRevenueAgg = await Company.aggregate([
-      { $match: { createdAt: { $gte: startOfYear } } },
-      {
-        $lookup: {
-          from: 'plans',
-          localField: 'plan',
-          foreignField: 'name',
-          as: 'planData'
-        }
-      },
-      { $unwind: { path: '$planData', preserveNullAndEmptyArrays: true } },
-      { $group: { _id: null, total: { $sum: { $ifNull: ['$planData.price', 0] } } } }
-    ]);
-
     const upcomingExpires = new Date();
     upcomingExpires.setDate(upcomingExpires.getDate() + 30);
 
-    const upcomingRenewalsCount = await Company.countDocuments({
-      expiryDate: { $gte: now, $lte: upcomingExpires }
-    });
-
-    const subscriptionTransactions = await Company.aggregate([
-      { $sort: { createdAt: -1 } },
-      {
-        $lookup: {
-          from: 'plans',
-          localField: 'plan',
-          foreignField: 'name',
-          as: 'planData'
-        }
-      },
-      { $unwind: { path: '$planData', preserveNullAndEmptyArrays: true } },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          email: 1,
-          phone: 1,
-          plan: 1,
-          startDate: 1,
-          expiryDate: 1,
-          status: 1,
-          amount: { $ifNull: ['$planData.price', 0] },
-          paymentMethod: { $literal: 'Subscription' },
-          paymentStatus: '$status',
-          invoice: { $concat: ['INV-', { $substr: ['$_id', -6, 6] }] },
-          createdAt: 1
-        }
-      }
+    const [totalRevenueAgg, monthlyRevenueAgg, yearlyRevenueAgg, pendingPaymentsAgg, upcomingRenewals, payments] = await Promise.all([
+      Payment.aggregate([
+        { $match: { status: 'success' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Payment.aggregate([
+        { $match: { status: 'success', createdAt: { $gte: startOfMonth } } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Payment.aggregate([
+        { $match: { status: 'success', createdAt: { $gte: startOfYear } } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Payment.aggregate([
+        { $match: { status: 'pending' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Subscription.countDocuments({
+        status: 'active',
+        endDate: { $gte: now, $lte: upcomingExpires }
+      }),
+      Payment.find()
+        .sort({ createdAt: -1 })
+        .limit(100)
+        .populate('managerId', 'name email mobile')
+        .populate({
+          path: 'subscriptionId',
+          select: 'planId startDate endDate status',
+          populate: { path: 'planId', select: 'name price durationMonths durationDays' }
+        })
+        .lean()
     ]);
+
+    const subscriptionTransactions = payments.map(payment => ({
+      _id: payment._id,
+      managerId: payment.managerId?._id,
+      name: payment.managerId?.name || 'Manager',
+      email: payment.managerId?.email || '',
+      phone: payment.managerId?.mobile || '',
+      plan: payment.subscriptionId?.planId?.name || payment.metadata?.planName || 'Subscription',
+      startDate: payment.subscriptionId?.startDate || payment.createdAt,
+      expiryDate: payment.subscriptionId?.endDate || null,
+      status: payment.subscriptionId?.status || payment.status,
+      amount: payment.amount,
+      currency: payment.currency,
+      provider: payment.provider,
+      paymentMethod: payment.provider === 'razorpay' ? 'Razorpay' : payment.provider,
+      paymentStatus: payment.status === 'success' ? 'Paid' : payment.status === 'pending' ? 'Pending' : 'Failed',
+      transactionId: payment.razorpayPaymentId || payment.transactionId,
+      invoice: `INV-${String(payment._id).slice(-6).toUpperCase()}`,
+      createdAt: payment.createdAt
+    }));
 
     res.json({
       totalRevenue: totalRevenueAgg[0]?.total || 0,
       monthlyRevenue: monthlyRevenueAgg[0]?.total || 0,
-      pendingPayments: monthlyRevenueAgg[0]?.pending || 0,
-      upcomingRenewals: upcomingRenewalsCount,
+      yearlyRevenue: yearlyRevenueAgg[0]?.total || 0,
+      pendingPayments: pendingPaymentsAgg[0]?.total || 0,
+      upcomingRenewals,
       subscriptionTransactions
     });
   } catch (err) {

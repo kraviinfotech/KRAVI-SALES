@@ -27,8 +27,7 @@ const roleConfig = {
     buttonLabel: 'Login as Manager',
     icon: ShieldCheck,
     buttonClass: 'bg-slate-900 hover:bg-slate-800',
-    registerLink: { to: '/register?role=manager', label: 'Register as a Manager' },
-    registerAdminLink: { to: '/register?role=admin', label: 'Register as Admin' }
+    registerLink: { to: '/register?role=manager', label: 'Register as a Manager' }
   }
 };
 
@@ -199,11 +198,6 @@ const roleConfig = {
                   <Link to={currentRole.registerLink.to} className="text-sm font-medium text-primary hover:underline">
                     {currentRole.registerLink.label}
                   </Link>
-                  {currentRole.registerAdminLink && (
-                    <Link to={currentRole.registerAdminLink.to} className="text-sm font-medium text-indigo-700 hover:underline">
-                      {currentRole.registerAdminLink.label}
-                    </Link>
-                  )}
                 </div>
               </div>
             )}

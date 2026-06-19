@@ -6,9 +6,10 @@ const SaleItem = require('../models/SaleItem');
 const Seller = require('../models/Seller');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
+const subscriptionMiddleware = require('../middleware/subscriptionMiddleware');
 
 // Protect all routes under this router for manager role only
-router.use(authMiddleware, roleMiddleware('manager'));
+router.use(authMiddleware, roleMiddleware('manager'), subscriptionMiddleware);
 
 const getManagerObjectId = (req) => new mongoose.Types.ObjectId(req.user._id);
 

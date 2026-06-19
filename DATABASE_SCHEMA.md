@@ -10,7 +10,7 @@ Stores authentication credentials for both Managers and Sellers.
 | `email` | String | Unique; Normalized |
 | `mobile` | String | Unique; 10-digit |
 | `password` | String | Hashed (Bcrypt) |
-| `role` | String | 'manager' or 'seller' |
+| `role` | String | 'admin', 'manager', or 'seller' |
 | `managerScannerPhoto`| String | Base64 (Only for managers) |
 | `resetPasswordToken` | String | OTP for password recovery |
 | `resetPasswordExpires`| Date | OTP expiry timestamp |
