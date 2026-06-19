@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Plus, X } from 'lucide-react';
 import API from '../../api/axios';
+import CustomInput from '../../components/CustomInput';
 
 const translations = {
   en: { title: "Add Products", pName: "Product Name", qty: "Quantity (pcs)", weight: "Weight (kg)", price: "Price per Unit", rate: "Rate", amt: "Amount", add: "Add More Product", next: "Next", unit: "Unit Type", qtyBtn: "By Quantity", weightBtn: "By Weight" },
@@ -56,7 +57,7 @@ const AddProducts = () => {
             unit: item.unit || 'quantity',
             price: item.price || item.rate || ''
           }))
-        }));
+        }))
       }
     }
   }, [formData.items, setFormData]);
@@ -151,11 +152,12 @@ const AddProducts = () => {
 
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">{t.pName}</label>
-              <input
+              <CustomInput
                 type="text"
                 list={`suggestions-${index}`}
                 value={item.productName || ''}
-                onChange={(event) => handleItemChange(index, 'productName', event.target.value)}
+                onChange={(val) => handleItemChange(index, 'productName', val)}
+                lang={lang}
                 placeholder="Select or Type..."
                 className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 required

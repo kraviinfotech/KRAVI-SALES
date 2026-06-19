@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Camera, X } from 'lucide-react';
 
+import CustomInput from '../../components/CustomInput';
+
 const translations = {
   en: {
     title: "Add Shop Details",
@@ -163,10 +165,11 @@ const AddShop = () => {
         <label className="mb-1 block text-sm font-medium text-gray-700">
           {t.name}
         </label>
-        <input
+        <CustomInput
           type="text"
           value={shopName}
-          onChange={(e) => setShopName(e.target.value)}
+          onChange={setShopName}
+          lang={lang}
           placeholder="Gupta Store"
           className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
           required
@@ -179,10 +182,11 @@ const AddShop = () => {
           {t.mobile}
         </label>
 
-        <input
+        <CustomInput
           type="tel"
           value={mobile}
-          onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
+          onChange={(val) => setMobile(val.replace(/\D/g, ""))}
+          lang={lang}
           placeholder="1234567890"
           maxLength={10}
           className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
@@ -194,9 +198,11 @@ const AddShop = () => {
         <label className="mb-1 block text-sm font-medium text-gray-700">
           {t.addr}
         </label>
-        <textarea
+        <CustomInput
+          component="textarea"
           value={shopAddress}
-          onChange={(e) => setShopAddress(e.target.value)}
+          onChange={setShopAddress}
+          lang={lang}
           placeholder="MG Road, Indore"
           rows="3"
           className="w-full resize-none rounded border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -210,10 +216,11 @@ const AddShop = () => {
         <label className="mb-1 block text-sm font-medium text-gray-700">
           {t.land}
         </label>
-        <input
+        <CustomInput
           type="text"
           value={landmark}
-          onChange={(e) => setLandmark(e.target.value)}
+          onChange={setLandmark}
+          lang={lang}
           placeholder="Near SBI Bank"
           className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
         />
