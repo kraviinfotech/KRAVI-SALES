@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   BarChart3,
+  CreditCard,
   FileSpreadsheet,
   LayoutDashboard,
   LogOut,
@@ -19,6 +20,7 @@ const navigation = [
   { name: 'Records', to: '/manager/records', icon: FileSpreadsheet },
   { name: 'Reports', to: '/manager/reports', icon: BarChart3 },
   { name: 'Products', to: '/manager/products', icon: Package },
+  { name: 'Subscription', to: '/manager/subscription', icon: CreditCard },
   { name: 'Profile', to: '/manager/profile', icon: UserCircle },
 ];
 

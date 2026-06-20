@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, X, Image } from 'lucide-react';
 import { format } from 'date-fns';
 
 const SalesTable = ({ records }) => {
   const [expandedId, setExpandedId] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const currencyFormatter = new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -83,9 +84,9 @@ const SalesTable = ({ records }) => {
                   {/* Expanded detail row */}
                   {isExpanded && (
                     <tr className="bg-slate-50/80">
-                      <td colSpan="7" className="p-6 border-t border-slate-200">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {/* Left: Visit Info */}
+                      <td colSpan="8" className="p-6 border-t border-slate-200">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          {/* Column 1: Visit Info */}
                           <div>
                             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Visit Details</h4>
                             <div className="space-y-1.5 text-xs text-gray-700">
@@ -117,7 +118,7 @@ const SalesTable = ({ records }) => {
                             </div>
                           </div>
 
-                          {/* Right: Products list */}
+                          {/* Column 2: Products list */}
                           <div>
                             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Items Ordered</h4>
                             <div className="bg-white rounded border border-gray-200 overflow-hidden">
@@ -156,6 +157,55 @@ const SalesTable = ({ records }) => {
                               </table>
                             </div>
                           </div>
+
+                          {/* Column 3: Captured Media */}
+                          <div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Media Files</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                              {/* Shop Image */}
+                              <div className="flex flex-col items-center">
+                                <span className="text-[10px] font-bold text-gray-500 mb-1">Shop Photo</span>
+                                {record.shopImage ? (
+                                  <div 
+                                    onClick={() => setSelectedImage(record.shopImage)}
+                                    className="w-full h-24 rounded border border-gray-200 overflow-hidden cursor-pointer hover:opacity-90 hover:border-blue-500 transition-all bg-gray-100 flex items-center justify-center relative group"
+                                  >
+                                    <img src={record.shopImage} alt="Shop" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-opacity">View</div>
+                                  </div>
+                                ) : (
+                                  <div className="w-full h-24 rounded border border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-400">
+                                    <Image size={18} />
+                                    <span className="text-[9px] font-bold mt-1">Not Uploaded</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Payment Proof */}
+                              <div className="flex flex-col items-center">
+                                <span className="text-[10px] font-bold text-gray-500 mb-1">Payment Proof</span>
+                                {record.scannerPhoto ? (
+                                  <div 
+                                    onClick={() => setSelectedImage(record.scannerPhoto)}
+                                    className="w-full h-24 rounded border border-gray-200 overflow-hidden cursor-pointer hover:opacity-90 hover:border-blue-500 transition-all bg-gray-100 flex items-center justify-center relative group"
+                                  >
+                                    <img src={record.scannerPhoto} alt="Payment Proof" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-opacity">View</div>
+                                  </div>
+                                ) : record.paymentMethod === 'Online' ? (
+                                  <div className="w-full h-24 rounded border border-dashed border-red-200 bg-red-50/50 flex flex-col items-center justify-center text-red-400">
+                                    <Image size={18} />
+                                    <span className="text-[9px] font-bold mt-1 text-center leading-tight">Missing Proof<br/>(Online)</span>
+                                  </div>
+                                ) : (
+                                  <div className="w-full h-24 rounded border border-slate-200 bg-slate-100 flex flex-col items-center justify-center text-slate-500 p-1 text-center">
+                                    <span className="text-[10px] font-black uppercase text-slate-700">Cash Payment</span>
+                                    <span className="text-[8px] font-bold mt-0.5 text-slate-500">Offline payment</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -166,6 +216,28 @@ const SalesTable = ({ records }) => {
           </tbody>
         </table>
       </div>
+
+      {/* Lightbox Modal for Image Preview */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xs p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-3xl max-h-[85vh] bg-white rounded-lg p-2 shadow-2xl animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            <button 
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-10 right-0 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors focus:outline-none"
+            >
+              <X size={20} />
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="High Resolution Preview" 
+              className="max-w-full max-h-[80vh] rounded object-contain"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

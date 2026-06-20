@@ -318,4 +318,37 @@ router.post(
   }
 );
 
+router.get('/history', roleMiddleware('manager'), async (req, res) => {
+  try {
+    const payments = await Payment.find({ managerId: req.user._id })
+      .sort({ createdAt: -1 })
+      .populate('subscriptionId')
+      .lean();
+
+    const formattedPayments = payments.map(payment => ({
+      _id: payment._id,
+      amount: payment.amount,
+      currency: payment.currency,
+      provider: payment.provider,
+      status: payment.status,
+      transactionId: payment.transactionId,
+      razorpayPaymentId: payment.razorpayPaymentId,
+      invoice: `INV-${String(payment._id).slice(-6).toUpperCase()}`,
+      createdAt: payment.createdAt,
+      planName: payment.metadata?.planName || 'Subscription',
+      subscriptionDetails: payment.subscriptionId,
+      manager: {
+        name: req.user.name,
+        email: req.user.email,
+        mobile: req.user.mobile
+      }
+    }));
+
+    res.json(formattedPayments);
+  } catch (err) {
+    console.error('Failed to load manager payment history:', err);
+    res.status(500).json({ message: 'Failed to fetch payment history' });
+  }
+});
+
 module.exports = router;

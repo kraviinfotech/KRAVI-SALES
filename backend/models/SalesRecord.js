@@ -76,6 +76,10 @@ const SalesRecordSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  shopImage: {
+    type: String,
+    default: null
+  },
 
   createdAt: {
     type: Date,

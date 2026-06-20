@@ -4,7 +4,7 @@ import ReportFilter from '../../components/ReportFilter';
 import SalesTable from '../../components/SalesTable';
 import StatCard from '../../components/StatCard';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend, AreaChart, Area, ComposedChart, ScatterChart, Scatter, ZAxis } from 'recharts';
-import { ShoppingCart, Landmark, DollarSign, Loader2, Calendar, TrendingUp, Users, Package, PieChart as PieIcon, BarChart3, Presentation, CircleDot, Trash2 } from 'lucide-react';
+import { ShoppingCart, Landmark, DollarSign, Loader2, Calendar, TrendingUp, Users, Package, PieChart as PieIcon, BarChart3, Presentation, CircleDot, ClipboardX } from 'lucide-react';
 
 const COLORS = ['#1D4ED8', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 const currencyFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
@@ -155,20 +155,6 @@ const Reports = () => {
     setFilters(newFilters);
   };
 
-  const handleDeleteSellerRecords = async (sellerId, sellerName) => {
-    if (sellerId === 'unknown') return;
-    if (!window.confirm(`Are you sure you want to delete ALL records for ${sellerName}? This cannot be undone.`)) return;
-    
-    try {
-      const response = await API.delete(`/reports/seller-records/${sellerId}`);
-      alert(response.data.message);
-      fetchSummary();
-      fetchChartData();
-      fetchFilteredRecords(filters, true);
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete records.');
-    }
-  };
 
   // Aggregations for Charts
   const sellerPerformance = useMemo(() => {
@@ -447,7 +433,6 @@ const Reports = () => {
                 <th className="p-4 text-center">Items Sold</th>
                 <th className="p-4 text-right">Total Sales</th>
                 <th className="p-4 text-right text-red-600">Pending</th>
-                <th className="p-4 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -459,22 +444,11 @@ const Reports = () => {
                   <td className="p-4 text-sm text-center font-medium text-slate-600">{row.items}</td>
                   <td className="p-4 text-sm text-right font-black text-slate-900">{currencyFormatter.format(row.sales)}</td>
                   <td className="p-4 text-sm text-right font-black text-red-600">{currencyFormatter.format(row.pending)}</td>
-                  <td className="p-4 text-center">
-                    {row.sellerId !== 'unknown' && (
-                      <button 
-                        onClick={() => handleDeleteSellerRecords(row.sellerId, row.name)}
-                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                        title="Delete all records for this seller"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                  </td>
                 </tr>
               ))}
               {sellerTableData.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="p-12 text-center text-slate-400 font-medium italic">No data available for this period.</td>
+                  <td colSpan="6" className="p-12 text-center text-slate-400 font-medium italic">No data available for this period.</td>
                 </tr>
               )}
             </tbody>
@@ -491,6 +465,16 @@ const Reports = () => {
         {loading && records.length === 0 ? (
           <div className="flex justify-center items-center py-20 bg-white rounded-xl border border-slate-200">
             <Loader2 className="animate-spin text-blue-700" size={32} />
+          </div>
+        ) : !loading && records.length === 0 ? (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm py-16 flex flex-col items-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center">
+              <ClipboardX size={26} className="text-slate-400" />
+            </div>
+            <p className="text-base font-bold text-slate-600">No visit logs found</p>
+            <p className="text-sm text-slate-400 text-center max-w-xs">
+              No records match the current filter. Try changing the date range or ask your sellers to log their first visit.
+            </p>
           </div>
         ) : (
           <SalesTable records={records} />

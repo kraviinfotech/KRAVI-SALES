@@ -47,7 +47,7 @@ app.use((err, req, res, next) => {
 });
 
 // Database Connection and Server Boot
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5002;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/salestracker';
 
 mongoose

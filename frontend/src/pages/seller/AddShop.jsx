@@ -1,328 +1,205 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Camera, X } from 'lucide-react';
+import { Camera, CheckCircle2, MapPin, X } from 'lucide-react';
 
 const translations = {
   en: {
-    title: "Add Shop Details",
-    name: "Shop Name",
-    mobile: "Mobile Number",
-    addr: "Address",
-    land: "Landmark (Optional)",
-    type: "Shop Type",
-    img: "Shop Image",
-    upload: "Upload/Capture",
-    next: "Next"
+    title: 'Shop Details', name: 'Shop Name', mobile: 'Mobile Number',
+    addr: 'Address', land: 'Landmark (Optional)', type: 'Shop Type',
+    img: 'Shop Image', upload: 'Upload / Capture', next: 'Next → Add Products'
   },
   hi: {
-    title: "दुकान का विवरण जोड़ें",
-    name: "दुकान का नाम",
-    mobile: "मोबाइल नंबर ",
-    addr: "पता",
-    land: "लैंडमार्क (वैकल्पिक)",
-    type: "दुकान का प्रकार",
-    img: "दुकान की फोटो",
-    upload: "फोटो लें/अपलोड",
-    next: "अगला"
+    title: 'दुकान का विवरण', name: 'दुकान का नाम', mobile: 'मोबाइल नंबर',
+    addr: 'पता', land: 'लैंडमार्क (वैकल्पिक)', type: 'दुकान का प्रकार',
+    img: 'दुकान की फोटो', upload: 'फोटो लें/अपलोड', next: 'अगला → उत्पाद'
   },
   mr: {
-    title: "दुकानाचे तपशील जोडा",
-    name: "दुकानाचे नाव",
-    mobile: "मोबाइल नंबर",
-    addr: "पत्ता",
-    land: "लँडमार्क (पर्यायी)",
-    type: "दुकानाचे प्रकार",
-    img: "दुकानाची फोटो",
-    upload: "फोटो घ्या/अपलोड",
-    next: "पुढील"
+    title: 'दुकानाचे तपशील', name: 'दुकानाचे नाव', mobile: 'मोबाइल नंबर',
+    addr: 'पत्ता', land: 'लँडमार्क (पर्यायी)', type: 'दुकानाचे प्रकार',
+    img: 'दुकानाची फोटो', upload: 'फोटो घ्या/अपलोड', next: 'पुढील → उत्पादने'
   }
 };
+
+const inputCls = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 transition';
+const labelCls = 'mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500';
 
 const AddShop = () => {
   const { formData, setFormData, lang } = useOutletContext();
   const t = translations[lang || 'en'];
   const navigate = useNavigate();
 
-  const [shopName, setShopName] = useState(formData.shopName || '');
-  const [mobile, setMobile] = useState(formData.mobile || '');
-
-  const [shopAddress, setShopAddress] = useState(formData.shopAddress || '');
-  const [landmark, setLandmark] = useState(formData.landmark || '');
-  const [shopType, setShopType] = useState(formData.shopType || 'Retail');
-
-  const [shopImage, setShopImage] = useState(formData.shopImage || null);
-  const [imagePreview, setImagePreview] = useState(null);
-
-  const [coords, setCoords] = useState({
-    lat: formData.latitude || '',
-    lng: formData.longitude || ''
-  });
-
-  const [locationUrl, setLocationUrl] = useState(
-    formData.locationUrl || ''
+  const [shopName,     setShopName]     = useState(formData.shopName     || '');
+  const [mobile,       setMobile]       = useState(formData.mobile       || '');
+  const [shopAddress,  setShopAddress]  = useState(formData.shopAddress  || '');
+  const [landmark,     setLandmark]     = useState(formData.landmark     || '');
+  const [shopType,     setShopType]     = useState(formData.shopType     || 'Retail');
+  const [shopImage,    setShopImage]    = useState(formData.shopImage    || null);
+  const [imagePreview, setImagePreview] = useState(
+    typeof formData.shopImage === 'string' ? formData.shopImage : null
   );
+  const [coords,      setCoords]      = useState({ lat: formData.latitude || '', lng: formData.longitude || '' });
+  const [locationUrl, setLocationUrl] = useState(formData.locationUrl || '');
+  const [locError,    setLocError]    = useState('');
+  const [locLoading,  setLocLoading]  = useState(false);
 
-  const [locError, setLocError] = useState('');
-
+  /* ── auto-capture location on mount ── */
   const captureLocation = () => {
     setLocError('');
-
-    if (!navigator.geolocation) {
-      setLocError('Geolocation is not supported by your browser.');
-      return;
-    }
-
+    setLocLoading(true);
+    if (!navigator.geolocation) { setLocError('Geolocation not supported.'); setLocLoading(false); return; }
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-
-        setCoords({
-          lat,
-          lng
-        });
-
-        const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-
-        setLocationUrl(mapsUrl);
+      (pos) => {
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+        setCoords({ lat, lng });
+        setLocationUrl(`https://www.google.com/maps?q=${lat},${lng}`);
+        setLocLoading(false);
       },
-      (error) => {
-        if (error.code === 1) {
-          setLocError(
-            'Location access is blocked. Please enable location permission.'
-          );
-        } else {
-          setLocError('Unable to retrieve your location.');
-        }
+      (err) => {
+        setLocError(err.code === 1 ? 'Location permission blocked.' : 'Unable to get location.');
+        setLocLoading(false);
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
+  useEffect(() => { if (!coords.lat || !coords.lng) captureLocation(); }, []);
+
+  /* ── image handling ── */
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setShopImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeImage = () => {
-    setShopImage(null);
-    setImagePreview(null);
+    if (!file) return;
+    setShopImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result);
+    reader.readAsDataURL(file);
   };
 
   useEffect(() => {
-    if (!coords.lat || !coords.lng) {
-      captureLocation();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (shopImage && shopImage instanceof File) {
+    if (shopImage instanceof File) {
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(shopImage);
     }
   }, [shopImage]);
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const removeImage = () => { setShopImage(null); setImagePreview(null); };
 
-    setFormData((prev) => ({
-      ...prev,
-      shopName,
-      mobile,
-      shopAddress,
-      landmark,
-      shopType,
-      shopImage,
-      latitude: coords.lat,
-      longitude: coords.lng,
-      locationUrl
+  /* ── submit ── */
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setFormData(prev => ({
+      ...prev, shopName, mobile, shopAddress, landmark, shopType,
+      shopImage: imagePreview, latitude: coords.lat, longitude: coords.lng, locationUrl
     }));
-
     navigate('/sell/products');
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-4 max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-gray-200"
-    >
-      <h2 className="text-xl font-bold mb-4">{t.title}</h2>
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-xl mx-auto">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-4 text-base font-black text-slate-900">{t.title}</h2>
 
-
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">
-          {t.name}
-        </label>
-        <input
-          type="text"
-          value={shopName}
-          onChange={(e) => setShopName(e.target.value)}
-          placeholder="Gupta Store"
-          className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-          required
-        />
-      </div>
-
-
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">
-          {t.mobile}
-        </label>
-
-        <input
-          type="tel"
-          value={mobile}
-          onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
-          placeholder="1234567890"
-          maxLength={10}
-          className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-          required
-        />
-      </div>
-
-      <div className="md:col-span-2">
-        <label className="mb-1 block text-sm font-medium text-gray-700">
-          {t.addr}
-        </label>
-        <textarea
-          value={shopAddress}
-          onChange={(e) => setShopAddress(e.target.value)}
-          placeholder="MG Road, Indore"
-          rows="3"
-          className="w-full resize-none rounded border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          required
-        />
-      </div>
-
-
-
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">
-          {t.land}
-        </label>
-        <input
-          type="text"
-          value={landmark}
-          onChange={(e) => setLandmark(e.target.value)}
-          placeholder="Near SBI Bank"
-          className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">
-          {t.type}
-        </label>
-        <select
-          value={shopType}
-          onChange={(e) => setShopType(e.target.value)}
-          className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-          required
-        >
-          <option value="Retail">General Store</option>
-          <option value="Wholesale">Wholesale</option>
-          <option value="Distributor">Distributor</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-
-      {/* Location Section */}
-      <div>
-
-
-        <label className="mb-1 block text-sm font-medium text-gray-700">
-          Location URL
-        </label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-
-
-
-
-          <input
-            type="text"
-            value={locationUrl}
-            readOnly
-            placeholder="Location URL will appear here"
-            className="w-full rounded border border-gray-300 bg-gray-200 px-3 py-2 text-sm text-gray-500np cursor-not-allowed"
-          />
-          <button
-            type="button"
-            onClick={captureLocation}
-            className="w-full rounded bg-gray-600 py-2 text-sm font-medium text-white hover:bg-gray-700"
-          >
-            Capture Current Location
-          </button>
-
-
-
+        {/* Shop Name */}
+        <div className="mb-3">
+          <label className={labelCls}>{t.name}</label>
+          <input type="text" value={shopName} onChange={e => setShopName(e.target.value)}
+            placeholder="Gupta Store" className={inputCls} required />
         </div>
-        <div>
+
+        {/* Mobile */}
+        <div className="mb-3">
+          <label className={labelCls}>{t.mobile}</label>
+          <input type="tel" value={mobile} onChange={e => setMobile(e.target.value.replace(/\D/g, ''))}
+            placeholder="9876543210" maxLength={10} className={inputCls} required />
+        </div>
+
+        {/* Address */}
+        <div className="mb-3">
+          <label className={labelCls}>{t.addr}</label>
+          <textarea value={shopAddress} onChange={e => setShopAddress(e.target.value)}
+            placeholder="MG Road, Indore" rows={2}
+            className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 transition" required />
+        </div>
+
+        {/* Landmark + Shop Type side by side */}
+        <div className="mb-3 grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>{t.land}</label>
+            <input type="text" value={landmark} onChange={e => setLandmark(e.target.value)}
+              placeholder="Near SBI Bank" className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>{t.type}</label>
+            <select value={shopType} onChange={e => setShopType(e.target.value)} className={inputCls} required>
+              <option value="Retail">General Store</option>
+              <option value="Wholesale">Wholesale</option>
+              <option value="Distributor">Distributor</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Location */}
+        <div className="mb-3">
+          <label className={labelCls}>Location</label>
+          <div className="flex gap-2">
+            <input type="text" value={locationUrl} readOnly
+              placeholder="Location URL will appear here"
+              className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs text-gray-500 cursor-not-allowed" />
+            <button type="button" onClick={captureLocation} disabled={locLoading}
+              className="flex items-center gap-1 rounded-lg bg-slate-700 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 transition disabled:opacity-60 shrink-0">
+              <MapPin size={13} />
+              {locLoading ? 'Getting...' : locationUrl ? 'Refresh' : 'Capture'}
+            </button>
+          </div>
           {locationUrl && (
-            <a
-              href={locationUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 block text-sm text-blue-600 underline"
-            >
-              Open Location in Google Maps
-            </a>
+            <a href={locationUrl} target="_blank" rel="noopener noreferrer"
+              className="mt-1 block text-xs text-blue-600 underline">Open in Google Maps</a>
           )}
-
-          {locError && (
-            <p className="mt-2 text-sm text-red-500">
-              {locError}
-            </p>
-          )}
+          {locError && <p className="mt-1 text-xs text-red-500">{locError}</p>}
         </div>
 
-      </div>
-      <div className="flex flex-col">
-        <label className="mb-1 block text-sm font-medium text-gray-700">
-          {t.img}
-        </label>
-        <div className="flex-1 min-h-[88px] relative border-2 border-dashed border-gray-300 rounded bg-gray-50 flex items-center justify-center overflow-hidden">
-          {imagePreview ? (
-            <div className="relative w-full h-full">
-              <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={removeImage}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          ) : (
-            <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center justify-center text-gray-400 hover:text-primary transition-colors">
-              <Camera size={24} />
-              <span className="text-[10px] mt-1 uppercase font-bold">{t.upload}</span>
-              <input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
+        {/* Shop Image — compact preview */}
+        <div>
+          <label className={labelCls}>{t.img}</label>
+          <div className="flex items-center gap-3">
+            {/* Upload trigger */}
+            <label htmlFor="image-upload"
+              className="flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 text-blue-500 hover:bg-blue-100 transition overflow-hidden">
+              {imagePreview ? (
+                <img src={imagePreview} alt="Shop preview" className="h-full w-full object-cover rounded-xl" />
+              ) : (
+                <Camera size={22} />
+              )}
+              <input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
             </label>
-          )}
+
+            {/* Right side text / controls */}
+            {imagePreview ? (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                  <CheckCircle2 size={13} /> Image captured
+                </div>
+                <button type="button" onClick={removeImage}
+                  className="flex items-center gap-1 text-[11px] font-semibold text-red-500 hover:text-red-700">
+                  <X size={12} /> Remove
+                </button>
+                <label htmlFor="image-upload" className="cursor-pointer text-[11px] font-semibold text-blue-600 hover:text-blue-800">
+                  Change photo
+                </label>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs font-semibold text-slate-600">{t.upload}</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Tap the box to take a photo</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <button
-        type="submit"
-        className="mt-4 w-full rounded bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700"
-      >
+      <button type="submit"
+        className="w-full rounded-xl bg-blue-700 py-3 text-sm font-black text-white shadow-sm hover:bg-blue-800 transition-colors">
         {t.next}
       </button>
     </form>

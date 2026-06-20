@@ -100,6 +100,86 @@ router.delete('/purge-unknown', async (req, res) => {
   }
 });
 
+// POST /api/reports/manager-record -> Manager manually creates a sales record for any of their sellers
+const { body: reportBody, validationResult: reportValidationResult } = require('express-validator');
+router.post('/manager-record', [
+  reportBody('sellerId').trim().notEmpty().withMessage('Seller is required'),
+  reportBody('shopName').trim().notEmpty().withMessage('Shop name is required'),
+  reportBody('shopAddress').trim().notEmpty().withMessage('Shop address is required'),
+  reportBody('shopType').isIn(['Retail', 'Wholesale', 'Distributor', 'Other']).withMessage('Invalid shop type'),
+  reportBody('items').isArray({ min: 1 }).withMessage('At least one item is required'),
+  reportBody('paymentStatus').optional().isIn(['Paid', 'Partial', 'Pending']),
+  reportBody('paidAmount').optional().isFloat({ min: 0 }).toFloat(),
+  reportBody('pendingAmount').optional().isFloat({ min: 0 }).toFloat(),
+  reportBody('visitDatetime').optional().isISO8601().toDate()
+], async (req, res) => {
+  const errors = reportValidationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+  const { sellerId, shopName, shopAddress, shopType, mobile, landmark, items,
+    paidAmount, pendingAmount, paymentStatus, paymentMethod, visitDatetime } = req.body;
+
+  try {
+    const managerId = getManagerObjectId(req);
+    // Ensure the seller belongs to this manager
+    const seller = await Seller.findOne({ _id: sellerId, managerId });
+    if (!seller) return res.status(404).json({ message: 'Seller not found or does not belong to you' });
+
+    let totalAmount = 0;
+    const itemsToSave = (items || []).map(item => {
+      const quantity = item.unit === 'weight' ? Number(item.weight || 0) : Number(item.quantity || 0);
+      const rate = Number(item.price || item.rate || 0);
+      const amount = Number((quantity * rate).toFixed(2));
+      totalAmount += amount;
+      return {
+        productName: item.productName,
+        unit: item.unit || 'quantity',
+        quantity: item.unit === 'weight' ? item.weight : item.quantity,
+        weight: item.unit === 'weight' ? item.weight : undefined,
+        price: rate, rate, amount
+      };
+    });
+
+    const record = new SalesRecord({
+      sellerId: seller._id,
+      managerId,
+      shopName, shopAddress,
+      mobile: mobile || '',
+      landmark: landmark || '',
+      shopType,
+      latitude: 0, longitude: 0,  // Manager adds manually, no GPS
+      visitDatetime: visitDatetime || new Date(),
+      totalAmount: Number(totalAmount.toFixed(2)),
+      paymentMethod: paymentMethod || 'Offline',
+      paidAmount: paidAmount || 0,
+      pendingAmount: pendingAmount || 0,
+      paymentStatus: paymentStatus || 'Pending'
+    });
+    await record.save();
+
+    const savedItems = [];
+    for (const item of itemsToSave) {
+      const saleItem = new SaleItem({
+        recordId: record._id,
+        productName: item.productName,
+        unit: item.unit,
+        quantity: item.quantity,
+        weight: item.weight,
+        price: item.price,
+        rate: item.rate,
+        amount: item.amount
+      });
+      await saleItem.save();
+      savedItems.push(saleItem);
+    }
+
+    res.status(201).json({ message: 'Record saved successfully', record, items: savedItems });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error saving record' });
+  }
+});
+
 // GET /api/reports/summary -> Returns totalSellers, totalRecords, monthlyTotal, yearlyTotal
 router.get('/summary', async (req, res) => {
   try {

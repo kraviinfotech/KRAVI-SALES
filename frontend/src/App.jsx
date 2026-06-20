@@ -21,10 +21,12 @@ import ManagerDashboard from './pages/manager/ManagerDashboard';
 import AddSeller from './pages/manager/AddSeller';
 import Reports from './pages/manager/Reports';
 import ManagerRecords from './pages/manager/ManagerRecords';
+import ManagerAddRecord from './pages/manager/ManagerAddRecord';
 import ProductsOverview from './pages/manager/ProductsOverview';
 import ManagerSellerDetail from './pages/manager/ManagerSellerDetail';
 import ManagerProfile from './pages/manager/ManagerProfile';
 import SubscriptionPayment from './pages/manager/SubscriptionPayment';
+import SubscriptionBilling from './pages/manager/SubscriptionBilling';
 import AdminDashboard from './pages/Admin/Dashboard';
 
 import AdminManagers from './pages/Admin/Managers';
@@ -112,11 +114,13 @@ const App = () => {
             <Route path="/manager" element={<ManagerDashboard />} />
             <Route path="/manager/sellers" element={<AddSeller />} />
             <Route path="/manager/records" element={<ManagerRecords />} />
+            <Route path="/manager/records/new" element={<ManagerAddRecord />} />
             <Route path="/manager/reports" element={<Reports />} />
             <Route path="/manager/products" element={<ProductsOverview />} />
             <Route path="/manager/profile" element={<ManagerProfile />} />
             <Route path="/manager/seller/:sellerId" element={<ManagerSellerDetail />} />
             <Route path="/manager/payment" element={<SubscriptionPayment />} />
+            <Route path="/manager/subscription" element={<SubscriptionBilling />} />
           </Route>
 
           {/* Admin Routes */}

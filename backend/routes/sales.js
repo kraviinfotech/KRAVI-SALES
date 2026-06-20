@@ -93,7 +93,8 @@ router.post(
     body('paidAmount').optional().isFloat({ min: 0 }).toFloat(),
     body('pendingAmount').optional().isFloat({ min: 0 }).toFloat(),
     body('paymentStatus').optional().isIn(['Paid', 'Partial', 'Pending']).withMessage('Invalid payment status'),
-    body('scannerPhoto').optional({ values: 'falsy' }).isString().withMessage('Scanner photo must be a string')
+    body('scannerPhoto').optional({ values: 'falsy' }).isString().withMessage('Scanner photo must be a string'),
+    body('shopImage').optional({ values: 'falsy' }).isString().withMessage('Shop image must be a string')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -101,7 +102,7 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { shopName, shopAddress, mobile, landmark, shopType, latitude, longitude, items, paymentMethod, paidAmount, pendingAmount, paymentStatus, scannerPhoto } = req.body;
+    const { shopName, shopAddress, mobile, landmark, shopType, latitude, longitude, items, paymentMethod, paidAmount, pendingAmount, paymentStatus, scannerPhoto, shopImage } = req.body;
 
     try {
       // Find the seller profile of the logged-in user
@@ -163,7 +164,8 @@ router.post(
         paidAmount: paidAmount || 0,
         pendingAmount: pendingAmount || 0,
         paymentStatus: paymentStatus || 'Pending',
-        scannerPhoto: scannerPhoto || null
+        scannerPhoto: scannerPhoto || null,
+        shopImage: shopImage || null
       });
 
       await record.save();
