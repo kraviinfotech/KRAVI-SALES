@@ -184,27 +184,23 @@ const ManagerRecords = () => {
     const dateStr = format(new Date(), 'dd/MM/yyyy, hh:mm a');
     doc.text(`Generated on: ${dateStr}`, W / 2, 12 + 26, { align: 'center' });
 
-    // Contact Right (Manager Info)
+    // Contact Right (Kravi Infotech Address)
     const cX = R;
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...DARK);
-    doc.text(user?.name || 'Manager', cX, 12 + 10, { align: 'right' });
+    doc.text('Kravi Infotech', cX, 12 + 10, { align: 'right' });
     
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...GRAY);
-    const mgrPhone = user?.mobile || user?.phone ? `+91 ${user?.mobile || user?.phone}` : '';
-    const mgrEmail = user?.email || '';
     
     let yRight = 12 + 17;
-    if (mgrPhone) {
-      doc.text(mgrPhone, cX, yRight, { align: 'right' });
-      yRight += 7;
-    }
-    if (mgrEmail) {
-      doc.text(mgrEmail, cX, yRight, { align: 'right' });
-    }
+    doc.text('Ahilyanagar, Maharashtra, India', cX, yRight, { align: 'right' });
+    yRight += 7;
+    doc.text('contact@kraviinfotech.com', cX, yRight, { align: 'right' });
+    yRight += 7;
+    doc.text('+91 9657013534', cX, yRight, { align: 'right' });
 
     // Top Divider
     let y = 12 + 40;

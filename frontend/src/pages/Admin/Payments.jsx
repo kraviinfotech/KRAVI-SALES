@@ -93,16 +93,24 @@ const Payments = () => {
       doc.setTextColor(108, 62, 244); // Purple (#6C3EF4)
       doc.text('KRAVI SALES', margin, top);
       doc.setTextColor(0, 0, 0);
-      top += 24;
 
-      // Company Details
+      // Company Details (Right)
+      const rightX = pageWidth - margin;
+      let rightY = top - 12;
       doc.setFontSize(10);
-      doc.text('Sales Tracking & Management System', margin, top);
-      top += 14;
-      doc.text('Email: support@kravi-sales.com | Phone: +91 98765 43210', margin, top);
-      top += 14;
-      doc.text('Address: 123 Business Park, Mumbai, India - 400001', margin, top);
-      top += 20;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Kravi Infotech', rightX, rightY, { align: 'right' });
+      
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      rightY += 12;
+      doc.text('Ahilyanagar, Maharashtra, India', rightX, rightY, { align: 'right' });
+      rightY += 12;
+      doc.text('contact@kraviinfotech.com', rightX, rightY, { align: 'right' });
+      rightY += 12;
+      doc.text('+91 9657013534', rightX, rightY, { align: 'right' });
+
+      top += 38;
 
       // Divider line
       doc.setDrawColor(200, 200, 200);

@@ -50,10 +50,28 @@ const SellerReports = () => {
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 14, 30);
+
+    // Address on the right
+    const rightX = 196;
+    let rightY = 14;
+    doc.setFontSize(10);
+    doc.setTextColor(17, 24, 39);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Kravi Infotech', rightX, rightY, { align: 'right' });
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100);
+    rightY += 6;
+    doc.text('Ahilyanagar, Maharashtra, India', rightX, rightY, { align: 'right' });
+    rightY += 6;
+    doc.text('contact@kraviinfotech.com', rightX, rightY, { align: 'right' });
+    rightY += 6;
+    doc.text('+91 9657013534', rightX, rightY, { align: 'right' });
     
     // Decorative Line
     doc.setDrawColor(226, 232, 240);
-    doc.line(14, 35, 196, 35);
+    doc.line(14, 36, 196, 36);
 
     // Summary Table
     autoTable(doc, {

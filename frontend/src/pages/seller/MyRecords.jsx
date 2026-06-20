@@ -47,8 +47,27 @@ const MyRecords = () => {
     doc.setFontSize(9);
     doc.setTextColor(100);
     doc.text(`Exported on: ${now}  |  Total: ${records.length} visits`, 14, 23);
+    
+    // Address on the right
+    const rightX = 283;
+    let rightY = 10;
+    doc.setFontSize(10);
+    doc.setTextColor(17, 24, 39);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Kravi Infotech', rightX, rightY, { align: 'right' });
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100);
+    rightY += 5;
+    doc.text('Ahilyanagar, Maharashtra, India', rightX, rightY, { align: 'right' });
+    rightY += 5;
+    doc.text('contact@kraviinfotech.com', rightX, rightY, { align: 'right' });
+    rightY += 5;
+    doc.text('+91 9657013534', rightX, rightY, { align: 'right' });
+
     doc.setDrawColor(226, 232, 240);
-    doc.line(14, 27, 283, 27);
+    doc.line(14, 29, 283, 29);
 
     autoTable(doc, {
       startY: 32,
