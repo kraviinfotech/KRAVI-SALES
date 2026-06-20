@@ -36,7 +36,8 @@ const ReviewSave = () => {
     shopType, 
     latitude, 
     longitude, 
-    items
+    items,
+    shopImage
   } = formData;
 
   const totalAmount = useMemo(() => (items || []).reduce((sum, item) => {
@@ -50,16 +51,7 @@ const ReviewSave = () => {
 
   const pendingAmount = useMemo(() => totalAmount - payingAmount, [totalAmount, payingAmount]);
 
-  // Effect to update payment status based on paid amount
-  useEffect(() => {
-    if (payingAmount >= totalAmount && totalAmount > 0) {
-      setPaymentStatus('Paid');
-    } else if (payingAmount > 0 && payingAmount < totalAmount) {
-      setPaymentStatus('Partial');
-    } else {
-      setPaymentStatus('Pending');
-    }
-  }, [payingAmount, totalAmount]);
+  // Effect to update payment status based on paid amount removed. Seller manually selects status.
 
   // Fetch manager default scanner if available for sellers
   useEffect(() => {
@@ -140,7 +132,8 @@ const ReviewSave = () => {
         paymentMethod,
         paidAmount: Number(payingAmount) || 0,
         pendingAmount: Number(pendingAmount) || 0,
-        paymentStatus
+        paymentStatus,
+        shopImage
       };
 
       if (typeof scannerPhoto === 'string' && scannerPhoto.trim()) {
@@ -278,7 +271,9 @@ const ReviewSave = () => {
 
           {/* Paying Amount */}
           <div>
-            <label htmlFor="payingAmount" className="mb-1 block text-sm font-medium text-gray-700">Paying Amount (₹)</label>
+            <label htmlFor="payingAmount" className="mb-1 block text-sm font-medium text-gray-700">
+              {paymentMethod === 'Offline' ? 'Cash Received (₹)' : 'Paying Amount (₹)'}
+            </label>
             <input
               id="payingAmount"
               type="number"

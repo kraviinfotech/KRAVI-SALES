@@ -13,6 +13,7 @@ const ProductsOverview = () => {
   const [records, setRecords] = useState([]);
   const [masterProducts, setMasterProducts] = useState([]);
   const [newProductName, setNewProductName] = useState('');
+  const [newProductPrice, setNewProductPrice] = useState('');
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAnimationActive] = useState(false);
   const [error, setError] = useState('');
@@ -47,9 +48,13 @@ const ProductsOverview = () => {
     if (!newProductName.trim()) return;
     setIsAnimationActive(true);
     try {
-      const res = await API.post('/products', { name: newProductName });
+      const res = await API.post('/products', {
+        name: newProductName,
+        baseRate: newProductPrice ? Number(newProductPrice) : 0
+      });
       setMasterProducts(prev => [...prev, res.data].sort((a,b) => a.name.localeCompare(b.name)));
       setNewProductName('');
+      setNewProductPrice('');
     } catch (err) {
       alert(err.response?.data?.message || err.message || 'Error adding product');
     } finally { setIsAnimationActive(false); }
@@ -120,7 +125,7 @@ const ProductsOverview = () => {
       {/* Add Master Product Form */}
       <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <h2 className="text-sm font-black text-slate-900 mb-4 uppercase tracking-wider">Add to Master Catalog</h2>
-        <form onSubmit={handleAddProduct} className="flex gap-3">
+        <form onSubmit={handleAddProduct} className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
             value={newProductName}
@@ -128,10 +133,19 @@ const ProductsOverview = () => {
             placeholder="e.g. New Shampoo Variant"
             className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none"
           />
+          <input
+            type="number"
+            min={0}
+            step={0.01}
+            value={newProductPrice}
+            onChange={(e) => setNewProductPrice(e.target.value)}
+            placeholder="Base Price (₹)"
+            className="w-full sm:w-36 rounded border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+          />
           <button
             type="submit"
             disabled={isAdding}
-            className="bg-blue-700 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-800 disabled:opacity-50"
+            className="bg-blue-700 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-800 disabled:opacity-50 whitespace-nowrap"
           >
             {isAdding ? 'Adding...' : 'Add Product'}
           </button>
@@ -140,6 +154,9 @@ const ProductsOverview = () => {
           {masterProducts.map(p => (
             <span key={p._id} className="inline-flex items-center gap-1 bg-slate-100 px-2 py-1 rounded text-xs font-bold text-slate-600 border border-slate-200">
               {p.name}
+              {p.baseRate > 0 && (
+                <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded ml-1">₹{p.baseRate}</span>
+              )}
               <button onClick={() => handleDeleteProduct(p._id)} className="text-slate-400 hover:text-red-600 ml-1">×</button>
             </span>
           ))}
