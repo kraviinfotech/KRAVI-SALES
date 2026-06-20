@@ -163,12 +163,16 @@ const generateInvoicePDF = (tx, managerName) => {
 
     // Contact — right side
     const cX = R - 175;
-    doc.setFontSize(8.5);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(...DARK);
-    doc.text('123, Business Park, Sector 62,', cX, 36);
-    doc.text('Noida, Uttar Pradesh - 201309', cX, 48);
-    doc.text('+91 98765 43210', cX, 62);
-    doc.text('info@kravi.com', cX, 76);
+    doc.text('Kravi Infotech', cX, 36);
+    
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Ahilyanagar, Maharashtra, India', cX, 48);
+    doc.text('contact@kraviinfotech.com', cX, 60);
+    doc.text('+91 9657013534', cX, 72);
 
     // Divider
     y = 95;
@@ -532,7 +536,7 @@ const SubscriptionBilling = () => {
   const managerName = status?.name || status?.companyName || 'Manager';
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="w-full space-y-6">
 
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">

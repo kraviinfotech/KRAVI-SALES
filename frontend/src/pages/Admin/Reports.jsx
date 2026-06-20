@@ -116,6 +116,22 @@ const Reports = () => {
     doc.setFontSize(10);
     doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 14, 22);
 
+    // Address on the right
+    const rightX = 283;
+    let rightY = 10;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Kravi Infotech', rightX, rightY, { align: 'right' });
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    rightY += 5;
+    doc.text('Ahilyanagar, Maharashtra, India', rightX, rightY, { align: 'right' });
+    rightY += 5;
+    doc.text('contact@kraviinfotech.com', rightX, rightY, { align: 'right' });
+    rightY += 5;
+    doc.text('+91 9657013534', rightX, rightY, { align: 'right' });
+
     const tableColumn = ['Date', 'Seller', 'Shop Name', 'Shop Type', 'Total', 'Paid', 'Pending', 'Status'];
     const tableRows = records.map((r) => [
       new Date(r.visitDatetime).toLocaleDateString('en-IN'),
