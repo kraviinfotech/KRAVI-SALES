@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const Seller = require('../models/Seller');
+const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 const subscriptionMiddleware = require('../middleware/subscriptionMiddleware');
@@ -9,10 +10,12 @@ const subscriptionMiddleware = require('../middleware/subscriptionMiddleware');
 // GET /api/products
 router.get('/', authMiddleware, subscriptionMiddleware, async (req, res) => {
   try {
-    let managerId;
+    let query = {};
 
     if (req.user.role === 'manager') {
-      managerId = req.user._id;
+      query = { managerId: req.user._id };
+    } else if (req.user.role === 'admin') {
+      query = {}; // Admin sees all
     } else {
       const seller = await Seller.findOne({ userId: req.user._id });
 
@@ -21,11 +24,21 @@ router.get('/', authMiddleware, subscriptionMiddleware, async (req, res) => {
           message: 'Seller profile not found'
         });
       }
+      
+      const adminUsers = await User.find({ role: 'admin' }).select('_id');
+      const adminIds = adminUsers.map(u => u._id);
 
-      managerId = seller.managerId;
+      query = {
+        $or: [
+          { managerId: seller.managerId },
+          { managerId: { $in: adminIds } },
+          { managerId: { $exists: false } },
+          { managerId: null }
+        ]
+      };
     }
 
-    const products = await Product.find({ managerId })
+    const products = await Product.find(query)
       .sort({ name: 1 });
 
     res.json(products);
@@ -38,7 +51,7 @@ router.get('/', authMiddleware, subscriptionMiddleware, async (req, res) => {
 });
 
 // POST /api/products
-router.post('/', authMiddleware, roleMiddleware('manager'), subscriptionMiddleware, async (req, res) => {
+router.post('/', authMiddleware, roleMiddleware(['manager', 'admin']), subscriptionMiddleware, async (req, res) => {
   const { name, category, baseRate } = req.body;
 
   if (!name) {
@@ -73,7 +86,7 @@ router.post('/', authMiddleware, roleMiddleware('manager'), subscriptionMiddlewa
 });
 
 // DELETE /api/products/:id
-router.delete('/:id', authMiddleware, roleMiddleware('manager'), subscriptionMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, roleMiddleware(['manager', 'admin']), subscriptionMiddleware, async (req, res) => {
   try {
     const product = await Product.findOneAndDelete({
       _id: req.params.id,

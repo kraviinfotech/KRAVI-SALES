@@ -13,6 +13,7 @@ const adminRoutes = require('./routes/admin');
 const plansRoutes = require('./routes/plans');
 const paymentsRoutes = require('./routes/payments');
 const subscriptionsRoutes = require('./routes/subscriptions');
+const shopPaymentsRoutes = require('./routes/shopPayments');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/plans', plansRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/subscriptions', subscriptionsRoutes);
+app.use('/api/shoppayments', shopPaymentsRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {
