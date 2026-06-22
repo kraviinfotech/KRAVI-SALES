@@ -120,25 +120,26 @@ const ManagerReportFilter = ({ onFilter, onDownloadCSV, sellers = [] }) => {
             className="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
           />
         </div>
-      </div>
-      <div className="flex flex-wrap items-center justify-between mt-4 pt-4 border-t border-gray-100 gap-2">
-        <div className="flex space-x-2">
-          <button type="submit" className="flex items-center space-x-1.5 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded text-sm font-medium transition-colors">
-            <Search size={16} />
-            <span>Apply Filters</span>
-          </button>
-          <button type="button" onClick={handleClear} className="flex items-center space-x-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded text-sm font-medium transition-colors">
-            <RotateCcw size={16} />
-            <span>Reset</span>
+        {/* Reset button in same row */}
+        <div className="flex flex-col justify-end">
+          <button
+            type="button"
+            onClick={handleClear}
+            className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded text-sm font-medium transition-colors whitespace-nowrap"
+          >
+            <RotateCcw size={14} />
+            Reset
           </button>
         </div>
-        {onDownloadCSV && (
+      </div>
+      {onDownloadCSV && (
+        <div className="flex justify-end mt-3">
           <button type="button" onClick={onDownloadCSV} className="flex items-center space-x-1.5 bg-success hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm font-medium transition-colors">
             <Download size={16} />
             <span>Download CSV</span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </form>
   );
 };

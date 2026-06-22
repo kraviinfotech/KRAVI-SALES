@@ -4,7 +4,7 @@ import ReportFilter from '../../components/ReportFilter';
 import SalesTable from '../../components/SalesTable';
 import StatCard from '../../components/StatCard';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend, AreaChart, Area, ComposedChart, ScatterChart, Scatter, ZAxis } from 'recharts';
-import { ShoppingCart, Landmark, DollarSign, Loader2, Calendar, TrendingUp, Users, Package, PieChart as PieIcon, BarChart3, Presentation, CircleDot, ClipboardX } from 'lucide-react';
+import { ShoppingCart, Landmark, DollarSign, Loader2, Calendar, TrendingUp, Users, Package, PieChart as PieIcon, BarChart3, Presentation, ClipboardX } from 'lucide-react';
 
 const COLORS = ['#1D4ED8', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 const currencyFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
@@ -388,22 +388,43 @@ const Reports = () => {
           </div>
         </div>
 
-        {/* Shop Performance Chart */}
+        {/* Shop Performance Chart - Pie Chart */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center gap-2 mb-6">
-            <CircleDot size={18} className="text-orange-600" />
-            <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Shop Value Distribution (Bubble Chart)</h3>
+            <PieIcon size={18} className="text-orange-600" />
+            <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Shop Value Distribution (Pie Chart)</h3>
           </div>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis type="number" dataKey="visits" name="Visits" fontSize={10} stroke="#64748b" label={{ value: 'Visit Count', position: 'insideBottom', offset: -5, fontSize: 10 }} />
-                <YAxis type="number" dataKey="sales" name="Sales" unit="₹" fontSize={10} stroke="#64748b" />
-                <ZAxis type="number" dataKey="sales" range={[100, 1000]} name="Order Volume" />
-                <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                <Scatter name="Shops" data={shopPerformance} fill="#F59E0B" fillOpacity={0.6} />
-              </ScatterChart>
+              <PieChart>
+                <Pie
+                  data={shopPerformance}
+                  dataKey="sales"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={110}
+                  innerRadius={50}
+                  paddingAngle={3}
+                  label={({ name, percent }) =>
+                    percent > 0.04 ? `${name.slice(0, 12)}… ${(percent * 100).toFixed(1)}%` : ''
+                  }
+                  labelLine={false}
+                >
+                  {shopPerformance.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value) => [currencyFormatter.format(value), 'Sales']}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '12px' }}
+                />
+                <Legend
+                  iconType="circle"
+                  iconSize={10}
+                  formatter={(value) => <span style={{ fontSize: 11, fontWeight: 600, color: '#334155' }}>{value.slice(0, 18)}{value.length > 18 ? '…' : ''}</span>}
+                />
+              </PieChart>
             </ResponsiveContainer>
           </div>
         </div>

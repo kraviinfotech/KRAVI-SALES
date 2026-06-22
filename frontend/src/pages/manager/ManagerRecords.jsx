@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import API from '../../api/axios';
 import ReportFilter from '../../components/ReportFilter';
 import SalesTable from '../../components/SalesTable';
-import { Loader2, Plus, FileSpreadsheet, FileText, Printer, Download, Search, ClipboardList, CheckCircle2, XCircle, Calendar, DollarSign } from 'lucide-react';
+import { Loader2, Plus, FileSpreadsheet, FileText, Printer, Download, Search, ClipboardList, CheckCircle2, XCircle, Calendar, DollarSign, User, FileDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const ManagerRecords = () => {
@@ -17,6 +17,7 @@ const ManagerRecords = () => {
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [selectedSellerId, setSelectedSellerId] = useState('');
   
   // Initialize filters from URL search params
   const filters = {
@@ -262,6 +263,7 @@ const ManagerRecords = () => {
     doc.save(`Sales_Records_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
+
   const handlePrint = () => {
     window.print();
   };
@@ -313,6 +315,7 @@ const ManagerRecords = () => {
           </div>
         ))}
       </div>
+
 
       {/* Toolbar: Search, Filters & Exports */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
