@@ -7,10 +7,18 @@ const StartSelling = () => {
     const savedFormData = sessionStorage.getItem('sellFormData');
     if (savedFormData) {
       try {
-        return JSON.parse(savedFormData);
+        const parsed = JSON.parse(savedFormData);
+        // Sanitize: clear stale quantity=1 defaults from old cached data
+        if (parsed.items) {
+          parsed.items = parsed.items.map(item => ({
+            ...item,
+            quantity: (item.quantity === 1 && !item.productName) ? '' : item.quantity
+          }));
+        }
+        return parsed;
       } catch (e) {
         console.error("Failed to parse sellFormData from sessionStorage", e);
-        sessionStorage.removeItem('sellFormData'); // Clear corrupted data
+        sessionStorage.removeItem('sellFormData');
       }
     }
     return {
@@ -20,7 +28,7 @@ const StartSelling = () => {
       shopType: 'Retail',
       latitude: null,
       longitude: null,
-      items: [{ productName: '', unit: 'quantity', quantity: 1, weight: '', price: '' }],
+      items: [{ productName: '', unit: 'quantity', quantity: '', weight: '', price: '' }],
       paymentMethod: 'Offline',
       paidAmount: 0,
       paymentStatus: 'Pending', // Default payment status

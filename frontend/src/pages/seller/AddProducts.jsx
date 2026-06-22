@@ -9,35 +9,24 @@ const translations = {
   mr: { title: "उत्पादने जोडा", pName: "उत्पादनाचे नाव", qty: "प्रमाण (पीसीएस)", weight: "वजन (किग्रा)", price: "प्रति युनिट किंमत", rate: "दर", amt: "एकूण रक्कम", add: "अधिक उत्पादन जोडा", next: "पुढील", unit: "युनिट प्रकार", qtyBtn: "प्रमाण अनुसार", weightBtn: "वजन अनुसार" }
 };
 
-const emptyItem = { productName: '', unit: 'quantity', quantity: 1, weight: '', price: '' };
+const emptyItem = { productName: '', unit: 'quantity', quantity: '', weight: '', price: '' };
 
 const AddProducts = () => {
   const { formData, setFormData, lang } = useOutletContext();
   const t = translations[lang || 'en'];
   const navigate = useNavigate();
-  const [suggestedProducts, setSuggestedProducts] = useState(['Surf Excel', 'Maggi', 'Parle-G', 'Britannia Biscuits', 'Soap', 'Shampoo']);
   const [masterList, setMasterList] = useState([]);
 
   useEffect(() => {
-    const fetchAllSuggestions = async () => {
+    const fetchMasterProducts = async () => {
       try {
-        // 1. Master List from Manager
         const masterRes = await API.get('/products');
         setMasterList(masterRes.data);
-        const masterNames = masterRes.data.map(p => p.name);
-
-        // 2. Seller's own history
-        const historyRes = await API.get('/sales/my-records');
-        
-        const names = new Set(['Surf Excel', 'Maggi', 'Parle-G', 'Britannia Biscuits', 'Soap', 'Shampoo']);
-        masterNames.forEach(n => names.add(n));
-        historyRes.data.forEach(record => record.items?.forEach(item => names.add(item.productName)));
-        setSuggestedProducts(Array.from(names));
       } catch (err) {
         console.error("Failed to fetch product history", err);
       }
     };
-    fetchAllSuggestions();
+    fetchMasterProducts();
   }, []);
 
   // Ensure formData.items is initialized and has required fields
@@ -68,6 +57,21 @@ const AddProducts = () => {
     }));
   };
 
+  const handleProductSelect = (index, productName) => {
+    const selectedProduct = masterList.find(p => p.name === productName);
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.map((item, itemIndex) => {
+        if (itemIndex !== index) return item;
+        return {
+          ...item,
+          productName,
+          price: selectedProduct && selectedProduct.baseRate ? selectedProduct.baseRate : item.price
+        };
+      })
+    }));
+  };
+
   const handleUnitChange = (index, unit) => {
     setFormData(prev => ({
       ...prev,
@@ -77,7 +81,7 @@ const AddProducts = () => {
         const { quantity, weight, ...rest } = item;
         return unit === 'weight'
           ? { ...rest, unit: 'weight', weight: weight || '' }
-          : { ...rest, unit: 'quantity', quantity: quantity || 1 };
+          : { ...rest, unit: 'quantity', quantity: quantity || '' };
       })
     }));
   };
@@ -151,20 +155,17 @@ const AddProducts = () => {
 
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">{t.pName}</label>
-              <input
-                type="text"
-                list={`suggestions-${index}`}
+              <select
                 value={item.productName || ''}
-                onChange={(event) => handleItemChange(index, 'productName', event.target.value)}
-                placeholder="Select or Type..."
+                onChange={(event) => handleProductSelect(index, event.target.value)}
                 className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 required
-              />
-              <datalist id={`suggestions-${index}`}>
-                {masterList.map(p => (
-                  <option key={p._id} value={p.name} />
+              >
+                <option value="" disabled>Select Product...</option>
+                {masterList.map((p, idx) => (
+                  <option key={p._id || idx} value={p.name}>{p.name}</option>
                 ))}
-              </datalist>
+              </select>
             </div>
 
             <div className="space-y-2">
@@ -202,9 +203,9 @@ const AddProducts = () => {
                   <input
                     type="number"
                     min="1"
-                    value={item.quantity || 1}
+                    value={item.quantity || ''}
                     onChange={(event) => handleItemChange(index, 'quantity', event.target.value)}
-                    placeholder="5"
+                    placeholder="Enter quantity"
                     className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                     required
                   />
@@ -248,7 +249,7 @@ const AddProducts = () => {
                 type="text"
                 value={amount ? amount.toFixed(0) : ''}
                 readOnly
-                placeholder="600"
+                placeholder="0"
                 className="w-full rounded border border-gray-300 bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-900 outline-none"
               />
             </div>

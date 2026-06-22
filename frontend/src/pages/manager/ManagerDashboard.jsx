@@ -13,7 +13,11 @@ import {
   Search,
   TrendingUp,
   Users,
-  Trash2
+  Trash2,
+  Wallet,
+  CreditCard,
+  Banknote,
+  Clock
 } from 'lucide-react';
 
 const numberFormatter = new Intl.NumberFormat('en-IN');
@@ -22,6 +26,7 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
   currency: 'INR',
   maximumFractionDigits: 0
 });
+const recentCollectionsLimit = 20;
 
 const toDateInput = (date) => {
   const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
@@ -92,6 +97,24 @@ const ManagerDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const [error, setError] = useState('');
+
+  // Collections State
+  const [collectionStats, setCollectionStats] = useState({ totalCollection: 0, cashCollection: 0, onlineCollection: 0, pendingCollection: 0 });
+  const [recentCollections, setRecentCollections] = useState([]);
+  const [collectionsLoading, setCollectionsLoading] = useState(true);
+
+  const fetchCollectionData = useCallback(async (quiet = false) => {
+    if (!quiet) setCollectionsLoading(true);
+    try {
+      const res = await API.get('/shoppayments/manager-recent');
+      setCollectionStats(res.data.stats);
+      setRecentCollections(res.data.recentPayments);
+    } catch (err) {
+      console.error('Error fetching collections', err);
+    } finally {
+      setCollectionsLoading(false);
+    }
+  }, []);
 
   const fetchSummary = useCallback(async (quiet = false) => {
     if (!quiet) setSummaryLoading(true);
@@ -173,7 +196,8 @@ const ManagerDashboard = () => {
   useEffect(() => {
     fetchSummary();
     fetchChartData();
-  }, [fetchSummary, fetchChartData]);
+    fetchCollectionData();
+  }, [fetchSummary, fetchChartData, fetchCollectionData]);
 
   useEffect(() => {
     fetchRecords();
@@ -184,9 +208,10 @@ const ManagerDashboard = () => {
       fetchSummary(true);
       fetchChartData(true);
       fetchRecords(true);
+      fetchCollectionData(true);
     }, 30000);
     return () => clearInterval(interval);
-  }, [fetchSummary, fetchChartData, fetchRecords]);
+  }, [fetchSummary, fetchChartData, fetchRecords, fetchCollectionData]);
 
 
   const { sellerRows, totals } = useMemo(() => {
@@ -536,6 +561,97 @@ const ManagerDashboard = () => {
           </table>
         </div>
       </section>
+
+      {/* Collection Stats */}
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="group overflow-hidden rounded-xl bg-white/70 backdrop-blur-lg border border-slate-200 shadow-lg p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Total Collection</p>
+              <p className="mt-2 text-2xl font-black text-indigo-700">{currencyFormatter.format(collectionStats.totalCollection)}</p>
+            </div>
+            <div className="rounded-md p-2 bg-indigo-50 text-indigo-700"><Wallet size={20} /></div>
+          </div>
+        </div>
+        <div className="group overflow-hidden rounded-xl bg-white/70 backdrop-blur-lg border border-slate-200 shadow-lg p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Cash Collection</p>
+              <p className="mt-2 text-2xl font-black text-emerald-700">{currencyFormatter.format(collectionStats.cashCollection)}</p>
+            </div>
+            <div className="rounded-md p-2 bg-emerald-50 text-emerald-700"><Banknote size={20} /></div>
+          </div>
+        </div>
+        <div className="group overflow-hidden rounded-xl bg-white/70 backdrop-blur-lg border border-slate-200 shadow-lg p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Online Collection</p>
+              <p className="mt-2 text-2xl font-black text-blue-700">{currencyFormatter.format(collectionStats.onlineCollection)}</p>
+            </div>
+            <div className="rounded-md p-2 bg-blue-50 text-blue-700"><CreditCard size={20} /></div>
+          </div>
+        </div>
+        <div className="group overflow-hidden rounded-xl bg-white/70 backdrop-blur-lg border border-slate-200 shadow-lg p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Pending Collection</p>
+              <p className="mt-2 text-2xl font-black text-red-600">{currencyFormatter.format(collectionStats.pendingCollection)}</p>
+            </div>
+            <div className="rounded-md p-2 bg-red-50 text-red-600"><Clock size={20} /></div>
+          </div>
+        </div>
+      </section>
+
+      {/* Recent Collections Table */}
+      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Payments</p>
+            <h2 className="text-base font-black text-slate-950">Recent Collections</h2>
+          </div>
+          <button 
+            onClick={() => navigate('/manager/collections')}
+            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition-colors"
+          >
+            View All
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[600px] border-collapse text-sm">
+            <thead>
+              <tr className="bg-slate-50 text-xs font-bold text-slate-500 text-left border-b border-slate-200">
+                <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3">Shop</th>
+                <th className="px-4 py-3">Amount</th>
+                <th className="px-4 py-3">Mode</th>
+                <th className="px-4 py-3">Seller</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {collectionsLoading && recentCollections.length === 0 ? (
+                <tr><td colSpan="5" className="px-4 py-8 text-center"><Loader2 className="animate-spin inline text-blue-700" size={18} /></td></tr>
+              ) : recentCollections.length === 0 ? (
+                <tr><td colSpan="5" className="px-4 py-8 text-center text-slate-500 font-semibold">No recent collections found.</td></tr>
+              ) : (
+                recentCollections.slice(0, recentCollectionsLimit).map((payment) => (
+                  <tr key={payment._id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-semibold text-slate-700">{new Date(payment.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', hour:'numeric', minute:'numeric' })}</td>
+                    <td className="px-4 py-3 font-bold text-slate-950">{payment.shopName}</td>
+                    <td className="px-4 py-3 font-black text-emerald-700">+{currencyFormatter.format(payment.amount)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded text-[10px] font-bold ${payment.mode === 'Cash' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>
+                        {payment.mode}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-slate-700">{payment.sellerId?.name || 'Unknown'}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </div>
 );
 

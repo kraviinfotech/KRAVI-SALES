@@ -18,11 +18,13 @@ import ReviewSave from './pages/seller/ReviewSave';
 import SellerReports from './pages/seller/SellerReports';
 import SellerProfile from './pages/seller/SellerProfile';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
+import ManagerCollections from './pages/manager/ManagerCollections';
 import AddSeller from './pages/manager/AddSeller';
 import Reports from './pages/manager/Reports';
 import ManagerRecords from './pages/manager/ManagerRecords';
 import ManagerAddRecord from './pages/manager/ManagerAddRecord';
 import ProductsOverview from './pages/manager/ProductsOverview';
+import Notifications from './pages/manager/Notifications';
 import ManagerSellerDetail from './pages/manager/ManagerSellerDetail';
 import ManagerProfile from './pages/manager/ManagerProfile';
 import SubscriptionPayment from './pages/manager/SubscriptionPayment';
@@ -161,7 +163,9 @@ const App = () => {
             <Route path="/manager/records" element={<ManagerRecords />} />
             <Route path="/manager/records/new" element={<ManagerAddRecord />} />
             <Route path="/manager/reports" element={<Reports />} />
+            <Route path="/manager/collections" element={<ManagerCollections />} />
             <Route path="/manager/products" element={<ProductsOverview />} />
+            <Route path="/manager/notifications" element={<Notifications />} />
             <Route path="/manager/profile" element={<ManagerProfile />} />
             <Route path="/manager/seller/:sellerId" element={<ManagerSellerDetail />} />
             <Route path="/manager/payment" element={<SubscriptionPayment />} />
