@@ -48,9 +48,12 @@ const ProductsOverview = () => {
     if (!newProductName.trim()) return;
     setIsAnimationActive(true);
     try {
+      const token = localStorage.getItem('token');
       const res = await API.post('/products', {
         name: newProductName,
         baseRate: newProductPrice ? Number(newProductPrice) : 0
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
       setMasterProducts(prev => [...prev, res.data].sort((a,b) => a.name.localeCompare(b.name)));
       setNewProductName('');

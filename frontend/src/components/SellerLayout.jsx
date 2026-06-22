@@ -29,7 +29,8 @@ const SellerLayout = () => {
   const [checkingSubscription, setCheckingSubscription] = useState(true);
   const title = routeTitles.find((route) => location.pathname.startsWith(route.match))?.title || 'SalesFlow';
   const canGoBack = location.pathname !== '/dashboard';
-  const showBottomNav = !location.pathname.startsWith('/sell');
+  const isSellingFlow = location.pathname === '/sell' || location.pathname.startsWith('/sell/');
+  const showBottomNav = !isSellingFlow;
 
   const getInitials = (name) => {
     if (!name) return '?';

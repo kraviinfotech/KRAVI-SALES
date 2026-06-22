@@ -13,6 +13,7 @@ import {
   Users,
   X
 } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 
 const navigation = [
   { name: 'Dashboard', to: '/manager', icon: LayoutDashboard, end: true },
@@ -39,10 +40,11 @@ const Sidebar = ({ onLogout }) => {
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-80 bg-slate-900 text-white fixed h-screen top-0 left-0 border-r border-slate-800">
-        <div className="flex h-14 items-center px-4 border-b border-slate-800">
+        <div className="flex h-14 items-center justify-between px-4 border-b border-slate-800">
           <span className="text-sm font-bold tracking-wide">
             SalesFlow Manager
           </span>
+          {user?.role === 'manager' && <NotificationBell />}
         </div>
         <div className="px-4 py-6 border-b border-slate-800 bg-slate-900/50">
           <div className="flex items-center gap-3">
@@ -100,10 +102,17 @@ const Sidebar = ({ onLogout }) => {
           <aside className="fixed inset-0 z-40 flex">
             <div className="fixed inset-0 bg-black/35" onClick={toggleMenu}></div>
             <div className="relative flex min-h-screen w-64 flex-col bg-slate-900 text-white shadow-xl">
-              <div className="flex h-14 items-center px-4 border-b border-slate-800">
-                <span className="text-sm font-bold tracking-wide">
-                  SalesFlow Manager
-                </span>
+              <div className="flex items-center justify-between px-4 border-b border-slate-800 h-14">
+                <span className="text-sm font-bold tracking-wide text-white">SalesFlow Menu</span>
+                <div className="flex items-center gap-3">
+                  {user?.role === 'manager' && <NotificationBell />}
+                  <button
+                    onClick={toggleMenu}
+                    className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
               </div>
               <div className="px-4 py-6 border-b border-slate-800">
                 <div className="flex items-center gap-3">
