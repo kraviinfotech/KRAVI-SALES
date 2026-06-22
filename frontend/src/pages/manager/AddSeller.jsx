@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import API from '../../api/axios';
 import {
   UserPlus, Loader2, AlertCircle, CheckCircle2,
-  Eye, EyeOff, ListCollapse, ShieldCheck, RefreshCw, ArrowLeft
+  Eye, EyeOff, ListCollapse, ShieldCheck, RefreshCw, ArrowLeft, MapPin
 } from 'lucide-react';
+import { validatePassword, getPasswordStrength, getPasswordStrengthColor } from '../../utils/passwordUtils';
 
 const STEPS = ['details', 'otp', 'done'];
 
@@ -13,6 +14,7 @@ const AddSeller = () => {
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState('Weak');
   const [showPassword, setShowPassword] = useState(false);
 
   // OTP step
@@ -24,6 +26,7 @@ const AddSeller = () => {
   const [sellers, setSellers] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
   const [visiblePasswordSellerId, setVisiblePasswordSellerId] = useState(null);
+  const [locationDialog, setLocationDialog] = useState({ open: false, loading: false, error: '', location: null });
 
   // UI states
   const [loadingSubmit, setLoadingSubmit] = useState(false);
@@ -57,6 +60,22 @@ const AddSeller = () => {
     setStep('details');
     setError('');
     setSuccess('');
+    setLocationDialog({ open: false, loading: false, error: '', location: null });
+  };
+
+  const handleShowLocation = async (sellerId) => {
+    setLocationDialog({ open: true, loading: true, error: '', location: null });
+    try {
+      const res = await API.get(`/sellers/${sellerId}/location`);
+      setLocationDialog({ open: true, loading: false, error: '', location: res.data });
+    } catch (err) {
+      setLocationDialog({
+        open: true,
+        loading: false,
+        error: err.response?.data?.message || 'Unable to load location data',
+        location: null
+      });
+    }
   };
 
   // Step 1 – Send OTP
@@ -69,8 +88,9 @@ const AddSeller = () => {
       setError('Please enter a valid email address.');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.errors.join(' '));
       return;
     }
 
@@ -212,10 +232,13 @@ const AddSeller = () => {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setPasswordStrength(getPasswordStrength(e.target.value));
+                    }}
                     autoComplete="new-password"
                     className="w-full rounded border border-gray-300 bg-white px-3 py-2 pr-10 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="Min. 6 characters"
+                    placeholder="Min. 8 chars, uppercase, number, symbol"
                     required
                   />
                   <button
@@ -225,6 +248,10 @@ const AddSeller = () => {
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+                  <span>Password strength: <strong>{passwordStrength}</strong></span>
+                  <span className={`h-2.5 w-24 rounded-full ${getPasswordStrengthColor(passwordStrength)}`}></span>
                 </div>
               </div>
               <div className="flex flex-col gap-3 pt-1">
@@ -349,6 +376,7 @@ const AddSeller = () => {
                     <th className="p-3">Email</th>
                     <th className="p-3">Password</th>
                     <th className="p-3">Registered</th>
+                    <th className="p-3">Live Location</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-gray-700">
@@ -382,10 +410,88 @@ const AddSeller = () => {
                           day: '2-digit', month: 'short', year: 'numeric'
                         })}
                       </td>
+                      <td className="p-3">
+                        <button
+                          type="button"
+                          onClick={() => handleShowLocation(seller._id)}
+                          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100"
+                        >
+                          <MapPin size={14} /> View Location
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {locationDialog.open && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4 py-6">
+              <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-slate-200">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">Seller Live Location</h3>
+                    <p className="mt-1 text-sm text-slate-500">Latest recorded seller visit location from the manager’s sales records.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLocationDialog({ open: false, loading: false, error: '', location: null })}
+                    className="rounded-full bg-slate-100 p-2 text-slate-600 hover:bg-slate-200"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="mt-6 space-y-4">
+                  {locationDialog.loading ? (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-600">
+                      Loading location details…
+                    </div>
+                  ) : locationDialog.error ? (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+                      {locationDialog.error}
+                    </div>
+                  ) : locationDialog.location ? (
+                    <div className="space-y-4">
+
+                      {/* Shop Details 
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                        <p className="text-sm font-semibold text-slate-800">Shop</p>
+                        <p className="mt-1 text-sm text-slate-700">{locationDialog.location.shopName || 'Unknown shop'}</p>
+                        <p className="mt-1 text-sm text-slate-500">{locationDialog.location.shopAddress || 'Address not available'}</p>
+                      </div>
+                      */}
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                          <p className="text-sm font-semibold text-slate-800">Latitude</p>
+                          <p className="mt-1 text-sm text-slate-700">{locationDialog.location.latitude}</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                          <p className="text-sm font-semibold text-slate-800">Longitude</p>
+                          <p className="mt-1 text-sm text-slate-700">{locationDialog.location.longitude}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                        <p className="text-sm font-semibold text-slate-800">Recorded</p>
+                        <p className="text-sm text-slate-700">{new Date(locationDialog.location.visitDatetime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                        <a
+                          href={locationDialog.location.mapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                        >
+                          Open in Google Maps
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
+                      No location details to display.
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>

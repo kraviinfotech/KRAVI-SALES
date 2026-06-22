@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const Seller = require('../models/Seller');
+const SalesRecord = require('../models/SalesRecord');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 const subscriptionMiddleware = require('../middleware/subscriptionMiddleware');
@@ -253,6 +254,43 @@ router.get('/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error fetching seller' });
+  }
+});
+
+// GET /api/sellers/:id/location -> Return latest known seller location from sales records
+router.get('/:id/location', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid seller ID' });
+    }
+    const seller = await Seller.findOne({ _id: req.params.id, managerId: req.user._id });
+    if (!seller) return res.status(404).json({ message: 'Seller not found' });
+
+    const latestRecord = await SalesRecord.findOne({
+      sellerId: seller._id,
+      managerId: req.user._id,
+      latitude: { $exists: true },
+      longitude: { $exists: true }
+    })
+      .sort({ visitDatetime: -1, createdAt: -1 })
+      .lean();
+
+    if (!latestRecord) {
+      return res.status(404).json({ message: 'No location data available for this seller' });
+    }
+
+    const { latitude, longitude, shopName, shopAddress, visitDatetime } = latestRecord;
+    return res.json({
+      latitude,
+      longitude,
+      shopName,
+      shopAddress,
+      visitDatetime,
+      mapsUrl: `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error retrieving seller location' });
   }
 });
 

@@ -32,15 +32,11 @@ import AdminDashboard from './pages/Admin/Dashboard';
 import AdminManagers from './pages/Admin/Managers';
 import AdminPlans from './pages/Admin/Plans';
 import AdminPayments from './pages/Admin/Payments';
-
 import AdminSettings from './pages/Admin/Settings';
-
-
+import TermsPrivacy from './pages/TermsPrivacy';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import bgImage from "./images/bg.png"; 
-
-
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -82,6 +78,55 @@ const App = () => {
           <Route path="/register" element={!user ? <Register /> : <Navigate to={user.role === 'admin' ? '/admin' : user.role === 'manager' ? '/manager' : '/dashboard'} replace />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/terms-privacy" element={<TermsPrivacy />} />
+
+          <Route element={
+            <ProtectedRoute allowedRole="seller">
+              <SellerLayout />
+            </ProtectedRoute>
+          }>
+            <Route path="/dashboard" element={<SellerDashboard />} />
+            <Route path="/my-records" element={<MyRecords />} />
+            <Route path="/seller/reports" element={<SellerReports />} />
+            <Route path="/seller/profile" element={<SellerProfile />} />
+
+            <Route path="/sell" element={<StartSelling />}>
+              <Route path="shop" element={<AddShop />} />
+              <Route path="products" element={<AddProducts />} />
+              <Route path="review" element={<ReviewSave />} />
+              <Route index element={<Navigate to="shop" replace />} />
+            </Route>
+          </Route>
+
+          <Route element={
+            <ProtectedRoute allowedRole="manager">
+              <ManagerLayout />
+            </ProtectedRoute>
+          }>
+            <Route path="/manager" element={<ManagerDashboard />} />
+            <Route path="/manager/sellers" element={<AddSeller />} />
+            <Route path="/manager/records" element={<ManagerRecords />} />
+            <Route path="/manager/records/new" element={<ManagerAddRecord />} />
+            <Route path="/manager/reports" element={<Reports />} />
+            <Route path="/manager/products" element={<ProductsOverview />} />
+            <Route path="/manager/profile" element={<ManagerProfile />} />
+            <Route path="/manager/seller/:sellerId" element={<ManagerSellerDetail />} />
+            <Route path="/manager/payment" element={<SubscriptionPayment />} />
+            <Route path="/manager/subscription" element={<SubscriptionBilling />} />
+          </Route>
+
+          <Route element={
+            <ProtectedRoute allowedRole="admin">
+              <AdminLayout />
+            </ProtectedRoute>
+          }>
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/managers" element={<AdminManagers />} />
+            <Route path="/admin/plans" element={<AdminPlans />} />
+            <Route path="/admin/payments" element={<AdminPayments />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/*" element={<AdminDashboard />} />
+          </Route>
 
           <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : user.role === 'manager' ? '/manager' : '/dashboard') : '/login'} replace />} />
 

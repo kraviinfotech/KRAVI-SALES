@@ -79,13 +79,29 @@ router.get('/overview', async (req, res) => {
 router.get('/managers', async (req, res) => {
   try {
     const managers = await User.find({ role: 'manager' })
-      .select('name email mobile designation photo managerScannerPhoto company isActive createdAt')
+      .select('name email mobile designation photo managerScannerPhoto company isActive createdAt failedAttempts lockedUntil loginHistory termsAccepted termsAcceptedVersion')
       .sort({ createdAt: -1 })
       .lean();
     res.json(managers);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error retrieving managers' });
+  }
+});
+
+// PATCH /api/admin/managers/:id/unlock -> Manually unlock a manager account
+router.patch('/managers/:id/unlock', async (req, res) => {
+  try {
+    const manager = await User.findById(req.params.id);
+    if (!manager || manager.role !== 'manager') return res.status(404).json({ message: 'Manager not found' });
+    manager.lockedUntil = undefined;
+    manager.failedAttempts = 0;
+    manager.lastFailedAttempt = undefined;
+    await manager.save();
+    res.json({ message: 'Manager account unlocked successfully', manager });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error unlocking manager' });
   }
 });
 

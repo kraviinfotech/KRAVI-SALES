@@ -67,7 +67,49 @@ const UserSchema = new mongoose.Schema({
     default: Date.now
   },
   resetPasswordToken: { type: String },
-  resetPasswordExpires: { type: Date }
+  resetPasswordExpires: { type: Date },
+  failedAttempts: {
+    type: Number,
+    default: 0
+  },
+  lastFailedAttempt: {
+    type: Date,
+    default: null
+  },
+  lockedUntil: {
+    type: Date,
+    default: null
+  },
+  loginHistory: [
+    {
+      success: { type: Boolean, required: true },
+      date: { type: Date, default: Date.now },
+      ip: { type: String, default: null },
+      browser: { type: String, default: null },
+      device: { type: String, default: null },
+      reason: { type: String, default: null }
+    }
+  ],
+  termsAccepted: {
+    type: Boolean,
+    default: false
+  },
+  termsAcceptedVersion: {
+    type: String,
+    default: null
+  },
+  termsAcceptedAt: {
+    type: Date,
+    default: null
+  },
+  termsAcceptedIp: {
+    type: String,
+    default: null
+  },
+  termsAcceptedDevice: {
+    type: String,
+    default: null
+  }
 });
 
 // Hash password before saving and track password update time

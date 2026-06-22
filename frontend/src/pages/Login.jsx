@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ShieldCheck, UserRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const mobilePattern = /^\d{10}$/;
 
@@ -81,7 +82,6 @@ const roleConfig = {
         password
       });
 
-      // Admins use the Manager login tab but redirect to /admin
       const isAuthorized = 
         (selectedRole === 'seller' && userData.role === 'seller') ||
         (selectedRole === 'manager' && (userData.role === 'manager' || userData.role === 'admin'));

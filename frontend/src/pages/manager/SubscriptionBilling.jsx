@@ -466,9 +466,7 @@ const generateInvoicePDF = (tx, managerName) => {
     const terms = [
       '• Subscription fees are non-refundable and non-transferable after activation.',
       '• Services are available only during the active subscription period.',
-      '• Non-payment or delayed payment may result in immediate account suspension.',
-      '• Unauthorized sharing, resale, copying, or misuse of the software is strictly prohibited.',
-      '• KRAVI reserves the right to suspend accounts involved in fraudulent or suspicious activities.',
+      '• Non-payment or delayed payment may result in immediate account suspension.'
     ];
     let nY = footerContentY + 36;
     terms.forEach((t) => { doc.text(t, tcX + 12, nY); nY += 14; });
