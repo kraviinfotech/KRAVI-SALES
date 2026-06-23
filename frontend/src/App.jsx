@@ -35,6 +35,9 @@ import AdminManagers from './pages/Admin/Managers';
 import AdminPlans from './pages/Admin/Plans';
 import AdminPayments from './pages/Admin/Payments';
 import AdminSettings from './pages/Admin/Settings';
+import KraviChatbot from './components/KraviChatbot';
+
+
 import TermsPrivacy from './pages/TermsPrivacy';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -191,6 +194,7 @@ const App = () => {
           <Route path="*" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : user.role === 'manager' ? '/manager' : '/dashboard') : '/login'} replace />} />
         </Routes>
       </main>
+      <KraviChatbot />
     </div>
   );
 };
