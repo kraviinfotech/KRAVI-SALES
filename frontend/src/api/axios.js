@@ -5,6 +5,7 @@ const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5002/api',
 });
 
+
 // Request interceptor to automatically add authorization header
 API.interceptors.request.use(
   (config) => {

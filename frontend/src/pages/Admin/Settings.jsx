@@ -90,27 +90,7 @@ const Settings = () => {
             </button>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left: Tab Filter */}
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-              <div className="flex items-center gap-3 flex-wrap">
-                <Filter size={18} className="text-gray-500" />
-                <div className="flex gap-2 flex-wrap">
-                  {['General', 'Email', 'Notifications', 'Security', 'Billing'].map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                        activeTab === tab
-                          ? 'bg-[#6C3EF4] text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+
 
             {/* Right: Settings sections grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

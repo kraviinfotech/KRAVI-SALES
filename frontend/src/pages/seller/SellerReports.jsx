@@ -92,6 +92,8 @@ const SellerReports = () => {
         ['Total Collected',    fmt.format(stats.paidTotal)],
         ['Total Pending',      fmt.format(stats.pendingTotal)],
       ],
+
+      
       theme: 'striped',
       headStyles: { fillColor: [29, 78, 216], fontSize: 10, fontStyle: 'bold' },
       bodyStyles: { fontSize: 10 },

@@ -13,6 +13,42 @@ const {
   getManagerIdForUser,
   signUserToken
 } = require('../utils/subscriptionUtils');
+const { validatePassword } = require('../utils/passwordUtils');
+
+const TERMS_VERSION = process.env.TERMS_VERSION || '1.0';
+
+const getRequestIp = (req) => {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  return req.ip || req.connection?.remoteAddress || 'unknown';
+};
+
+const getBrowserFromUA = (ua = '') => {
+  if (/chrome/i.test(ua) && !/edge|edg|opr|opera/i.test(ua)) return 'Chrome';
+  if (/firefox/i.test(ua)) return 'Firefox';
+  if (/safari/i.test(ua) && !/chrome|chromium/i.test(ua)) return 'Safari';
+  if (/edg|edge/i.test(ua)) return 'Edge';
+  if (/opr|opera/i.test(ua)) return 'Opera';
+  if (/mobile/i.test(ua)) return 'Mobile Browser';
+  return 'Unknown Browser';
+};
+
+const getDeviceFromUA = (ua = '') => {
+  if (/mobile|android|iphone|ipad|tablet/i.test(ua)) return 'Mobile/Tablet';
+  return 'Desktop';
+};
+
+const addLoginHistoryEntry = (user, { success, ip, browser, device, reason }) => {
+  if (!Array.isArray(user.loginHistory)) {
+    user.loginHistory = [];
+  }
+  user.loginHistory.push({ success, ip, browser, device, reason });
+  if (user.loginHistory.length > 50) {
+    user.loginHistory = user.loginHistory.slice(-50);
+  }
+};
 
 // POST /api/auth/register -> public manager registration with admin-configured trial
 router.post(
@@ -22,6 +58,9 @@ router.post(
     body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
     body('mobile').isMobilePhone('any').withMessage('Valid mobile is required').trim(),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('acceptedTerms')
+      .custom((value) => value === true || value === 'true')
+      .withMessage('You must accept the Terms & Privacy Policy'),
     body('role').optional().isIn(['manager']).withMessage('Public registration is only available for managers')
   ],
   async (req, res) => {
@@ -31,12 +70,16 @@ router.post(
     }
 
     try {
-      const { name, email, mobile, password } = req.body;
-      // Normalize email
+      const { name, email, mobile, password, acceptedTerms } = req.body;
       const normalizedEmail = email ? email.trim().toLowerCase() : null;
       const normalizedMobile = mobile ? mobile.trim() : null;
+      const agreedToTerms = acceptedTerms === true || acceptedTerms === 'true';
 
-      // Prevent duplicates
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.valid) {
+        return res.status(400).json({ message: passwordValidation.errors.join(' ') });
+      }
+
       const existing = await User.findOne({ $or: [{ email: normalizedEmail }, { mobile: normalizedMobile }] });
       if (existing) {
         return res.status(400).json({ message: 'Email or mobile already registered' });
@@ -44,15 +87,23 @@ router.post(
 
       const role = 'manager';
 
-      const user = new User({ name, email: normalizedEmail, mobile: normalizedMobile, password, role });
+      const user = new User({
+        name,
+        email: normalizedEmail,
+        mobile: normalizedMobile,
+        password,
+        role,
+        termsAccepted: agreedToTerms,
+        termsAcceptedVersion: agreedToTerms ? TERMS_VERSION : null,
+        termsAcceptedAt: agreedToTerms ? new Date() : null
+      });
       await user.save();
 
-      // Automatically assign the admin-configured free/trial plan to new Managers
       if (role === 'manager') {
         await assignTrialSubscription(user._id);
       }
 
-      return res.status(201).json({ message: 'User registered successfully', user: { _id: user._id, name: user.name, email: user.email, role: user.role } });
+      return res.status(201).json({ message: 'User registered successfully', user: { _id: user._id, name: user.name, email: user.email, role: user.role, termsAccepted: user.termsAccepted, termsAcceptedVersion: user.termsAcceptedVersion } });
     } catch (err) {
       console.error('Register error:', err);
       return res.status(500).json({ message: 'Server error' });
@@ -85,15 +136,16 @@ router.post(
 
     const { email, mobile, password } = req.body;
     const trimmedMobile = mobile ? mobile.trim() : null;
-    // Normalize email to lowercase to match schema storage
     const trimmedEmail = email ? email.trim().toLowerCase() : null;
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+    const ip = getRequestIp(req);
+    const browser = getBrowserFromUA(userAgent);
+    const device = getDeviceFromUA(userAgent);
 
-    // Dev logging to help diagnose missing users (safe for local dev)
     if (process.env.NODE_ENV !== 'production') {
       console.log('Auth login attempt - email:', trimmedEmail, 'mobile:', trimmedMobile);
     }
 
-    // Find user by mobile or email
     let user = null;
     if (trimmedMobile) {
       user = await User.findOne({ mobile: trimmedMobile });
@@ -114,10 +166,58 @@ router.post(
       return res.status(400).json({ message: 'User not found' });
     }
 
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      addLoginHistoryEntry(user, {
+        success: false,
+        ip,
+        browser,
+        device,
+        reason: 'Account is locked'
+      });
+      await user.save();
+      return res.status(403).json({ message: `Account temporarily locked until ${user.lockedUntil.toLocaleString()}. Please try again later or contact admin.` });
+    }
+
+    if (user.lockedUntil && user.lockedUntil <= new Date()) {
+      user.lockedUntil = undefined;
+      user.failedAttempts = 0;
+      user.lastFailedAttempt = undefined;
+    }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      const now = new Date();
+      user.failedAttempts = (user.failedAttempts || 0) + 1;
+      user.lastFailedAttempt = now;
+      const reachedLock = user.failedAttempts >= 5;
+      if (reachedLock) {
+        user.lockedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      }
+      addLoginHistoryEntry(user, {
+        success: false,
+        ip,
+        browser,
+        device,
+        reason: reachedLock ? 'Account locked due to repeated failed login attempts' : 'Incorrect password'
+      });
+      await user.save();
+      if (reachedLock) {
+        return res.status(403).json({ message: `Too many failed login attempts. Account locked until ${user.lockedUntil.toLocaleString()}.` });
+      }
       return res.status(400).json({ message: 'Incorrect password' });
     }
+
+    user.failedAttempts = 0;
+    user.lastFailedAttempt = undefined;
+    user.lockedUntil = undefined;
+    addLoginHistoryEntry(user, {
+      success: true,
+      ip,
+      browser,
+      device,
+      reason: 'Login successful'
+    });
+    await user.save();
 
     let subscriptionStatus = null;
     const managerId = await getManagerIdForUser(user);
@@ -137,7 +237,9 @@ router.post(
         role: user.role,
         managerScannerPhoto: user.managerScannerPhoto || null,
         subscriptionTier: user.subscriptionTier || null,
-        subscriptionExpiry: user.subscriptionExpiry || null
+        subscriptionExpiry: user.subscriptionExpiry || null,
+        termsAccepted: user.termsAccepted || false,
+        termsAcceptedVersion: user.termsAcceptedVersion || null
       },
       subscriptionStatus
     });
@@ -206,7 +308,6 @@ router.post(
       .exists().withMessage('Token is required'),
     body('newPassword')
       .exists().withMessage('New password is required')
-      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -214,6 +315,11 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
     const { token, newPassword } = req.body;
+    const validation = validatePassword(newPassword);
+    if (!validation.valid) {
+      return res.status(400).json({ message: validation.errors.join(' ') });
+    }
+
     const user = await User.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() }
@@ -236,7 +342,7 @@ router.post(
 
 // GET /api/auth/me -> return current authenticated user
 router.get('/me', authMiddleware, async (req, res) => {
-  const { _id, name, email, mobile, role, managerScannerPhoto } = req.user;
+  const { _id, name, email, mobile, role, managerScannerPhoto, termsAccepted, termsAcceptedVersion } = req.user;
   res.json({
     user: {
       _id,
@@ -246,10 +352,71 @@ router.get('/me', authMiddleware, async (req, res) => {
       role,
       managerScannerPhoto: managerScannerPhoto || null,
       subscriptionTier: req.user.subscriptionTier || null,
-      subscriptionExpiry: req.user.subscriptionExpiry || null
+      subscriptionExpiry: req.user.subscriptionExpiry || null,
+      termsAccepted: termsAccepted || false,
+      termsAcceptedVersion: termsAcceptedVersion || null
     }
   });
 });
+
+// POST /api/auth/accept-terms -> save acceptance metadata
+router.post(
+  '/accept-terms',
+  authMiddleware,
+  [
+    body('acceptedCompanyAcceptance')
+      .custom((value) => value === true || value === 'true')
+      .withMessage('Company acceptance is required'),
+    body('acceptedTermsAndConditions')
+      .custom((value) => value === true || value === 'true')
+      .withMessage('Terms and conditions acceptance is required'),
+    body('acceptedPrivacyPolicy')
+      .custom((value) => value === true || value === 'true')
+      .withMessage('Privacy policy acceptance is required'),
+    body('acceptedCompanyPolicies')
+      .custom((value) => value === true || value === 'true')
+      .withMessage('Company policies acceptance is required')
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const user = await User.findById(req.user._id);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      const userAgent = req.headers['user-agent'] || 'Unknown';
+      const ip = getRequestIp(req);
+      const browser = getBrowserFromUA(userAgent);
+      const device = getDeviceFromUA(userAgent);
+
+      user.termsAccepted = true;
+      user.termsAcceptedVersion = TERMS_VERSION;
+      user.termsAcceptedAt = new Date();
+      user.termsAcceptedIp = ip;
+      user.termsAcceptedDevice = device;
+      await user.save();
+
+      res.json({
+        message: 'Terms accepted successfully',
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          mobile: user.mobile,
+          role: user.role,
+          termsAccepted: user.termsAccepted,
+          termsAcceptedVersion: user.termsAcceptedVersion
+        }
+      });
+    } catch (err) {
+      console.error('Accept terms error:', err);
+      res.status(500).json({ message: 'Server error saving acceptance' });
+    }
+  }
+);
 
 // PATCH /api/auth/me/scanner -> manager uploads default scanner image
 router.patch(

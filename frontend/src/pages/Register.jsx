@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { validatePassword, getPasswordStrength, getPasswordStrengthColor } from '../utils/passwordUtils';
 
 const Register = () => {
   const [searchParams] = useSearchParams();
@@ -11,7 +12,9 @@ const Register = () => {
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState('Weak');
   const [loading, setLoading] = useState(false);
 
   const { register } = useAuth();
@@ -24,7 +27,6 @@ const Register = () => {
       setError('Passwords do not match');
       return;
     }
-    // Basic validation
     const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
     const mobilePattern = /^\d{10}$/;
     if (!emailPattern.test(email)) {
@@ -35,13 +37,18 @@ const Register = () => {
       setError('Please enter a valid 10-digit mobile number');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (!acceptedTerms) {
+      setError('You must accept the Terms & Privacy Policy to register.');
+      return;
+    }
+    const validation = validatePassword(password);
+    if (!validation.valid) {
+      setError(validation.errors.join(' '));
       return;
     }
     setLoading(true);
     try {
-      await register({ name, email, mobile, password, role: 'manager' });
+      await register({ name, email, mobile, password, role: 'manager', acceptedTerms });
       alert('Registration successful! Please login to continue.');
       navigate('/login?role=manager', { replace: true });
     } catch (err) {
@@ -107,10 +114,17 @@ const Register = () => {
             <input
               type="password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => {
+                setPassword(e.target.value);
+                setPasswordStrength(getPasswordStrength(e.target.value));
+              }}
               className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               required
             />
+            <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+              <span>Password strength: <strong>{passwordStrength}</strong></span>
+              <span className={`h-2.5 w-24 rounded-full ${getPasswordStrengthColor(passwordStrength)}`}></span>
+            </div>
           </div>
 
           {/* Confirm Password */}
@@ -123,6 +137,19 @@ const Register = () => {
               className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               required
             />
+          </div>
+
+          <div className="flex items-start gap-3 text-sm text-slate-700">
+            <input
+              id="acceptedTerms"
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={() => setAcceptedTerms(prev => !prev)}
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <label htmlFor="acceptedTerms" className="leading-5">
+              I agree to the <a href="/terms-privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline">Terms &amp; Privacy Policy</a>.
+            </label>
           </div>
 
           <button

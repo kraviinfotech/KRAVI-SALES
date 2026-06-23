@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import API from '../api/axios';
+import { validatePassword, getPasswordStrength, getPasswordStrengthColor } from '../utils/passwordUtils';
 
 const ResetPassword = () => {
   const { token } = useParams();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState('Weak');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -17,6 +19,11 @@ const ResetPassword = () => {
     setMessage('');
     if (newPassword !== confirmPassword) {
       setError('Passwords do not match');
+      return;
+    }
+    const validation = validatePassword(newPassword);
+    if (!validation.valid) {
+      setError(validation.errors.join(' '));
       return;
     }
     setLoading(true);
@@ -41,10 +48,17 @@ const ResetPassword = () => {
           <input
             type="password"
             value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
+            onChange={(e) => {
+              setNewPassword(e.target.value);
+              setPasswordStrength(getPasswordStrength(e.target.value));
+            }}
             required
             className="w-full border border-gray-300 rounded px-3 py-2"
           />
+          <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+            <span>Password strength: <strong>{passwordStrength}</strong></span>
+            <span className={`h-2.5 w-24 rounded-full ${getPasswordStrengthColor(passwordStrength)}`}></span>
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
