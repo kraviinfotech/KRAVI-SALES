@@ -14,6 +14,7 @@ const plansRoutes = require('./routes/plans');
 const paymentsRoutes = require('./routes/payments');
 const subscriptionsRoutes = require('./routes/subscriptions');
 const shopPaymentsRoutes = require('./routes/shopPayments');
+const kraviChatRoutes = require('./routes/kraviChat');
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/plans', plansRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/subscriptions', subscriptionsRoutes);
 app.use('/api/shoppayments', shopPaymentsRoutes);
+app.use('/api/kravi-chat', kraviChatRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {
