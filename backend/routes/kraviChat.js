@@ -2,6 +2,17 @@ const express = require('express');
 
 const router = express.Router();
 
+const SUPPORTED_LANGUAGES = new Set(['hi', 'en', 'mr']);
+
+const LANGUAGE_NAMES = {
+  hi: 'Hindi/Hinglish',
+  en: 'English',
+  mr: 'Marathi',
+};
+
+const SUPPORT_EMAIL = 'contact@kraviinfotech.com';
+const SUPPORT_PHONE = '7657013534';
+
 const LOCAL_REPLIES = [
   {
     keywords: ['hindi', 'english', 'marathi', 'language', 'bhasha', 'jawab', 'jwab', 'reply', 'chatbot', 'bot'],
@@ -188,9 +199,9 @@ LANGUAGE RULES:
 SCOPE:
 - Only answer questions related to KRAVI Sales App.
 - If question is unrelated, say in the detected language:
-  HI: "Main sirf KRAVI app se related help kar sakta hoon."
-  EN: "I can only help with KRAVI Sales App related questions."
-  MR: "Mi fakt KRAVI app vishayak prashnanchi madad karu shakto."
+  HI: "Contact ke liye contact@kraviinfotech.com par mail karein ya 7657013534 par message bhejein."
+  EN: "For help, email contact@kraviinfotech.com or message 7657013534."
+  MR: "Contact sathi contact@kraviinfotech.com var mail kara kiwa 7657013534 var message pathva."
 
 APP CONTEXT:
 - KRAVI is a Field Sales Tracking app for Indian field teams.
@@ -392,6 +403,24 @@ function detectLanguage(text) {
   return 'hi';
 }
 
+function sanitizeLanguage(language) {
+  return SUPPORTED_LANGUAGES.has(language) ? language : null;
+}
+
+function buildSystemPrompt(language) {
+  const selectedLanguage = sanitizeLanguage(language);
+
+  if (!selectedLanguage) {
+    return SYSTEM_PROMPT;
+  }
+
+  return `${SYSTEM_PROMPT}
+
+SELECTED UI LANGUAGE:
+- The user selected ${LANGUAGE_NAMES[selectedLanguage]} in the chatbot dropdown.
+- Reply only in ${LANGUAGE_NAMES[selectedLanguage]} unless the user explicitly asks for another language.`;
+}
+
 function isAppRelated(normalizedText) {
   return APP_RELATED_KEYWORDS.some((keyword) => normalizedText.includes(keyword));
 }
@@ -410,21 +439,21 @@ function getGeneralAppReply(language) {
 
 function getUnsupportedReply(language) {
   if (language === 'mr') {
-    return 'Mi fakt KRAVI app vishayak prashnanchi madad karu shakto. KRAVI madhil login, payment, scanner, GPS, invoice, subscription, records kiwa reports badal vichara.';
+    return `Contact sathi contact@kraviinfotech.com var mail kara kiwa 7657013534 var message pathva.`;
   }
 
   if (language === 'en') {
-    return 'I can only help with KRAVI Sales App related questions. Ask me about login, payments, scanner, GPS, invoices, subscriptions, records, or reports.';
+    return `For help, email contact@kraviinfotech.com or message 7657013534.`;
   }
 
-  return 'Main sirf KRAVI app se related help kar sakta hoon. Aap login, payment, scanner, GPS, invoice, subscription, records ya reports ke baare me pooch sakte hain.';
+  return `Contact ke liye contact@kraviinfotech.com par mail karein ya 7657013534 par message bhejein.`;
 }
 
-function findLocalReply(messages) {
+function findLocalReply(messages, languageOverride = null) {
   const latestUserMessage = [...messages].reverse().find((message) => message.role === 'user');
   const userText = latestUserMessage?.content || '';
   const normalizedText = normalizeText(userText);
-  const language = detectLanguage(userText);
+  const language = sanitizeLanguage(languageOverride) || detectLanguage(userText);
   const matchedReply = LOCAL_REPLIES.find((reply) =>
     reply.keywords.some((keyword) => normalizedText.includes(normalizeText(keyword)))
   );
@@ -452,11 +481,12 @@ function findLocalReply(messages) {
 router.post('/', async (req, res) => {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const messages = sanitizeMessages(req.body.messages);
+  const selectedLanguage = sanitizeLanguage(req.body.language);
   if (!messages.length || messages[messages.length - 1].role !== 'user') {
     return res.status(400).json({ message: 'A user message is required.' });
   }
 
-  const localAnswer = findLocalReply(messages);
+  const localAnswer = findLocalReply(messages, selectedLanguage);
   if (localAnswer.isKnownAppQuestion || !apiKey) {
     return res.json({ reply: localAnswer.reply });
   }
@@ -472,7 +502,7 @@ router.post('/', async (req, res) => {
       body: JSON.stringify({
         model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
         max_tokens: Number(process.env.KRAVI_CHAT_MAX_TOKENS) || 600,
-        system: SYSTEM_PROMPT,
+        system: buildSystemPrompt(selectedLanguage),
         messages,
       }),
     });
