@@ -6,6 +6,7 @@ const Settings = require('../models/Settings');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
+const { sendEmail, buildSubscriptionEmail } = require('../utils/emailUtils');
 const {
   buildSubscriptionStatus,
   createRazorpayOrder,
@@ -294,6 +295,15 @@ router.post(
       const freshUser = await User.findById(req.user._id).select('-password');
       const status = await buildSubscriptionStatus(req.user._id);
       const token = signUserToken(freshUser, status);
+
+      if (freshUser?.email) {
+        sendEmail({
+          to: freshUser.email,
+          ...buildSubscriptionEmail({ user: freshUser, plan, subscription, payment })
+        }).catch((sendErr) => {
+          console.error('Subscription confirmation email failed:', sendErr);
+        });
+      }
 
       res.json({
         message: 'Subscription activated successfully',

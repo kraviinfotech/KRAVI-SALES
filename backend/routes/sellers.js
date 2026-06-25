@@ -8,6 +8,7 @@ const SalesRecord = require('../models/SalesRecord');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 const subscriptionMiddleware = require('../middleware/subscriptionMiddleware');
+const { sendEmail, buildOtpEmail } = require("../utils/emailUtils");
 
 // In-memory OTP store: key=email, value={ otp, expiresAt, formData }
 const otpStore = new Map();
@@ -62,15 +63,19 @@ router.post(
       // Store OTP with form data, keyed by email
       otpStore.set(email, { otp, expiresAt, formData: { name, email, mobile, password }, managerId: req.user._id.toString() });
 
-      // Log OTP for dev usage (acts like email delivery in dev)
-      console.log(`[OTP] Seller verification OTP for ${email}: ${otp}`);
+      try {
+        await sendEmail({
+          to: email,
+          ...buildOtpEmail({ name, email, otp })
+        });
+      } catch (sendErr) {
+        console.error('Seller OTP email failed:', sendErr);
+        otpStore.delete(email);
+        return res.status(500).json({ message: 'Unable to send OTP email. Please try again later.' });
+      }
 
-      // Return the OTP in response for dev mode; in prod you'd send via email/SMS only
-      const isProduction = process.env.NODE_ENV === 'production';
       return res.json({
-        message: `OTP sent to ${email}. Check the console if email is not configured.`,
-        // Expose OTP in non-production so manager can complete the flow without email server
-        ...(isProduction ? {} : { devOtp: otp })
+        message: `OTP sent to ${email}. Please check your email for the verification code.`
       });
     } catch (err) {
       console.error(err);

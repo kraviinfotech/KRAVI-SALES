@@ -310,19 +310,7 @@ const SubscriptionModal = ({ open, onClose, forceOpen = false }) => {
             <StatPill icon={CalendarDays} label="Expiry" value={formatDate(status?.endDate)} tone="text-amber-600" />
           </div>
 
-          <div className="mx-auto mt-10 flex max-w-5xl flex-wrap items-center gap-3 text-sm font-bold text-slate-700">
-            <span>Monthly</span>
-            <button
-              type="button"
-              onClick={() => setBillingCycle((cycle) => cycle === 'yearly' ? 'monthly' : 'yearly')}
-              className={`relative h-7 w-12 rounded-full transition ${billingCycle === 'yearly' ? 'bg-violet-600' : 'bg-slate-300'}`}
-              aria-label="Toggle billing cycle"
-            >
-              <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${billingCycle === 'yearly' ? 'left-6' : 'left-1'}`} />
-            </button>
-            <span>Yearly</span>
-            <span className="rounded-full bg-violet-600 px-3 py-1 text-xs font-black text-white">Save from 16%</span>
-          </div>
+        
 
           {loading ? (
             <div className="mx-auto mt-10 flex min-h-64 max-w-5xl items-center justify-center gap-2 rounded-lg border border-white/70 bg-white/70 text-sm font-bold text-slate-500">

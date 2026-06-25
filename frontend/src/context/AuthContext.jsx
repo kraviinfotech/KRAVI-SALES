@@ -61,8 +61,8 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (data) => {
     try {
-      const { name, email, mobile, password, role = 'seller' } = data;
-      await API.post('/auth/register', { name, email, mobile, password, role });
+      const { name, email, mobile, password, role = 'seller', acceptedTerms } = data;
+      await API.post('/auth/register', { name, email, mobile, password, role, acceptedTerms });
       return true;
     } catch (error) {
       console.log('Register error response:', error.response?.data);
@@ -76,6 +76,30 @@ export const AuthProvider = ({ children }) => {
         }
       }
       throw errMsg || 'Registration failed. Please check your details.';
+    }
+  };
+
+  const googleLogin = async (idToken) => {
+    try {
+      const response = await API.post('/auth/google', { idToken });
+      const { token, user: userData } = response.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      sessionStorage.removeItem(`subscriptionPromptSeen_${userData._id}`);
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      let errMsg = '';
+      if (error.response) {
+        const backendData = error.response.data;
+        errMsg = backendData.message || (Array.isArray(backendData.errors) ? backendData.errors[0].msg : 'Google sign-in failed');
+      } else if (error.request) {
+        errMsg = 'Backend server is not reachable. Please ensure the server is running on port 5002.';
+      } else {
+        errMsg = error.message;
+      }
+      console.error('Google login error:', errMsg);
+      throw errMsg || 'Google login failed. Please try again.';
     }
   };
 
@@ -96,7 +120,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateSession }}>
+    <AuthContext.Provider value={{ user, loading, login, register, googleLogin, logout, updateSession }}>
       {children}
     </AuthContext.Provider>
   );
