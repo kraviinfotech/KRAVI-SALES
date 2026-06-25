@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ShieldCheck, UserRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
+import GoogleLoginButton from './GoogleLoginButton';
+import videoSrc from '../assets/landing-page.mp4';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const mobilePattern = /^\d{10}$/;
-
 const roleRoutes = {
   admin: '/admin',
   manager: '/manager',
@@ -32,8 +32,8 @@ const roleConfig = {
   }
 };
 
-  const Login = () => {
-  const { login, logout } = useAuth();
+const Login = () => {
+  const { login, logout, googleLogin } = useAuth();
   const [searchParams] = useSearchParams();
   const initialRole = searchParams.get('role') === 'manager' ? 'manager' : 'seller';
   const [selectedRole, setSelectedRole] = useState(initialRole);
@@ -41,11 +41,49 @@ const roleConfig = {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
+  const [googleReady, setGoogleReady] = useState(false);
+  const [showIntroVideo, setShowIntroVideo] = useState(true);
 
   const navigate = useNavigate();
   const currentRole = roleConfig[selectedRole];
   const Icon = currentRole.icon;
+
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      console.warn('Google Sign-In not initialized: VITE_GOOGLE_CLIENT_ID is not set');
+      setGoogleReady(false);
+      return;
+    }
+
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async (response) => {
+          if (response.credential) {
+            try {
+              setLoading(true);
+              const userData = await googleLogin(response.credential);
+              const isAuthorized =
+                (selectedRole === 'seller' && userData.role === 'seller') ||
+                (selectedRole === 'manager' && (userData.role === 'manager' || userData.role === 'admin'));
+              if (!isAuthorized) {
+                logout();
+                setError(`Please use a ${selectedRole === 'manager' ? 'manager' : 'seller'} account for this form.`);
+                return;
+              }
+              navigate(roleRoutes[userData.role], { replace: true });
+            } catch (err) {
+              setError(err);
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      });
+      setGoogleReady(true);
+    }
+  }, [googleLogin, logout, navigate, selectedRole]);
 
   const handleRoleChange = (role) => {
     setSelectedRole(role);
@@ -82,7 +120,7 @@ const roleConfig = {
         password
       });
 
-      const isAuthorized = 
+      const isAuthorized =
         (selectedRole === 'seller' && userData.role === 'seller') ||
         (selectedRole === 'manager' && (userData.role === 'manager' || userData.role === 'admin'));
 
@@ -100,9 +138,28 @@ const roleConfig = {
     }
   };
 
+  const handleGoogleFailure = (message) => {
+    setError(message || 'Google sign-in failed.');
+  };
+
   return (
-<div className="min-h-screen flex items-start justify-center px-4 pt-28 pb-8 bg-transparent sm:items-center sm:py-8 lg:justify-end lg:pl-4 lg:pr-16">
-         <div className="w-full max-w-md">
+<>
+      {showIntroVideo && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black">
+          <video
+            className="h-full w-full object-cover"
+            src={videoSrc}
+            autoPlay
+            muted
+            playsInline
+            onEnded={() => setShowIntroVideo(false)}
+          />
+          <div className="pointer-events-none absolute inset-0 bg-black/40" />
+        </div>
+      )}
+
+    <div className="min-h-screen flex items-start justify-center px-4 pt-28 pb-8 bg-transparent sm:items-center sm:py-8 lg:justify-end lg:pl-4 lg:pr-16">
+        <div className="w-full max-w-md">
         <div className="rounded-lg border border-white bg-white/95 p-6 shadow-[0_22px_60px_rgba(37,99,235,0.14)] ring-1 ring-blue-100/60">
           <div className="mb-8 text-center border-b border-blue-100/70 pb-4">
             <p className="text-sm font-bold uppercase tracking-wide text-indigo-600">SalesFlow</p>
@@ -192,6 +249,12 @@ const roleConfig = {
               {loading ? 'Logging In...' : currentRole.buttonLabel}
             </button>
 
+            {googleReady && selectedRole === 'manager' && (
+              <div className="pt-2">
+                <GoogleLoginButton onSuccess={() => {}} onFailure={handleGoogleFailure} disabled={loading} />
+              </div>
+            )}
+
             {currentRole.registerLink && (
               <div className="text-right">
                 <div className="flex flex-col items-end gap-2">
@@ -205,7 +268,8 @@ const roleConfig = {
         </div>
       </div>
     </div>
-  );
+  
+</>)
 };
 
 export default Login;

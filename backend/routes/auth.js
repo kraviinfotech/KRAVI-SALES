@@ -1,7 +1,10 @@
+
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const Seller = require('../models/Seller');
@@ -14,6 +17,10 @@ const {
   signUserToken
 } = require('../utils/subscriptionUtils');
 const { validatePassword } = require('../utils/passwordUtils');
+const { sendEmail, buildWelcomeEmail, buildOtpEmail } = require('../utils/emailUtils');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 
 const TERMS_VERSION = process.env.TERMS_VERSION || '1.0';
 
@@ -51,8 +58,7 @@ const addLoginHistoryEntry = (user, { success, ip, browser, device, reason }) =>
 };
 
 // POST /api/auth/register -> public manager registration with admin-configured trial
-router.post(
-  '/register',
+router.post('/register',
   [
     body('name').exists().withMessage('Name is required').trim().notEmpty(),
     body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
@@ -74,6 +80,10 @@ router.post(
       const normalizedEmail = email ? email.trim().toLowerCase() : null;
       const normalizedMobile = mobile ? mobile.trim() : null;
       const agreedToTerms = acceptedTerms === true || acceptedTerms === 'true';
+      const userAgent = req.headers['user-agent'] || 'Unknown';
+      const ip = getRequestIp(req);
+      const browser = getBrowserFromUA(userAgent);
+      const device = getDeviceFromUA(userAgent);
 
       const passwordValidation = validatePassword(password);
       if (!passwordValidation.valid) {
@@ -95,13 +105,22 @@ router.post(
         role,
         termsAccepted: agreedToTerms,
         termsAcceptedVersion: agreedToTerms ? TERMS_VERSION : null,
-        termsAcceptedAt: agreedToTerms ? new Date() : null
+        termsAcceptedAt: agreedToTerms ? new Date() : null,
+        termsAcceptedIp: agreedToTerms ? ip : null,
+        termsAcceptedDevice: agreedToTerms ? device : null
       });
       await user.save();
 
       if (role === 'manager') {
         await assignTrialSubscription(user._id);
       }
+
+      sendEmail({
+        to: user.email,
+        ...buildWelcomeEmail(user)
+      }).catch((sendErr) => {
+        console.error('Welcome email failed:', sendErr);
+      });
 
       return res.status(201).json({ message: 'User registered successfully', user: { _id: user._id, name: user.name, email: user.email, role: user.role, termsAccepted: user.termsAccepted, termsAcceptedVersion: user.termsAcceptedVersion } });
     } catch (err) {
@@ -246,6 +265,89 @@ router.post(
   }
 );
 
+router.post(
+  '/google',
+  [
+    body('idToken')
+      .exists()
+      .withMessage('Google ID token is required')
+      .trim()
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { idToken } = req.body;
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return res.status(500).json({ message: 'Google OAuth is not configured' });
+    }
+
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: clientId
+      });
+      const payload = ticket.getPayload();
+      const email = payload?.email?.toLowerCase();
+      const emailVerified = payload?.email_verified;
+
+      if (!email || !emailVerified) {
+        return res.status(400).json({ message: 'Google account must have a verified email' });
+      }
+
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({
+          message: 'No account is associated with this Google email. Please register with that email first.'
+        });
+      }
+
+      if (user.lockedUntil && user.lockedUntil > new Date()) {
+        return res.status(403).json({ message: `Account temporarily locked until ${user.lockedUntil.toLocaleString()}.` });
+      }
+
+      user.failedAttempts = 0;
+      user.lastFailedAttempt = undefined;
+      user.lockedUntil = undefined;
+      addLoginHistoryEntry(user, {
+        success: true,
+        ip: getRequestIp(req),
+        browser: getBrowserFromUA(req.headers['user-agent']),
+        device: getDeviceFromUA(req.headers['user-agent']),
+        reason: 'Google login successful'
+      });
+      await user.save();
+
+      const managerId = await getManagerIdForUser(user);
+      const subscriptionStatus = managerId ? await buildSubscriptionStatus(managerId) : null;
+      const token = signUserToken(user, subscriptionStatus);
+
+      return res.json({
+        token,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          mobile: user.mobile,
+          role: user.role,
+          managerScannerPhoto: user.managerScannerPhoto || null,
+          subscriptionTier: user.subscriptionTier || null,
+          subscriptionExpiry: user.subscriptionExpiry || null,
+          termsAccepted: user.termsAccepted || false,
+          termsAcceptedVersion: user.termsAcceptedVersion || null
+        },
+        subscriptionStatus
+      });
+    } catch (err) {
+      console.error('Google Auth error:', err);
+      return res.status(401).json({ message: 'Unable to verify Google sign-in token' });
+    }
+  }
+);
+
 // POST /api/auth/forgot-password
 router.post(
   '/forgot-password',
@@ -293,8 +395,18 @@ router.post(
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    // In a real app, send the OTP via email or SMS. Here we log it for development.
-    console.log(`Password reset OTP for ${user.email || user.mobile}: ${otp}`);
+    try {
+      await sendEmail({
+        to: user.email,
+        ...buildOtpEmail({ name: user.name, email: user.email, otp })
+      });
+    } catch (sendErr) {
+      console.error('Password reset email failed:', sendErr);
+      user.resetPasswordToken = null;
+      user.resetPasswordExpires = null;
+      await user.save();
+      return res.status(500).json({ message: 'Unable to send password reset OTP. Please try again later.' });
+    }
 
     return res.json({ message: 'If the email or mobile is registered, an OTP has been sent to the registered email.' });
   }
@@ -502,5 +614,40 @@ router.get('/debug-user', async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 });
+
+
+
+
+router.get("/test-email", async (req, res) => {
+  try {
+    const email = buildWelcomeEmail({
+      name: "Developer Om"
+    });
+
+    const info = await sendEmail({
+      to: "ommaheshwagh2003@gmail.com",
+      subject: email.subject,
+      text: email.text,
+      html: email.html
+    });
+
+    console.log("Email sent:", info);
+
+    res.json({
+      success: true,
+      message: "Test email sent!",
+      info
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+});
+
+
 
 module.exports = router;

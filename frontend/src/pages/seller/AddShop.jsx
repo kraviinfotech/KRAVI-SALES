@@ -58,7 +58,7 @@ const AddShop = () => {
         setLocError(err.code === 1 ? 'Location permission blocked.' : 'Unable to get location.');
         setLocLoading(false);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 100000, maximumAge: 0 }
     );
   };
 

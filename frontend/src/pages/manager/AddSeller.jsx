@@ -20,7 +20,6 @@ const AddSeller = () => {
   // OTP step
   const [step, setStep] = useState('details'); // 'details' | 'otp' | 'done'
   const [otp, setOtp] = useState('');
-  const [devOtp, setDevOtp] = useState(''); // auto-fill in dev
 
   // Sellers list
   const [sellers, setSellers] = useState([]);
@@ -56,7 +55,6 @@ const AddSeller = () => {
     setEmail('');
     setPassword('');
     setOtp('');
-    setDevOtp('');
     setStep('details');
     setError('');
     setSuccess('');
@@ -98,11 +96,6 @@ const AddSeller = () => {
     try {
       const res = await API.post('/sellers/send-otp', { name, mobile, email, password });
       setSuccess(res.data.message || 'OTP sent!');
-      // In dev mode the server returns devOtp – auto-fill it for convenience
-      if (res.data.devOtp) {
-        setDevOtp(res.data.devOtp);
-        setOtp(res.data.devOtp);
-      }
       setStep('otp');
     } catch (err) {
       if (!err.response) {
@@ -283,14 +276,6 @@ const AddSeller = () => {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
                 <p className="font-semibold mb-1">OTP sent to:</p>
                 <p className="font-mono text-blue-700">{email}</p>
-                {devOtp && (
-                  <div className="mt-3 bg-amber-50 border border-amber-300 rounded p-2">
-                    <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide mb-1">
-                      Dev Mode — OTP auto-filled
-                    </p>
-                    <p className="font-mono text-2xl font-black text-amber-800 tracking-widest">{devOtp}</p>
-                  </div>
-                )}
               </div>
 
               <div>
@@ -322,7 +307,7 @@ const AddSeller = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setStep('details'); setOtp(''); setDevOtp(''); setError(''); setSuccess(''); }}
+                  onClick={() => { setStep('details'); setOtp(''); setError(''); setSuccess(''); }}
                   className="w-full rounded border border-gray-200 text-gray-600 py-2 text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-1"
                 >
                   <ArrowLeft size={14} /> Back / Resend OTP
