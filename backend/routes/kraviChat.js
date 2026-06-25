@@ -439,14 +439,14 @@ function getGeneralAppReply(language) {
 
 function getUnsupportedReply(language) {
   if (language === 'mr') {
-    return `Contact sathi contact@kraviinfotech.com var mail kara kiwa 7657013534 var message pathva.`;
+    return `Help sathi contact@kraviinfotech.com var mail kara kiwa 7657013534 var message pathva.`;
   }
 
   if (language === 'en') {
     return `For help, email contact@kraviinfotech.com or message 7657013534.`;
   }
 
-  return `Contact ke liye contact@kraviinfotech.com par mail karein ya 7657013534 par message bhejein.`;
+  return `Help ke liye contact@kraviinfotech.com par mail karein ya 7657013534 par message bhejein.`;
 }
 
 function findLocalReply(messages, languageOverride = null) {

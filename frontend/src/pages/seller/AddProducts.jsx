@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, ChevronDown } from 'lucide-react';
 import API from '../../api/axios';
 
 const translations = {
@@ -16,6 +16,44 @@ const AddProducts = () => {
   const t = translations[lang || 'en'];
   const navigate = useNavigate();
   const [masterList, setMasterList] = useState([]);
+  const [suggestionsOpen, setSuggestionsOpen] = useState({});
+  const [searchQueries, setSearchQueries] = useState({});
+  const wrapperRefs = React.useRef({});
+
+  const isValidProduct = (productName) => {
+    return masterList.some((product) => product.name === productName);
+  };
+
+  const getFilteredProducts = (query) => {
+    const normalized = (query || '').trim().toLowerCase();
+    if (!normalized) return masterList;
+    return masterList.filter((product) => product.name.toLowerCase().includes(normalized));
+  };
+
+  const openSuggestions = (index) => {
+    setSuggestionsOpen(prev => ({ ...prev, [index]: true }));
+  };
+
+  const closeSuggestions = (index) => {
+    setSuggestionsOpen(prev => ({ ...prev, [index]: false }));
+  };
+
+  const toggleSuggestions = (index) => {
+    setSuggestionsOpen(prev => ({ ...prev, [index]: !prev[index] }));
+  };
+
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      Object.entries(wrapperRefs.current).forEach(([idx, node]) => {
+        if (node && !node.contains(event.target)) {
+          setSuggestionsOpen(prev => ({ ...prev, [idx]: false }));
+        }
+      });
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchMasterProducts = async () => {
@@ -57,8 +95,24 @@ const AddProducts = () => {
     }));
   };
 
-  const handleProductSelect = (index, productName) => {
+  const handleSearchInput = (index, query) => {
+    setSearchQueries(prev => ({ ...prev, [index]: query }));
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.map((item, itemIndex) => {
+        if (itemIndex !== index) return item;
+        return {
+          ...item,
+          productName: '',
+          price: ''
+        };
+      })
+    }));
+  };
+
+  const handleProductSelection = (index, productName) => {
     const selectedProduct = masterList.find(p => p.name === productName);
+    setSearchQueries(prev => ({ ...prev, [index]: productName }));
     setFormData(prev => ({
       ...prev,
       items: prev.items.map((item, itemIndex) => {
@@ -70,6 +124,7 @@ const AddProducts = () => {
         };
       })
     }));
+    setSuggestionsOpen(prev => ({ ...prev, [index]: false }));
   };
 
   const handleUnitChange = (index, unit) => {
@@ -118,6 +173,18 @@ const AddProducts = () => {
         return hasValidName && hasValidQuantity && hasValidWeight && hasValidPrice;
       });
 
+    let hasInvalidProduct = false;
+    formData.items.forEach((item, idx) => {
+      if (!item.productName || !isValidProduct(item.productName)) {
+        hasInvalidProduct = true;
+        setSuggestionsOpen(prev => ({ ...prev, [idx]: true }));
+      }
+    });
+
+    if (hasInvalidProduct) {
+      return;
+    }
+
     if (!validItems.length) {
       alert('Please add at least one product with all required fields.');
       return;
@@ -153,19 +220,48 @@ const AddProducts = () => {
               </div>
             )}
 
-            <div>
+            <div className="relative" ref={el => wrapperRefs.current[index] = el}>
               <label className="mb-1 block text-sm font-medium text-gray-700">{t.pName}</label>
-              <select
-                value={item.productName || ''}
-                onChange={(event) => handleProductSelect(index, event.target.value)}
-                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                required
-              >
-                <option value="" disabled>Select Product...</option>
-                {masterList.map((p, idx) => (
-                  <option key={p._id || idx} value={p.name}>{p.name}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <div className="flex rounded-md border border-gray-300 bg-white focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+                  <input
+                    value={searchQueries[index] !== undefined ? searchQueries[index] : item.productName || ''}
+                    onChange={(event) => handleSearchInput(index, event.target.value)}
+                    onFocus={() => openSuggestions(index)}
+                    placeholder="Type to search manager products..."
+                    className={`flex-1 rounded-l-md border-0 bg-transparent px-3 py-2 text-sm focus:outline-none ${suggestionsOpen[index] ? 'rounded-b-none' : 'rounded-r-md'}`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleSuggestions(index)}
+                    className="flex items-center justify-center rounded-r-md border-l border-gray-300 bg-gray-50 px-3 py-2 text-gray-600 text-sm leading-none transition hover:bg-gray-100"
+                    aria-label="Toggle product dropdown"
+                  >
+                    <ChevronDown size={18} />
+                  </button>
+                </div>
+
+                {suggestionsOpen[index] && (
+                  <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-b-md border border-t-0 border-gray-300 bg-white shadow-lg">
+                    {getFilteredProducts(searchQueries[index] !== undefined ? searchQueries[index] : item.productName).length > 0 ? (
+                      getFilteredProducts(searchQueries[index] !== undefined ? searchQueries[index] : item.productName).map((p, idx) => (
+                        <button
+                          key={p._id || idx}
+                          type="button"
+                          onMouseDown={() => handleProductSelection(index, p.name)}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          {p.name}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-gray-500">No available product</div>
+                    )}
+                  </div>
+                )}
+              </div>
+
             </div>
 
             <div className="space-y-2">

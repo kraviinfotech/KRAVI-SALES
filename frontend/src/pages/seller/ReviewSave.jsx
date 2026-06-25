@@ -105,6 +105,12 @@ const ReviewSave = () => {
     setLoading(true);
     setError('');
 
+    // Validation: require scanner/photo proof for Online payments
+    if (paymentMethod === 'Online' && (!scannerPhoto || (typeof scannerPhoto === 'string' && scannerPhoto.trim() === ''))) {
+      setError('Please capture or select payment proof before saving for online payments.');
+      setLoading(false);
+      return;
+    }
     try {
       const salesItems = (items || []).map((item) => {
         const unit = item.unit === 'weight' ? 'weight' : 'quantity';
