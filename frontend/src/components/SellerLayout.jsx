@@ -31,6 +31,7 @@ const SellerLayout = () => {
   const canGoBack = location.pathname !== '/dashboard';
   const isSellingFlow = location.pathname === '/sell' || location.pathname.startsWith('/sell/');
   const showBottomNav = !isSellingFlow;
+  const showLang = location.pathname === '/dashboard';
 
   const getInitials = (name) => {
     if (!name) return '?';
@@ -105,17 +106,22 @@ const SellerLayout = () => {
 
           <h1 className="flex-1 text-center text-lg font-bold text-slate-900">{title}</h1>
           
-          <div className="flex items-center gap-1 border-l pl-3 ml-3 border-slate-200">
-            {['en', 'hi', 'mr'].map((l) => (
-              <button
-                key={l}
-                onClick={() => toggleLang(l)}
-                className={`text-[10px] font-black w-6 h-6 rounded flex items-center justify-center uppercase ${lang === l ? 'bg-blue-700 text-white' : 'text-slate-400 hover:bg-slate-100'}`}
+          {showLang && (
+            <div className="flex items-center border-l pl-3 ml-3 border-slate-200">
+              <label htmlFor="language-select" className="sr-only">Language</label>
+              <select
+                id="language-select"
+                value={lang}
+                onChange={(e) => toggleLang(e.target.value)}
+                className="text-[12px] font-black rounded px-2 py-1 bg-white border border-slate-200 text-slate-700"
+                aria-label="Select language"
               >
-                {l}
-              </button>
-            ))}
-          </div>
+                <option value="en">English</option>
+                <option value="hi">हिंदी</option>
+                <option value="mr">मराठी</option>
+              </select>
+            </div>
+          )}
 
           <button
             type="button"
