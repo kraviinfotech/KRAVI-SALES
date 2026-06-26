@@ -85,7 +85,7 @@ function ChatBubble({ role, text, timestamp }) {
   return (
     <div className={`mb-3 flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}>
       {!isUser && (
-        <div className="mr-2 mt-1 h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white p-0.5 shadow-sm">
+        <div className="mr-2 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white p-0.5 shadow-sm">
           <img
             src={kraviAssistantImage}
             alt="KRAVI Bot"
@@ -94,7 +94,7 @@ function ChatBubble({ role, text, timestamp }) {
         </div>
       )}
       <div
-        className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm whitespace-pre-wrap ${
+        className={`max-w-[82%] rounded-2xl px-3 py-2 text-[13px] leading-relaxed shadow-sm whitespace-pre-wrap ${
           isUser
             ? 'rounded-br-sm bg-[#6d28d9] text-white'
             : 'rounded-bl-sm border border-slate-200 bg-white text-slate-800'
@@ -608,15 +608,15 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
       onPointerCancel={handleDragEnd}
     >
       {isOpen && (
-        <div className="mb-3 flex h-[620px] max-h-[calc(100vh-7rem)] w-[390px] max-w-[94vw] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="mb-3 flex h-[560px] max-h-[calc(100vh-7rem)] w-[340px] max-w-[94vw] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
           <div
-            className={`flex shrink-0 touch-none items-center justify-between border-b border-slate-100 bg-white px-4 py-3 text-slate-900 ${
+            className={`flex shrink-0 touch-none items-center justify-between border-b border-slate-100 bg-white px-3.5 py-2.5 text-slate-900 ${
               isDragging ? 'cursor-grabbing' : 'cursor-grab'
             }`}
             onPointerDown={(event) => handleDragStart(event, 'header')}
           >
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 overflow-hidden rounded-full bg-[#6d28d9] p-0.5">
+              <div className="h-9 w-9 overflow-hidden rounded-full bg-[#6d28d9] p-0.5">
                 <img
                   src={kraviAssistantImage}
                   alt="KRAVI AI Assistant"
@@ -624,7 +624,7 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
                 />
               </div>
               <div>
-                <p className="text-base font-semibold leading-tight">KRAVI Support</p>
+                <p className="text-sm font-semibold leading-tight">KRAVI Support</p>
                 <p className="text-[11px] leading-tight text-slate-500">{copy.supportStatus}</p>
               </div>
             </div>
@@ -654,7 +654,7 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
             </div>
           </div>
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto bg-slate-50 px-4 py-4">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto bg-slate-50 px-3.5 py-3">
             <div className="min-h-[72px]" />
             <DateDivider />
             {messages.map((message, index) => (
@@ -682,7 +682,7 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
             />
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 bg-white px-3 py-3">
+          <div className="shrink-0 border-t border-slate-200 bg-white px-2.5 py-2.5">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
@@ -691,16 +691,16 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
                 onKeyDown={handleKeyDown}
                 placeholder={copy.placeholder}
                 rows={1}
-                className="max-h-24 flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-400"
+                className="max-h-20 flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[13px] text-slate-800 placeholder:text-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-400"
               />
               <button
                 type="button"
                 onClick={sendMessage}
                 disabled={!input.trim() || isLoading}
-                className="shrink-0 rounded-xl bg-[#7c3aed] p-2.5 text-white transition-colors hover:bg-[#6d28d9] disabled:bg-slate-200 disabled:text-slate-400"
+                className="shrink-0 rounded-xl bg-[#7c3aed] p-2 text-white transition-colors hover:bg-[#6d28d9] disabled:bg-slate-200 disabled:text-slate-400"
                 aria-label="Send message"
               >
-                <Send size={18} />
+                <Send size={16} />
               </button>
             </div>
           </div>
@@ -712,14 +712,14 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
         onPointerDown={(event) => handleDragStart(event, 'toggle')}
         onClick={handleToggleClick}
         onDragStart={(event) => event.preventDefault()}
-        className={`flex h-16 w-16 touch-none items-center justify-center overflow-hidden rounded-full border border-zinc-800 bg-white p-0.5 text-white shadow-lg transition-transform hover:scale-105 active:scale-95 ${
+        className={`flex h-14 w-14 touch-none items-center justify-center overflow-hidden rounded-full border border-zinc-800 bg-white p-0.5 text-white shadow-lg transition-transform hover:scale-105 active:scale-95 ${
           isDragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
         aria-label="Toggle KRAVI chat"
       >
         {isOpen ? (
           <span className="flex h-full w-full items-center justify-center rounded-full bg-[#7c3aed]">
-            <X size={24} />
+            <X size={22} />
           </span>
         ) : (
           <img
