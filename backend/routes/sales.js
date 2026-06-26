@@ -8,6 +8,7 @@ const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 const subscriptionMiddleware = require('../middleware/subscriptionMiddleware');
+const { attachItemsToRecords } = require('../utils/salesRecordUtils');
 
 // Protect all routes in this file for sellers only
 router.use(authMiddleware, roleMiddleware('seller'), subscriptionMiddleware);
@@ -200,6 +201,53 @@ router.post(
   }
 );
 
+// GET /api/sales/today-stats -> Lightweight today summary for seller dashboard
+router.get('/today-stats', async (req, res) => {
+  try {
+    const seller = await Seller.findOne({ userId: req.user._id }).select('_id managerId');
+
+    if (!seller || !seller.managerId) {
+      return res.status(403).json({
+        message: 'Seller profile not found or not associated with a manager'
+      });
+    }
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const todayRecords = await SalesRecord.find({
+      sellerId: seller._id,
+      managerId: seller.managerId,
+      visitDatetime: { $gte: startOfDay, $lte: endOfDay }
+    })
+      .select('totalAmount')
+      .lean();
+
+    const recordIds = todayRecords.map((record) => record._id);
+    const items = recordIds.length
+      ? await SaleItem.find({ recordId: { $in: recordIds } })
+          .select('recordId unit quantity weight')
+          .lean()
+      : [];
+
+    const itemsSold = items.reduce((sum, item) => {
+      if (item.unit === 'weight') return sum + 1;
+      return sum + Number(item.quantity || 0);
+    }, 0);
+
+    res.json({
+      visits: todayRecords.length,
+      sales: todayRecords.reduce((sum, record) => sum + Number(record.totalAmount || 0), 0),
+      items: itemsSold
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error retrieving today stats' });
+  }
+});
+
 // GET /api/sales/my-records -> Get logged-in seller's past records with items populated
 router.get('/my-records', async (req, res) => {
   try {
@@ -211,20 +259,15 @@ router.get('/my-records', async (req, res) => {
       });
     }
 
-    // Find only records owned by the logged-in seller and their assigned manager.
+    const lite = req.query.lite === '1' || req.query.lite === 'true';
+    const projection = lite ? '-scannerPhoto -shopImage' : '-scannerPhoto';
+
     const records = await SalesRecord.find({ sellerId: seller._id, managerId: seller.managerId })
+      .select(projection)
       .sort({ visitDatetime: -1 })
       .lean();
 
-    // Populate items manually for each record
-    const recordsWithItems = [];
-    for (const record of records) {
-      const items = await SaleItem.find({ recordId: record._id });
-      recordsWithItems.push({
-        ...record,
-        items
-      });
-    }
+    const recordsWithItems = await attachItemsToRecords(records);
 
     res.json(recordsWithItems);
   } catch (err) {
