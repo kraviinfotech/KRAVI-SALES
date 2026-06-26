@@ -113,6 +113,7 @@ const SubscriptionPayment = () => {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
+      {/*
       <button
         type="button"
         onClick={() => setShowPlans(true)}
@@ -121,6 +122,7 @@ const SubscriptionPayment = () => {
         <ArrowLeft size={18} />
         Back to plans
       </button>
+      */}
 
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-start gap-4">

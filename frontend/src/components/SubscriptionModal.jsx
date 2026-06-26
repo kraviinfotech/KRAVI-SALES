@@ -268,35 +268,11 @@ const SubscriptionModal = ({ open, onClose, forceOpen = false }) => {
           </button>
         </div>
 
-        <div className="bg-gradient-to-r from-blue-600 via-violet-600 to-fuchsia-600 px-5 py-4 text-white md:px-8">
-          <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-3 text-sm font-semibold sm:flex-row sm:items-center">
-            <div className="flex items-center gap-3">
-              <Sparkles size={20} className="shrink-0" />
-              <span>Premium access keeps your sellers, reports, scanner and manager tools active.</span>
-            </div>
-            <span className="rounded-lg border border-white/25 px-4 py-2 text-xs font-black">Secure checkout</span>
-          </div>
-        </div>
 
         <div className="px-5 pb-8 pt-12 md:px-8 md:pb-10">
           <div className="mx-auto max-w-5xl text-center">
-            <h2 className="text-4xl font-black text-slate-950 sm:text-5xl md:text-6xl">Plans and pricing</h2>
-            <div className="mx-auto mt-7 inline-flex rounded-full bg-white p-2 shadow-lg shadow-violet-100">
-              <button
-                type="button"
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 px-5 py-3 text-sm font-black text-white"
-              >
-                <BadgeCheck size={18} />
-                Individuals and business
-              </button>
-              <button
-                type="button"
-                className="flex items-center gap-2 rounded-full px-5 py-3 text-sm font-black text-slate-700"
-              >
-                <Crown size={18} className="text-amber-500" />
-                Premium
-              </button>
-            </div>
+            <h4 className="text-4xl font-black text-slate-950 sm:text-5xl md:text-6xl">Plans and pricing</h4>
+          
           </div>
 
           <div className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-3 sm:grid-cols-3">
@@ -333,7 +309,7 @@ const SubscriptionModal = ({ open, onClose, forceOpen = false }) => {
                 </div>
               )}
 
-              <div className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+              <div className="mx-auto mt-10 grid max-w-5xl max-h-xl grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
                 {plans.map((plan, index) => (
                   <PlanCard key={plan._id} plan={plan} index={index} currentPlanId={currentPlanId} onSelect={handleSelect} />
                 ))}

@@ -88,12 +88,7 @@ const AddProducts = () => {
     }
   }, [formData.items, setFormData]);
 
-  const handleItemChange = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      items: prev.items.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item)
-    }));
-  };
+
 
   const handleSearchInput = (index, query) => {
     setSearchQueries(prev => ({ ...prev, [index]: query }));
@@ -328,14 +323,13 @@ const AddProducts = () => {
                 <label className="mb-1 block text-sm font-medium text-gray-700">{t.price}</label>
                 <input
                   type="number"
-                  min="0"
-                  step="0.01"
+                  
                   value={item.price || item.rate || ''}
-                  onChange={(event) => handleItemChange(index, 'price', event.target.value)}
-                  placeholder="120"
-                  className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  readOnly
+                  className="w-full rounded border border-gray-300 bg-gray-100 px-3 py-2 text-sm cursor-not-allowed"
                   required
                 />
+
               </div>
             </div>
 
