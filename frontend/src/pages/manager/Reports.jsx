@@ -50,19 +50,21 @@ const Reports = () => {
   
   const [filters, setFilters] = useState({ sellerId: '', sellerName: '', shopName: '', shopType: '', status: '', from: '', to: '' });
 
+  // Track active requests to cancel if needed
+  const abortControllerRef = React.useRef(null);
+
   const fetchSummary = useCallback(async () => {
     try {
       const res = await API.get('/reports/summary');
       setSummary(res.data);
     } catch (err) {
-      console.error('Summary fetch error:', err);
+      if (err.name !== 'CanceledError') {
+        console.error('Summary fetch error:', err);
+      }
     }
   }, []);
 
-  useEffect(() => {
-    fetchSummary();
-  }, [fetchSummary]);
-
+  // Initial fetch of sellers only once
   useEffect(() => {
     const fetchSellers = async () => {
       try {
@@ -75,27 +77,34 @@ const Reports = () => {
     fetchSellers();
   }, []);
 
-  const fetchChartData = useCallback(async () => {
+  // Initial fetch of summary only once
+  useEffect(() => {
+    fetchSummary();
+  }, []); // Empty deps - only run once on mount
+
+  const fetchChartData = useCallback(async (signal) => {
       try {
         let endpoint = activeTab === 'monthly' ? '/reports/monthly' : activeTab === 'yearly' ? '/reports/yearly' : activeTab === 'daily' ? '/reports/daily' : '/reports/weekly';
         if (activeTab === 'custom') {
-          setChartData(getBlankChartData(activeTab)); // Show blank chart for custom tab if no custom logic to populate it
+          setChartData(getBlankChartData(activeTab));
           return;
         }
         
-        const response = await API.get(endpoint);
+        const response = await API.get(endpoint, { signal });
         const data = response.data.map(item => ({
           name: item.day || item.month || item.date || item.label || 'N/A',
           sales: Number(item.total || 0)
         }));
-        setChartData(data.length > 0 ? data : getBlankChartData(activeTab)); // Use blank data if API returns empty
+        setChartData(data.length > 0 ? data : getBlankChartData(activeTab));
       } catch (err) {
-        console.error(err);
-        setChartData(getBlankChartData(activeTab)); // Ensure chartData is blank on error
+        if (err.name !== 'CanceledError') {
+          console.error('Chart fetch error:', err);
+          setChartData(getBlankChartData(activeTab));
+        }
       }
   }, [activeTab]);
 
-  const fetchFilteredRecords = useCallback(async (currentFilters, quiet = false) => {
+  const fetchFilteredRecords = useCallback(async (currentFilters, quiet = false, signal) => {
     // Prevent UI from disappearing if data already exists
     if (!quiet && records.length === 0) setLoading(true);
     try {
@@ -124,32 +133,64 @@ const Reports = () => {
         queryParams.append('from', startOfYear.toISOString().split('T')[0]);
       }
 
-      const response = await API.get(`/reports/records?${queryParams.toString()}`);
-      // Ensure response.data is an array and filter safely
+      const response = await API.get(`/reports/records?${queryParams.toString()}`, { signal });
       const data = Array.isArray(response.data) ? response.data : [];
-      setRecords(data.filter(r => r && r.sellerId)); // Filter out records with no valid seller
+      setRecords(data.filter(r => r && r.sellerId));
+      setErrorMsg('');
     } catch (err) {
-      console.error(err);
-      setErrorMsg(err.response?.data?.message || err.message || 'Failed to load records');
+      if (err.name !== 'CanceledError') {
+        console.error('Records fetch error:', err);
+        setErrorMsg(err.response?.data?.message || err.message || 'Failed to load records');
+        // Keep showing previous data if error occurs
+        if (records.length === 0) {
+          setRecords([]);
+        }
+      }
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, [activeTab, records.length]);
 
+  // Fetch data when tab or filters change
   useEffect(() => {
-    fetchChartData();
-    fetchFilteredRecords(filters);
-  }, [filters, activeTab]);
+    // Cancel previous requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
 
-  // Auto-refresh interval
+    setLoading(true);
+    fetchChartData(signal);
+    fetchFilteredRecords(filters, false, signal);
+
+    return () => {
+      // Cleanup on unmount or dependency change
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [filters, activeTab, fetchChartData, fetchFilteredRecords]);
+
+  // Auto-refresh interval - simplified to avoid circular dependencies
   useEffect(() => {
     const interval = setInterval(() => {
+      // Cancel previous refresh requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
       fetchSummary();
-      fetchChartData();
-      fetchFilteredRecords(filters, true);
+      fetchChartData(signal);
+      fetchFilteredRecords(filters, true, signal); // quiet=true to prevent loading state
     }, 30000);
+    
     return () => clearInterval(interval);
-  }, [fetchSummary, fetchChartData, fetchFilteredRecords, filters]);
+  }, []); // Empty deps - this is safe since we pass everything needed as parameters
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
