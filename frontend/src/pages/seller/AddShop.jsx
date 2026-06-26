@@ -28,19 +28,19 @@ const AddShop = () => {
   const t = translations[lang || 'en'];
   const navigate = useNavigate();
 
-  const [shopName,     setShopName]     = useState(formData.shopName     || '');
-  const [mobile,       setMobile]       = useState(formData.mobile       || '');
-  const [shopAddress,  setShopAddress]  = useState(formData.shopAddress  || '');
-  const [landmark,     setLandmark]     = useState(formData.landmark     || '');
-  const [shopType,     setShopType]     = useState(formData.shopType     || 'Retail');
-  const [shopImage,    setShopImage]    = useState(formData.shopImage    || null);
+  const [shopName, setShopName] = useState(formData.shopName || '');
+  const [mobile, setMobile] = useState(formData.mobile || '');
+  const [shopAddress, setShopAddress] = useState(formData.shopAddress || '');
+  const [landmark, setLandmark] = useState(formData.landmark || '');
+  const [shopType, setShopType] = useState(formData.shopType || 'Retail');
+  const [shopImage, setShopImage] = useState(formData.shopImage || null);
   const [imagePreview, setImagePreview] = useState(
     typeof formData.shopImage === 'string' ? formData.shopImage : null
   );
-  const [coords,      setCoords]      = useState({ lat: formData.latitude || '', lng: formData.longitude || '' });
+  const [coords, setCoords] = useState({ lat: formData.latitude || '', lng: formData.longitude || '' });
   const [locationUrl, setLocationUrl] = useState(formData.locationUrl || '');
-  const [locError,    setLocError]    = useState('');
-  const [locLoading,  setLocLoading]  = useState(false);
+  const [locError, setLocError] = useState('');
+  const [locLoading, setLocLoading] = useState(false);
 
   /* ── auto-capture location on mount ── */
   const captureLocation = () => {
@@ -162,36 +162,65 @@ const AddShop = () => {
         {/* Shop Image — compact preview */}
         <div>
           <label className={labelCls}>{t.img}</label>
+
           <div className="flex items-center gap-3">
-            {/* Upload trigger */}
-            <label htmlFor="image-upload"
-              className="flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 text-blue-500 hover:bg-blue-100 transition overflow-hidden">
+            {/* Camera Trigger */}
+            <label
+              htmlFor="image-upload"
+              className="flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 text-blue-500 hover:bg-blue-100 transition overflow-hidden"
+            >
               {imagePreview ? (
-                <img src={imagePreview} alt="Shop preview" className="h-full w-full object-cover rounded-xl" />
+                <img
+                  src={imagePreview}
+                  alt="Shop preview"
+                  className="h-full w-full object-cover rounded-xl"
+                />
               ) : (
                 <Camera size={22} />
               )}
-              <input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleImageChange}
+                className="hidden"
+              />
             </label>
 
-            {/* Right side text / controls */}
+            {/* Right Side */}
             {imagePreview ? (
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-                  <CheckCircle2 size={13} /> Image captured
+                  <CheckCircle2 size={13} />
+                  Image captured
                 </div>
-                <button type="button" onClick={removeImage}
-                  className="flex items-center gap-1 text-[11px] font-semibold text-red-500 hover:text-red-700">
-                  <X size={12} /> Remove
+
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="flex items-center gap-1 text-[11px] font-semibold text-red-500 hover:text-red-700"
+                >
+                  <X size={12} />
+                  Remove
                 </button>
-                <label htmlFor="image-upload" className="cursor-pointer text-[11px] font-semibold text-blue-600 hover:text-blue-800">
-                  Change photo
+
+                <label
+                  htmlFor="image-upload"
+                  className="cursor-pointer text-[11px] font-semibold text-blue-600 hover:text-blue-800"
+                >
+                  Capture Again
                 </label>
               </div>
             ) : (
               <div>
-                <p className="text-xs font-semibold text-slate-600">{t.upload}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Tap the box to take a photo</p>
+                <p className="text-xs font-semibold text-slate-600">
+                  Capture Shop Photo
+                </p>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  Tap the camera icon to capture a photo
+                </p>
               </div>
             )}
           </div>
