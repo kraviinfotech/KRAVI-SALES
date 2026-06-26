@@ -34,25 +34,13 @@ const SellerDashboard = () => {
   const fetchTodayStats = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true);
     try {
-        const response = await API.get('/sales/my-records');
-        const today = new Date().toDateString();
-        const todayRecords = response.data.filter((record) => new Date(record.visitDatetime).toDateString() === today);
-
-        setStats({
-          visits: todayRecords.length,
-          sales: todayRecords.reduce((sum, record) => sum + Number(record.totalAmount || 0), 0),
-          items: todayRecords.reduce((sum, record) => {
-            const itemTotal = (record.items || []).reduce((itemSum, item) => {
-              if (item.unit === 'weight') {
-                return itemSum + 1; // Count weight-based items as 1
-              } else {
-                return itemSum + Number(item.quantity || 0);
-              }
-            }, 0);
-            return sum + itemTotal;
-          }, 0)
-        });
-      } catch (err) {
+      const response = await API.get('/sales/today-stats');
+      setStats({
+        visits: response.data.visits || 0,
+        sales: response.data.sales || 0,
+        items: response.data.items || 0
+      });
+    } catch (err) {
         console.error(err);
         setError(t.errorLoading);
       } finally {

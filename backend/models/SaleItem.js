@@ -38,4 +38,6 @@ const SaleItemSchema = new mongoose.Schema({
   }
 });
 
+SaleItemSchema.index({ recordId: 1 });
+
 module.exports = mongoose.model('SaleItem', SaleItemSchema);

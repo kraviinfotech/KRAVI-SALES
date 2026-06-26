@@ -6,6 +6,9 @@ import { AlertCircle, BarChart3, Download, Loader2, Package, ShoppingBag, Trendi
 
 const fmt = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 
+// jsPDF default fonts cannot render ₹ — use ASCII-safe amounts in PDFs
+const pdfAmount = (value) => `Rs. ${Number(value || 0).toLocaleString('en-IN')}`;
+
 const safeDate = (v) => {
   try {
     const d = new Date(v);
@@ -19,7 +22,7 @@ const SellerReports = () => {
   const [error,   setError]   = useState('');
 
   useEffect(() => {
-    API.get('/sales/my-records')
+    API.get('/sales/my-records?lite=1')
       .then(res => setRecords(res.data))
       .catch(() => setError('Reports could not be loaded.'))
       .finally(() => setLoading(false));
@@ -85,12 +88,12 @@ const SellerReports = () => {
       head: [['Metric', 'Value']],
       body: [
         ['Total Shop Visits',   stats.visits],
-        ['Total Sales Amount',  fmt.format(stats.sales)],
+        ['Total Sales Amount',  pdfAmount(stats.sales)],
         ['Total Items Sold',    stats.items],
         ['Today\'s Visits',    stats.todayVisits],
-        ['Today\'s Sales',     fmt.format(stats.todaySales)],
-        ['Total Collected',    fmt.format(stats.paidTotal)],
-        ['Total Pending',      fmt.format(stats.pendingTotal)],
+        ['Today\'s Sales',     pdfAmount(stats.todaySales)],
+        ['Total Collected',    pdfAmount(stats.paidTotal)],
+        ['Total Pending',      pdfAmount(stats.pendingTotal)],
       ],
 
       
@@ -112,7 +115,7 @@ const SellerReports = () => {
       body: records.slice(0, 20).map(r => [
         r.shopName || '-',
         safeDate(r.visitDatetime),
-        fmt.format(r.totalAmount || 0),
+        pdfAmount(r.totalAmount),
         r.paymentStatus || '-',
       ]),
       theme: 'grid',

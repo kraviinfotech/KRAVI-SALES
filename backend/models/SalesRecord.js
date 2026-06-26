@@ -87,4 +87,7 @@ const SalesRecordSchema = new mongoose.Schema({
   }
 });
 
+SalesRecordSchema.index({ sellerId: 1, managerId: 1, visitDatetime: -1 });
+SalesRecordSchema.index({ managerId: 1, visitDatetime: -1 });
+
 module.exports = mongoose.model('SalesRecord', SalesRecordSchema);

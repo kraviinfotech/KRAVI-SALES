@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const SalesRecord = require('../models/SalesRecord');
 const SaleItem = require('../models/SaleItem');
 const Seller = require('../models/Seller');
+const { attachItemsToRecords } = require('../utils/salesRecordUtils');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 const subscriptionMiddleware = require('../middleware/subscriptionMiddleware');
@@ -605,18 +606,11 @@ router.get('/records', async (req, res) => {
     // Populate the Seller information
     const records = await SalesRecord.find(query)
       .populate('sellerId', 'name mobile')
+      .select('-scannerPhoto -shopImage')
       .sort({ visitDatetime: -1 })
       .lean();
 
-    // Fetch and append SaleItems for each SalesRecord
-    const recordsWithItems = [];
-    for (const record of records) {
-      const items = await SaleItem.find({ recordId: record._id });
-      recordsWithItems.push({
-        ...record,
-        items
-      });
-    }
+    const recordsWithItems = await attachItemsToRecords(records);
 
     res.json(recordsWithItems);
   } catch (err) {
