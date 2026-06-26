@@ -185,30 +185,36 @@ const ReviewSave = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
-      <h2 className="text-xl font-bold border-b pb-2">Review Record</h2>
-      
+    <div className="max-w-2xl mx-auto bg-gradient-to-br from-slate-100 via-slate-50 to-white p-6 rounded-[32px] shadow-2xl ring-1 ring-slate-200/70 space-y-6">
+      <div className="rounded-[28px] bg-white p-6 shadow-sm shadow-slate-200/40 ring-1 ring-slate-200">
+        <h2 className="text-2xl font-bold tracking-tight text-indigo-700">Review Record</h2>
+        <p className="mt-1 text-sm text-indigo-500">Confirm the sale details before saving your record.</p>
+      </div>
+
       {error && (
-        <div className="flex items-center gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+        <div className="flex items-center gap-2 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-medium text-orange-800 shadow-sm">
           <AlertCircle size={16} />
           <span>{error}</span>
         </div>
       )}
 
       <section>
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">Shop Details</h3>
-        <div className="space-y-1 text-sm text-gray-900 bg-gray-50 p-4 rounded border border-gray-100">
-          <p><span className="font-medium text-gray-600">Name:</span> {shopName || '-'}</p>
-          <p><span className="font-medium text-gray-600">Mobile:</span> {mobile || '-'}</p>
-          <p><span className="font-medium text-gray-600">Address:</span> {shopAddress || '-'}</p>
-          {landmark && <p><span className="font-medium text-gray-600">Landmark:</span> {landmark}</p>}
-          <p><span className="font-medium text-gray-600">Type:</span> {shopType}</p>
+        <h3 className="text-base font-bold text-slate-900 mb-3">Shop Details</h3>
+        <div className="space-y-3 text-base text-slate-900 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-5 rounded-[22px] border border-slate-200 shadow-sm">
+          <p><span className="font-semibold text-slate-700">Name:</span> {shopName || '-'}</p>
+          <p><span className="font-semibold text-slate-700">Mobile:</span> {mobile || '-'}</p>
+          <p><span className="font-semibold text-slate-700">Address:</span> {shopAddress || '-'}</p>
+          {landmark && <p><span className="font-semibold text-slate-700">Landmark:</span> {landmark}</p>}
+          <p><span className="font-semibold text-slate-700">Type:</span> {shopType}</p>
         </div>
       </section>
 
       <section>
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">Products</h3>
-        <div className="space-y-2 bg-gray-50 p-4 rounded border border-gray-100">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-slate-900">Products</h3>
+          <span className="text-sm uppercase tracking-[0.24em] text-slate-500">{(items || []).length} items</span>
+        </div>
+        <div className="space-y-2 bg-white p-4 rounded-[22px] border border-slate-200 shadow-sm">
           {(items || []).map((item, index) => {
             let quantity, rate, amount;
             let displayLabel = '';
@@ -226,39 +232,40 @@ const ReviewSave = () => {
             amount = quantity * rate;
 
             return (
-              <div key={`${item.productName}-${index}`} className="flex items-center justify-between text-sm border-b border-gray-200 last:border-0 pb-2 last:pb-0">
-                <span className="font-medium text-gray-800">{item.productName}</span>
-                <span className="font-semibold text-gray-900">
-                  {displayLabel} x ₹{rate} = ₹{amount.toFixed(2)}
-                </span>
+              <div key={`${item.productName}-${index}`} className="flex items-center justify-between gap-4 text-base border-b border-slate-200 last:border-0 pb-3 last:pb-0">
+                <span className="font-semibold text-slate-900">{item.productName || '-'}</span>
+                <span className="font-semibold text-slate-700">{displayLabel} x ₹{rate} = ₹{amount.toFixed(2)}</span>
               </div>
             );
           })}
         </div>
       </section>
 
-      <div className="border-t border-gray-200 pt-4 space-y-1">
+      <div className="border border-indigo-100 bg-white/95 pt-4 space-y-3 rounded-[24px] p-5 text-slate-900 shadow-lg shadow-indigo-100/40">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-gray-700">Total Amount</h3>
-          <p className="text-xl font-bold text-gray-900">{currencyFormatter.format(totalAmount)}</p>
+          <div>
+            <p className="text-base font-semibold text-slate-900">Total Amount</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Summary Total</p>
+          </div>
+          <p className="text-3xl font-extrabold text-indigo-700">{currencyFormatter.format(totalAmount)}</p>
         </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-emerald-600">Paying Amount</span>
-          <span className="font-bold text-emerald-700">{currencyFormatter.format(payingAmount)}</span>
+        <div className="flex items-center justify-between rounded-2xl bg-indigo-50 px-4 py-3 text-sm text-slate-700">
+          <span className="font-medium">Paying Amount</span>
+          <span className="font-semibold text-indigo-700">{currencyFormatter.format(payingAmount)}</span>
         </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-red-600">Pending Amount</span>
-          <span className="font-bold text-red-700">{currencyFormatter.format(pendingAmount)}</span>
+        <div className="flex items-center justify-between rounded-2xl bg-rose-50 px-4 py-3 text-sm text-slate-700">
+          <span className="font-medium">Pending Amount</span>
+          <span className="font-semibold text-rose-600">{currencyFormatter.format(pendingAmount)}</span>
         </div>
       </div>
 
       {/* Payment Details Section */}
-      <section className="space-y-4 border-t border-gray-200 pt-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">Payment Details</h3>
+      <section className="space-y-4 border-t border-slate-200 pt-4">
+        <h3 className="text-base font-bold text-slate-800 mb-2">Payment Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Payment Method */}
           <div>
-            <label htmlFor="paymentMethod" className="mb-1 block text-sm font-medium text-gray-700">Payment Method</label>
+            <label htmlFor="paymentMethod" className="mb-1 block text-base font-semibold text-slate-700">Payment Method</label>
             <select
               id="paymentMethod"
               value={paymentMethod}
@@ -268,7 +275,7 @@ const ReviewSave = () => {
                   setShowScanner(true);
                 }
               }}
-              className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-200"
             >
               <option value="Offline">Cash</option>
               <option value="Online">Online</option>
@@ -277,7 +284,7 @@ const ReviewSave = () => {
 
           {/* Paying Amount */}
           <div>
-            <label htmlFor="payingAmount" className="mb-1 block text-sm font-medium text-gray-700">
+            <label htmlFor="payingAmount" className="mb-1 block text-base font-semibold text-slate-700">
               {paymentMethod === 'Offline' ? 'Cash Received (₹)' : 'Paying Amount (₹)'}
             </label>
             <input
@@ -287,29 +294,29 @@ const ReviewSave = () => {
               step="0.01"
               value={payingAmount || ''}
               onChange={(e) => setPayingAmount(Number(e.target.value))}
-              className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-200"
             />
           </div>
 
           {/* Pending Amount (Read-only) */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Pending Amount (₹)</label>
+            <label className="mb-1 block text-base font-semibold text-slate-700">Pending Amount (₹)</label>
             <input
               type="text"
               value={currencyFormatter.format(pendingAmount)}
               readOnly
-              className="w-full rounded border border-gray-300 bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-900 outline-none"
+              className="w-full rounded-2xl border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
             />
           </div>
 
           {/* Payment Status */}
           <div>
-            <label htmlFor="paymentStatus" className="mb-1 block text-sm font-medium text-gray-700">Payment Status</label>
+            <label htmlFor="paymentStatus" className="mb-1 block text-base font-semibold text-slate-700">Payment Status</label>
             <select
               id="paymentStatus"
               value={paymentStatus}
               onChange={(e) => setPaymentStatus(e.target.value)}
-              className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-200"
             >
               <option value="Pending">Pending</option>
               <option value="Partial">Partial</option>
@@ -341,7 +348,7 @@ const ReviewSave = () => {
         type="button"
         onClick={handleSave}
         disabled={loading}
-        className="w-full rounded bg-primary py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-75 mt-4"
+        className="w-full rounded-2xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-200/40 transition duration-200 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-75 mt-4"
       >
         {loading ? 'Saving...' : 'Save Record'}
       </button>
