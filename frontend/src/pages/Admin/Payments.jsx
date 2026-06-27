@@ -109,8 +109,10 @@ const Payments = () => {
       doc.text('contact@kraviinfotech.com', rightX, rightY, { align: 'right' });
       rightY += 12;
       doc.text('+91 9657013534', rightX, rightY, { align: 'right' });
+      rightY += 12;
+      doc.text('GSTIN: 27BMXPT8116L1ZZ', rightX, rightY, { align: 'right' });
 
-      top += 38;
+      top += 50;
 
       // Divider line
       doc.setDrawColor(200, 200, 200);
@@ -178,27 +180,53 @@ const Payments = () => {
       if (doc.lastAutoTable && doc.lastAutoTable.finalY) {
         finalY = doc.lastAutoTable.finalY + 12;
       }
-      const summaryX = pageWidth - margin - 120;
 
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text('Subtotal:', summaryX, finalY);
-      doc.setTextColor(0, 0, 0);
-      doc.text(`₹${t.amount}`, pageWidth - margin - 30, finalY, { align: 'right' });
+      const baseAmount = Number(t.amount || 0);
+      const gstRate = 0.18;
+      const gstAmount = +(baseAmount * gstRate).toFixed(2);
+      const totalAmount = +(baseAmount + gstAmount).toFixed(2);
 
-      doc.setTextColor(100, 100, 100);
-      doc.text('Tax (0%):', summaryX, finalY + 14);
-      doc.setTextColor(0, 0, 0);
-      doc.text('₹0', pageWidth - margin - 30, finalY + 14, { align: 'right' });
+      // Summary Box
+      const boxW = 160;
+      const boxH = 80;
+      const boxX = pageWidth - margin - boxW;
+      const boxY = finalY - 8;
 
-      doc.setDrawColor(200, 200, 200);
-      doc.line(summaryX, finalY + 20, pageWidth - margin, finalY + 20);
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(220, 224, 230);
+      doc.setLineWidth(0.8);
+      doc.roundedRect(boxX, boxY, boxW, boxH, 4, 4, 'FD');
 
-      doc.setFontSize(12);
+      const valX = pageWidth - margin - 12;
+      const lblX = boxX + 12;
+      let sY = finalY + 8;
+
+      // Subtotal (Bold)
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(50, 50, 50);
+      doc.text('Subtotal:', lblX, sY);
+      doc.text(`₹${baseAmount.toFixed(2)}`, valX, sY, { align: 'right' });
+
+      // GST (18%) (Bold)
+      sY += 18;
+      doc.setFont('helvetica', 'bold');
+      doc.text('GST (18%):', lblX, sY);
+      doc.text(`₹${gstAmount.toFixed(2)}`, valX, sY, { align: 'right' });
+
+      // Divider inside Summary Box
+      sY += 10;
+      doc.setDrawColor(209, 213, 219);
+      doc.setLineWidth(0.6);
+      doc.line(boxX + 10, sY, pageWidth - margin - 10, sY);
+
+      // Total Due (Highlight Purple)
+      sY += 16;
+      doc.setFontSize(10.5);
+      doc.setFont('helvetica', 'bold');
       doc.setTextColor(108, 62, 244);
-      doc.text('TOTAL DUE:', summaryX, finalY + 30);
-      doc.setFontSize(14);
-      doc.text(`₹${t.amount}`, pageWidth - margin - 30, finalY + 30, { align: 'right' });
+      doc.text('TOTAL DUE:', lblX, sY);
+      doc.text(`₹${totalAmount.toFixed(2)}`, valX, sY, { align: 'right' });
 
       // Payment Status
       doc.setFontSize(9);

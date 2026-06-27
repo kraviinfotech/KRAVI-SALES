@@ -120,72 +120,156 @@ const MyRecords = () => {
     }
   };
 
-  /* ── PDF generator ─────────────────────────────── */
+  /* ── PDF generator (same as Manager dashboard) ─── */
   const handleDownloadPDF = () => {
     if (!records.length) { alert('No records to export.'); return; }
+
     const doc = new jsPDF('landscape');
-    const now  = new Date().toLocaleString('en-IN');
+    const W = doc.internal.pageSize.getWidth();
+    const H = doc.internal.pageSize.getHeight();
+    const L = 14;
+    const R = W - 14;
+
+    const BLUE  = [26, 86, 219];
+    const DBLUE = [30, 58, 138];
+    const GRAY  = [107, 114, 128];
+    const DARK  = [17, 24, 39];
+    const WHITE = [255, 255, 255];
+
+    // ── HEADER: Logo block ──
+    doc.setFillColor(...BLUE);
+    doc.roundedRect(L, 12, 32, 32, 5, 5, 'F');
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...WHITE);
+    doc.text('K', L + 8, 12 + 24);
 
     doc.setFontSize(18);
-    doc.setTextColor(29, 78, 216);
-    doc.text('My Sales Records', 14, 16);
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.text(`Exported on: ${now}  |  Total: ${records.length} visits`, 14, 23);
-    
-    // Address on the right
-    const rightX = 283;
-    let rightY = 10;
-    doc.setFontSize(10);
-    doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
-    doc.text('Kravi Infotech', rightX, rightY, { align: 'right' });
-    
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100);
-    rightY += 5;
-    doc.text('Ahilyanagar, Maharashtra, India', rightX, rightY, { align: 'right' });
-    rightY += 5;
-    doc.text('contact@kraviinfotech.com', rightX, rightY, { align: 'right' });
-    rightY += 5;
-    doc.text('+91 9657013534', rightX, rightY, { align: 'right' });
+    doc.setTextColor(...DBLUE);
+    doc.text('KRAVI', L + 40, 12 + 16);
 
-    doc.setDrawColor(226, 232, 240);
-    doc.line(14, 29, 283, 29);
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...GRAY);
+    doc.text('Sales Person Tracker', L + 40, 12 + 24);
+
+    // Center Title
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...DBLUE);
+    doc.text('My Sales Records', W / 2, 12 + 16, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...GRAY);
+    const dateStr = new Date().toLocaleString('en-IN');
+    doc.text(`Generated on: ${dateStr}  |  Total: ${records.length} visits`, W / 2, 12 + 26, { align: 'center' });
+
+    // Contact Right
+    const cX = R;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...DARK);
+    doc.text('Kravi Infotech', cX, 12 + 10, { align: 'right' });
+
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...GRAY);
+    let yRight = 12 + 17;
+    doc.text('Ahilyanagar, Maharashtra, India', cX, yRight, { align: 'right' });
+    yRight += 7;
+    doc.text('contact@kraviinfotech.com', cX, yRight, { align: 'right' });
+    yRight += 7;
+    doc.text('+91 9657013534', cX, yRight, { align: 'right' });
+
+    // Top Divider
+    let y = 12 + 40;
+    doc.setDrawColor(...BLUE);
+    doc.setLineWidth(1.2);
+    doc.line(L, y, R, y);
+    y += 10;
+
+    const tableColumn = ['#', 'Shop Name', 'Mobile', 'Visit Date & Time', 'Items', 'Total Amount', 'Paid', 'Pending', 'Status'];
+    const tableRows = records.map((r, i) => {
+      const itemCount = (r.items || []).reduce((s, it) =>
+        s + (it.unit === 'weight' ? 1 : Number(it.quantity || 0)), 0);
+      return [
+        i + 1,
+        r.shopName || '-',
+        r.mobile   || '-',
+        safeDate(r.visitDatetime, true),
+        itemCount,
+        `Rs. ${Number(r.totalAmount   || 0).toLocaleString('en-IN')}`,
+        `Rs. ${Number(r.paidAmount    || 0).toLocaleString('en-IN')}`,
+        `Rs. ${Number(r.pendingAmount || 0).toLocaleString('en-IN')}`,
+        r.paymentStatus || 'Pending',
+      ];
+    });
+
+    const STATUS_COL = 8;
 
     autoTable(doc, {
-      startY: 32,
-      head: [['#', 'Shop Name', 'Mobile', 'Visit Date & Time', 'Items', 'Total Amount', 'Paid', 'Pending', 'Status']],
-      body: records.map((r, i) => {
-        const itemCount = (r.items || []).reduce((s, it) =>
-          s + (it.unit === 'weight' ? 1 : Number(it.quantity || 0)), 0);
-        return [
-          i + 1,
-          r.shopName || '-',
-          r.mobile   || '-',
-          safeDate(r.visitDatetime, true),
-          itemCount,
-          `Rs. ${Number(r.totalAmount || 0).toLocaleString('en-IN')}`,
-          `Rs. ${Number(r.paidAmount  || 0).toLocaleString('en-IN')}`,
-          `Rs. ${Number(r.pendingAmount || 0).toLocaleString('en-IN')}`,
-          r.paymentStatus || '-',
-        ];
-      }),
+      head: [tableColumn],
+      body: tableRows,
+      startY: y,
       theme: 'grid',
-      styles: { fontSize: 8, halign: 'center' },
-      headStyles: { fillColor: [29, 78, 216], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+      headStyles: { fillColor: DBLUE, textColor: WHITE, fontSize: 8, fontStyle: 'bold', halign: 'center' },
+      bodyStyles: { fontSize: 8, textColor: [50, 50, 50] },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      styles: { cellPadding: 4, halign: 'center', lineColor: [220, 225, 235] },
       columnStyles: {
         1: { halign: 'left' },
         3: { halign: 'left' },
         5: { halign: 'right' },
-        6: { halign: 'right' },
-        7: { halign: 'right' },
+        6: { halign: 'right', textColor: [5, 122, 85],  fontStyle: 'bold' },
+        7: { halign: 'right', textColor: [185, 28, 28], fontStyle: 'bold' },
       },
+      didParseCell: function (data) {
+        if (data.section === 'body' && data.column.index === STATUS_COL) {
+          const val = String(data.cell.raw || '');
+          if (val === 'Paid') {
+            data.cell.styles.textColor = [5, 122, 85];
+            data.cell.styles.fontStyle = 'bold';
+          } else if (val === 'Pending') {
+            data.cell.styles.textColor = [185, 28, 28];
+            data.cell.styles.fontStyle = 'bold';
+          } else {
+            data.cell.styles.textColor = [180, 83, 9];
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      },
+      margin: { left: L, right: L, bottom: 30 },
+      didDrawPage: function (data) {
+        const footerY = H - 15;
+        doc.setDrawColor(...BLUE);
+        doc.setLineWidth(1.2);
+        doc.line(L, footerY - 10, R, footerY - 10);
+
+        doc.setFontSize(8.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...BLUE);
+        doc.text('KRAVI Sales Person Tracker', L, footerY);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...DARK);
+        doc.text('This is a system generated report.', W / 2, footerY, { align: 'center' });
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...BLUE);
+        doc.text(`Page ${doc.internal.getCurrentPageInfo().pageNumber} of {total_pages_count_string}`, R, footerY, { align: 'right' });
+      }
     });
+
+    const totalPagesExp = '{total_pages_count_string}';
+    if (typeof doc.putTotalPages === 'function') {
+      doc.putTotalPages(totalPagesExp);
+    }
 
     doc.save(`My_Records_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
+
 
   if (loading) {
     return (

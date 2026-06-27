@@ -173,6 +173,7 @@ const generateInvoicePDF = (tx, managerName) => {
     doc.text('Ahilyanagar, Maharashtra, India', cX, 48);
     doc.text('contact@kraviinfotech.com', cX, 60);
     doc.text('+91 9657013534', cX, 72);
+    doc.text('GSTIN: 27BMXPT8116L1ZZ', cX, 84);
 
     // Divider
     y = 95;
@@ -394,54 +395,59 @@ const generateInvoicePDF = (tx, managerName) => {
     doc.setTextColor(...GREEN);
     doc.text('Thank you! Your payment has been received.', pCol1X + 20, piY + 30);
 
-    // Totals
-    const tLX = pCol2X + 10;
-    const tVX = R - 12;
-    const totRows = [
-      ['Subtotal', 'Rs. ' + fmtAmt(baseAmount)],
-      ['Discount',  'Rs. 0.00'],
-      ['GST (18%)', 'Rs. ' + fmtAmt(gstAmount)],
-    ];
-    let tY = y + 20;
-    totRows.forEach(([lbl, val]) => {
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...MGRAY);
-      doc.text(lbl, tLX, tY);
-      doc.text(val, tVX, tY, { align: 'right' });
-      tY += 22;
-    });
-
+    // Totals Box
+    doc.setFillColor(248, 250, 252);
     doc.setDrawColor(209, 213, 219);
-    doc.setLineWidth(0.6);
-    doc.line(pCol2X, tY, R, tY);
-    tY += 14;
+    doc.setLineWidth(0.8);
+    doc.roundedRect(pCol2X, y, pColW, pSecH, 5, 5, 'FD');
 
-    // Total Amount
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...DARK);
-    doc.text('Total Amount', tLX, tY);
-    doc.setTextColor(...BLUE);
-    doc.text('Rs. ' + fmtAmt(totalAmount), tVX, tY, { align: 'right' });
-    tY += 22;
+    const tLX = pCol2X + 12;
+    const tVX = R - 12;
+    let tY = y + 24;
 
-    // Amount Paid
+    // Subtotal (Bold)
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...GREEN);
-    doc.text('Amount Paid', tLX, tY);
-    doc.text('Rs. ' + fmtAmt(amountPaid), tVX, tY, { align: 'right' });
-    tY += 16;
+    doc.setTextColor(...DARK);
+    doc.text('Subtotal', tLX, tY);
+    doc.text('Rs. ' + fmtAmt(baseAmount), tVX, tY, { align: 'right' });
+    tY += 20;
 
-    // Balance Due (green filled row)
-    doc.setFillColor(...GREEN);
-    doc.roundedRect(pCol2X, tY - 10, pColW, 26, 4, 4, 'F');
-    doc.setFontSize(11);
+    // Discount (Normal/Gray)
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...GRAY);
+    doc.text('Discount', tLX, tY);
+    doc.text('Rs. 0.00', tVX, tY, { align: 'right' });
+    tY += 20;
+
+    // GST (18%) (Bold)
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...WHITE);
-    doc.text('Balance Due', tLX + 4, tY + 7);
-    doc.text('Rs. ' + fmtAmt(balanceDue), tVX - 4, tY + 7, { align: 'right' });
+    doc.setTextColor(...DARK);
+    doc.text('GST (18%)', tLX, tY);
+    doc.text('Rs. ' + fmtAmt(gstAmount), tVX, tY, { align: 'right' });
+    tY += 20;
+
+    // Divider
+    doc.setDrawColor(209, 213, 219);
+    doc.setLineWidth(0.6);
+    doc.line(pCol2X + 10, tY - 8, R - 10, tY - 8);
+
+    // Total Amount (Bigger, Bold, Blue)
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...BLUE);
+    doc.text('Total Amount', tLX, tY + 4);
+    doc.text('Rs. ' + fmtAmt(totalAmount), tVX, tY + 4, { align: 'right' });
+    tY += 24;
+
+    // Amount Paid (Bold, Green)
+    doc.setFontSize(9.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...GREEN);
+    doc.text('Amount Paid', tLX, tY + 4);
+    doc.text('Rs. ' + fmtAmt(amountPaid), tVX, tY + 4, { align: 'right' });
 
     y += pSecH + 26;
 
