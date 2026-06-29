@@ -19,6 +19,7 @@ const AddProducts = () => {
   const [suggestionsOpen, setSuggestionsOpen] = useState({});
   const [searchQueries, setSearchQueries] = useState({});
   const wrapperRefs = React.useRef({});
+  const lastCardRef = React.useRef(null);
 
   const isValidProduct = (productName) => {
     return masterList.some((product) => product.name === productName);
@@ -67,6 +68,15 @@ const AddProducts = () => {
     fetchMasterProducts();
   }, []);
 
+  useEffect(() => {
+    if (formData.items?.length > 1) {
+      lastCardRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }, [formData.items?.length]);
+
   // Ensure formData.items is initialized and has required fields
   useEffect(() => {
     if (!formData.items || formData.items.length === 0) {
@@ -88,7 +98,12 @@ const AddProducts = () => {
     }
   }, [formData.items, setFormData]);
 
-
+  const handleItemChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item)
+    }));
+  };
 
   const handleSearchInput = (index, query) => {
     setSearchQueries(prev => ({ ...prev, [index]: query }));
@@ -200,7 +215,11 @@ const AddProducts = () => {
           : (Number(item.weight) || 0) * price;
 
         return (
-          <div key={index} className="space-y-4 rounded border border-gray-200 bg-gray-50 p-4">
+          <div
+            key={index}
+            ref={index === formData.items.length - 1 ? lastCardRef : null}
+            className="space-y-4 rounded border border-gray-200 bg-gray-50 p-4"
+          >
             {formData.items.length > 1 && (
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-gray-700">Product {index + 1}</span>
@@ -265,22 +284,20 @@ const AddProducts = () => {
                 <button
                   type="button"
                   onClick={() => handleUnitChange(index, 'quantity')}
-                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
-                    item.unit === 'quantity'
+                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${item.unit === 'quantity'
                       ? 'bg-primary text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                    }`}
                 >
                   {t.qtyBtn}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleUnitChange(index, 'weight')}
-                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
-                    item.unit === 'weight'
+                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${item.unit === 'weight'
                       ? 'bg-primary text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                    }`}
                 >
                   {t.weightBtn}
                 </button>
@@ -323,13 +340,15 @@ const AddProducts = () => {
                 <label className="mb-1 block text-sm font-medium text-gray-700">{t.price}</label>
                 <input
                   type="number"
-                  
+                  min="0"
+                  step="0.01"
                   value={item.price || item.rate || ''}
-                  readOnly
-                  className="w-full rounded border border-gray-300 bg-gray-100 px-3 py-2 text-sm cursor-not-allowed"
+                  onChange={(event) => handleItemChange(index, 'price', event.target.value)}
+                  placeholder="120"
+                  className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   required
+                  readOnly
                 />
-
               </div>
             </div>
 
