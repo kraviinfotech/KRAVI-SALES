@@ -144,6 +144,7 @@ const ProductsOverview = () => {
             onChange={(e) => setNewProductPrice(e.target.value)}
             placeholder="Base Price (₹)"
             className="w-full sm:w-36 rounded border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            required
           />
           <button
             type="submit"
