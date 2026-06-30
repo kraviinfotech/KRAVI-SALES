@@ -143,133 +143,136 @@ const Login = () => {
   };
 
   return (
-<>
+    <>
       {showIntroVideo && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black">
-          <video
-            className="h-full w-full object-cover"
-            src={videoSrc}
-            autoPlay
-            muted
-            playsInline
-            onEnded={() => setShowIntroVideo(false)}
-          />
-          <div className="pointer-events-none absolute inset-0 bg-black/40" />
-        </div>
-      )}
+  <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black">
+    <video
+      className="h-full w-full object-cover cursor-pointer"
+      src={videoSrc}
+      autoPlay
+      muted
+      playsInline
+      onEnded={() => setShowIntroVideo(false)}
+      onClick={() => setShowIntroVideo(false)}
+    />
+    <div className="pointer-events-none absolute inset-0 bg-black/40" />
 
-    <div className="min-h-screen flex items-start justify-center px-4 pt-28 pb-8 bg-transparent sm:items-center sm:py-8 lg:justify-end lg:pl-4 lg:pr-16">
+    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white text-sm font-medium animate-pulse">
+      Tap anywhere to skip
+    </div>
+  </div>
+)}
+
+      <div className="min-h-screen flex items-start justify-center px-4 pt-28 pb-8 bg-transparent sm:items-center sm:py-8 lg:justify-end lg:pl-4 lg:pr-16">
         <div className="w-full max-w-md">
-        <div className="rounded-lg border border-white bg-white/95 p-6 shadow-[0_22px_60px_rgba(37,99,235,0.14)] ring-1 ring-blue-100/60">
-          <div className="mb-8 text-center border-b border-blue-100/70 pb-4">
-            <p className="text-sm font-bold uppercase tracking-wide text-indigo-600">SalesFlow</p>
-            <h1 className="mt-1 text-2xl font-black text-gray-900">Login</h1>
-          </div>
-
-          <div className="mb-5 grid grid-cols-2 rounded-md border border-slate-200 bg-white/90 p-1">
-            <button
-              type="button"
-              onClick={() => handleRoleChange('seller')}
-              className={`flex items-center justify-center gap-2 rounded px-3 py-2 text-sm font-bold transition-colors ${
-                selectedRole === 'seller'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-white hover:text-slate-950'
-              }`}
-            >
-              <UserRound size={16} />
-              Seller
-            </button>
-            <button
-              type="button"
-              onClick={() => handleRoleChange('manager')}
-              className={`flex items-center justify-center gap-2 rounded px-3 py-2 text-sm font-bold transition-colors ${
-                selectedRole === 'manager'
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-white hover:text-slate-950'
-              }`}
-            >
-              <ShieldCheck size={16} />
-              Manager
-            </button>
-          </div>
-
-          <div className="mb-6 flex items-center gap-3">
-            <div className="rounded-md bg-blue-50/70 p-2 text-primary">
-              <Icon size={22} />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">{currentRole.title}</h2>
-              <p className="text-sm font-medium text-gray-500">{currentRole.subtitle}</p>
-            </div>
-          </div>
-
-          {error && (
-            <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Email or Mobile Number</label>
-              <input
-                type="text"
-                inputMode="email"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="e.g. email@example.com or 9876543210"
-                className="w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm shadow-inner shadow-blue-100/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                autoComplete="off"
-                required
-              />
+          <div className="rounded-lg border border-white bg-white/95 p-6 shadow-[0_22px_60px_rgba(37,99,235,0.14)] ring-1 ring-blue-100/60">
+            <div className="mb-8 text-center border-b border-blue-100/70 pb-4">
+              <p className="text-sm font-bold uppercase tracking-wide text-indigo-600">SalesFlow</p>
+              <h1 className="mt-1 text-2xl font-black text-gray-900">Login</h1>
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm shadow-inner shadow-blue-100/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                autoComplete="new-password"
-                required
-              />
-              <div className="mt-1 text-right">
-                <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-                  Forgot Password?
-                </Link>
+            <div className="mb-5 grid grid-cols-2 rounded-md border border-slate-200 bg-white/90 p-1">
+              <button
+                type="button"
+                onClick={() => handleRoleChange('seller')}
+                className={`flex items-center justify-center gap-2 rounded px-3 py-2 text-sm font-bold transition-colors ${selectedRole === 'seller'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-white hover:text-slate-950'
+                  }`}
+              >
+                <UserRound size={16} />
+                Seller
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRoleChange('manager')}
+                className={`flex items-center justify-center gap-2 rounded px-3 py-2 text-sm font-bold transition-colors ${selectedRole === 'manager'
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-white hover:text-slate-950'
+                  }`}
+              >
+                <ShieldCheck size={16} />
+                Manager
+              </button>
+            </div>
+
+            <div className="mb-6 flex items-center gap-3">
+              <div className="rounded-md bg-blue-50/70 p-2 text-primary">
+                <Icon size={22} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">{currentRole.title}</h2>
+                <p className="text-sm font-medium text-gray-500">{currentRole.subtitle}</p>
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full rounded py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-75 ${currentRole.buttonClass}`}
-            >
-              {loading ? 'Logging In...' : currentRole.buttonLabel}
-            </button>
-
-            {googleReady && selectedRole === 'manager' && (
-              <div className="pt-2">
-                <GoogleLoginButton onSuccess={() => {}} onFailure={handleGoogleFailure} disabled={loading} />
+            {error && (
+              <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+                {error}
               </div>
             )}
 
-            {currentRole.registerLink && (
-              <div className="text-right">
-                <div className="flex flex-col items-end gap-2">
-                  <Link to={currentRole.registerLink.to} className="text-sm font-medium text-primary hover:underline">
-                    {currentRole.registerLink.label}
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Email or Mobile Number</label>
+                <input
+                  type="text"
+                  inputMode="email"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="e.g. email@example.com or 9876543210"
+                  className="w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm shadow-inner shadow-blue-100/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  autoComplete="off"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm shadow-inner shadow-blue-100/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  autoComplete="new-password"
+                  required
+                />
+                <div className="mt-1 text-right">
+                  <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                    Forgot Password?
                   </Link>
                 </div>
               </div>
-            )}
-          </form>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className={`w-full rounded py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-75 ${currentRole.buttonClass}`}
+              >
+                {loading ? 'Logging In...' : currentRole.buttonLabel}
+              </button>
+
+              {googleReady && selectedRole === 'manager' && (
+                <div className="pt-2">
+                  <GoogleLoginButton onSuccess={() => { }} onFailure={handleGoogleFailure} disabled={loading} />
+                </div>
+              )}
+
+              {currentRole.registerLink && (
+                <div className="text-right">
+                  <div className="flex flex-col items-end gap-2">
+                    <Link to={currentRole.registerLink.to} className="text-sm font-medium text-primary hover:underline">
+                      {currentRole.registerLink.label}
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </form>
+          </div>
         </div>
       </div>
-    </div>
-  
-</>)
+
+    </>)
 };
 
 export default Login;
