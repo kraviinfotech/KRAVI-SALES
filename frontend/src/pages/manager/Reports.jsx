@@ -39,13 +39,19 @@ const getBlankChartData = (activeTab) => {
   return []; // For custom or unknown tabs
 };
 
+// Module-level cache for instant re-navigation
+let cachedSummary = null;
+let cachedSellers = null;
+let cachedRecords = null;
+let hasFetchedReports = false;
+
 const Reports = () => {
   const [activeTab, setActiveTab] = useState('weekly'); // daily, weekly, monthly, yearly, custom
-  const [summary, setSummary] = useState({ totalSellers: 0, totalRecords: 0, monthlyTotal: 0, yearlyTotal: 0 });
+  const [summary, setSummary] = useState(cachedSummary || { totalSellers: 0, totalRecords: 0, monthlyTotal: 0, yearlyTotal: 0 });
   const [chartData, setChartData] = useState([]);
-  const [records, setRecords] = useState([]);
-  const [sellers, setSellers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState(cachedRecords || []);
+  const [sellers, setSellers] = useState(cachedSellers || []);
+  const [loading, setLoading] = useState(!hasFetchedReports);
   const [errorMsg, setErrorMsg] = useState('');
   
   const [filters, setFilters] = useState({ sellerId: '', sellerName: '', shopName: '', shopType: '', status: '', from: '', to: '' });
@@ -57,6 +63,7 @@ const Reports = () => {
     try {
       const res = await API.get('/reports/summary');
       setSummary(res.data);
+      cachedSummary = res.data;
     } catch (err) {
       if (err.name !== 'CanceledError') {
         console.error('Summary fetch error:', err);
@@ -70,11 +77,13 @@ const Reports = () => {
       try {
         const response = await API.get('/sellers');
         setSellers(response.data);
+        cachedSellers = response.data;
+        hasFetchedReports = true;
       } catch (err) {
         console.error(err);
       }
     };
-    fetchSellers();
+    if (!hasFetchedReports) fetchSellers();
   }, []);
 
   // Initial fetch of summary only once
@@ -104,9 +113,11 @@ const Reports = () => {
       }
   }, [activeTab]);
 
+  const recordsLengthRef = React.useRef(0);
+  
   const fetchFilteredRecords = useCallback(async (currentFilters, quiet = false, signal) => {
     // Prevent UI from disappearing if data already exists
-    if (!quiet && records.length === 0) setLoading(true);
+    if (!quiet && recordsLengthRef.current === 0) setLoading(true);
     try {
       const queryParams = new URLSearchParams();
       if (currentFilters.sellerId) queryParams.append('sellerId', currentFilters.sellerId);
@@ -135,21 +146,23 @@ const Reports = () => {
 
       const response = await API.get(`/reports/records?${queryParams.toString()}`, { signal });
       const data = Array.isArray(response.data) ? response.data : [];
-      setRecords(data.filter(r => r && r.sellerId));
+      const validRecords = data.filter(r => r && r.sellerId);
+      setRecords(validRecords);
+      recordsLengthRef.current = validRecords.length;
       setErrorMsg('');
     } catch (err) {
       if (err.name !== 'CanceledError') {
         console.error('Records fetch error:', err);
         setErrorMsg(err.response?.data?.message || err.message || 'Failed to load records');
         // Keep showing previous data if error occurs
-        if (records.length === 0) {
+        if (recordsLengthRef.current === 0) {
           setRecords([]);
         }
       }
     } finally {
       setLoading(false);
     }
-  }, [activeTab, records.length]);
+  }, [activeTab]);
 
   // Fetch data when tab or filters change
   useEffect(() => {
@@ -192,9 +205,9 @@ const Reports = () => {
     return () => clearInterval(interval);
   }, []); // Empty deps - this is safe since we pass everything needed as parameters
 
-  const handleFilterChange = (newFilters) => {
+  const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
-  };
+  }, []);
 
 
   // Aggregations for Charts

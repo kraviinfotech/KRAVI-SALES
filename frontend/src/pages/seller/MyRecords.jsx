@@ -23,9 +23,12 @@ const statusColors = {
   Pending: 'bg-red-50     text-red-700     border-red-200',
 };
 
+let cachedRecords = null;
+let hasFetchedRecords = false;
+
 const MyRecords = () => {
-  const [records, setRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState(cachedRecords || []);
+  const [loading, setLoading] = useState(!hasFetchedRecords);
   const [error, setError]   = useState('');
 
   // Payment Modal State
@@ -40,16 +43,20 @@ const MyRecords = () => {
   const [managerScannerLoaded, setManagerScannerLoaded] = useState(false);
   const [paymentPhoto, setPaymentPhoto] = useState(null);
 
-  const fetchRecords = () => {
-    setLoading(true);
+  const fetchRecords = (quiet = false) => {
+    if (!quiet) setLoading(true);
     API.get('/sales/my-records')
-      .then(res => setRecords(res.data))
+      .then(res => {
+        setRecords(res.data);
+        cachedRecords = res.data;
+        hasFetchedRecords = true;
+      })
       .catch(() => setError('Records load nahi ho paaye.'))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    fetchRecords();
+    fetchRecords(hasFetchedRecords);
     
     // Fetch manager default scanner
     const loadDefaultScanner = async () => {

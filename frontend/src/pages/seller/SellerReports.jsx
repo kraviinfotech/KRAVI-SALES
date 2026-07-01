@@ -16,14 +16,22 @@ const safeDate = (v) => {
   } catch { return 'N/A'; }
 };
 
+let cachedRecords = null;
+let hasFetchedRecords = false;
+
 const SellerReports = () => {
-  const [records, setRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState(cachedRecords || []);
+  const [loading, setLoading] = useState(!hasFetchedRecords);
   const [error,   setError]   = useState('');
 
   useEffect(() => {
+    if (!hasFetchedRecords) setLoading(true);
     API.get('/sales/my-records?lite=1')
-      .then(res => setRecords(res.data))
+      .then(res => {
+        setRecords(res.data);
+        cachedRecords = res.data;
+        hasFetchedRecords = true;
+      })
       .catch(() => setError('Reports could not be loaded.'))
       .finally(() => setLoading(false));
   }, []);

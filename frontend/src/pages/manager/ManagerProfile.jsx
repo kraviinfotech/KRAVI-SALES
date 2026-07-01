@@ -5,10 +5,14 @@ import { useAuth } from '../../context/AuthContext';
 
 const numberFormatter = new Intl.NumberFormat('en-IN');
 
+// Module-level cache for instant re-navigation
+let cachedSummary = null;
+let hasFetchedProfile = false;
+
 const ManagerProfile = () => {
   const { user } = useAuth();
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState(cachedSummary);
+  const [loading, setLoading] = useState(!hasFetchedProfile);
   const [managerScannerPhoto, setManagerScannerPhoto] = useState(null);
   const [scannerLoading, setScannerLoading] = useState(false);
   const [scannerMessage, setScannerMessage] = useState('');
@@ -19,6 +23,8 @@ const ManagerProfile = () => {
       try {
         const response = await API.get('/reports/summary');
         setSummary(response.data);
+        cachedSummary = response.data;
+        hasFetchedProfile = true;
       } catch (err) {
         console.error(err);
       } finally {
