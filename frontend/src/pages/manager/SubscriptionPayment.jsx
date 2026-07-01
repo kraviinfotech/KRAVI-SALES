@@ -49,6 +49,20 @@ const SubscriptionPayment = () => {
     loadPlans();
   }, []);
 
+  const clearRazorpayStorage = () => {
+    try {
+      // Razorpay SDK automatically stores some keys in localStorage.
+      // We clean them up for better security/privacy.
+      Object.keys(localStorage).forEach((key) => {
+        if (key.toLowerCase().includes('rzp') || key.toLowerCase().includes('razorpay')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (e) {
+      console.error('Failed to clear Razorpay storage', e);
+    }
+  };
+
   const startPayment = async () => {
     if (!selectedPlan) return;
     setPaying(true);
@@ -88,6 +102,7 @@ const SubscriptionPayment = () => {
             });
 
             updateSession({ token: verifyRes.data.token, user: verifyRes.data.user });
+            clearRazorpayStorage();
             navigate('/manager', { replace: true, state: { subscriptionActivated: true } });
           } catch (err) {
             setError(err.response?.data?.message || 'Payment was received but verification failed. Please contact support.');
@@ -96,7 +111,10 @@ const SubscriptionPayment = () => {
           }
         },
         modal: {
-          ondismiss: () => setPaying(false)
+          ondismiss: () => {
+            setPaying(false);
+            clearRazorpayStorage();
+          }
         },
         theme: {
           color: '#111827'
