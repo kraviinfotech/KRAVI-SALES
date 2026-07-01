@@ -10,18 +10,25 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
 });
 const collectionsPageSize = 20;
 
+let cachedCollections = null;
+let cachedPagination = null;
+let hasFetchedCollections = false;
+
 const ManagerCollections = () => {
-  const [collections, setCollections] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
-  const [loading, setLoading] = useState(true);
+  const [collections, setCollections] = useState(cachedCollections || []);
+  const [pagination, setPagination] = useState(cachedPagination || { page: 1, pages: 1, total: 0 });
+  const [loading, setLoading] = useState(!hasFetchedCollections);
   const navigate = useNavigate();
 
-  const fetchCollections = async (page = 1) => {
-    setLoading(true);
+  const fetchCollections = async (page = 1, quiet = false) => {
+    if (!quiet) setLoading(true);
     try {
       const res = await API.get(`/shoppayments/manager-collections?page=${page}&limit=${collectionsPageSize}`);
       setCollections(res.data.collections);
       setPagination(res.data.pagination);
+      cachedCollections = res.data.collections;
+      cachedPagination = res.data.pagination;
+      hasFetchedCollections = true;
     } catch (err) {
       console.error('Error fetching collections:', err);
     } finally {
@@ -30,7 +37,7 @@ const ManagerCollections = () => {
   };
 
   useEffect(() => {
-    fetchCollections(pagination.page);
+    fetchCollections(pagination.page, hasFetchedCollections && pagination.page === 1);
   }, [pagination.page]);
 
   const handlePrevPage = () => {

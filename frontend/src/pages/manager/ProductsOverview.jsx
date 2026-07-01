@@ -9,21 +9,28 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
   maximumFractionDigits: 0
 });
 
+let cachedRecords = null;
+let cachedMasterProducts = null;
+let hasFetchedProducts = false;
+
 const ProductsOverview = () => {
-  const [records, setRecords] = useState([]);
-  const [masterProducts, setMasterProducts] = useState([]);
+  const [records, setRecords] = useState(cachedRecords || []);
+  const [masterProducts, setMasterProducts] = useState(cachedMasterProducts || []);
   const [newProductName, setNewProductName] = useState('');
   const [newProductPrice, setNewProductPrice] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!hasFetchedProducts);
   const [isAdding, setIsAnimationActive] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchRecords = async () => {
+      if (!hasFetchedProducts) setLoading(true);
       try {
         const response = await API.get('/reports/records');
         // Filter out records where seller no longer exists
-        setRecords(Array.isArray(response.data) ? response.data.filter(r => r.sellerId) : []);
+        const validRecords = Array.isArray(response.data) ? response.data.filter(r => r.sellerId) : [];
+        setRecords(validRecords);
+        cachedRecords = validRecords;
       } catch (err) {
         console.error(err);
         setError('Product totals could not be loaded.');
@@ -36,6 +43,8 @@ const ProductsOverview = () => {
       try {
         const res = await API.get('/products');
         setMasterProducts(res.data);
+        cachedMasterProducts = res.data;
+        hasFetchedProducts = true;
       } catch (err) { console.error(err); }
     };
 
