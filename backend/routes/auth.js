@@ -21,6 +21,7 @@ const { sendEmail, buildWelcomeEmail, buildOtpEmail } = require('../utils/emailU
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const registrationOtpStore = new Map();
 
 const TERMS_VERSION = process.env.TERMS_VERSION || '1.0';
 
@@ -126,6 +127,138 @@ router.post('/register',
     } catch (err) {
       console.error('Register error:', err);
       return res.status(500).json({ message: 'Server error' });
+    }
+  }
+);
+
+// POST /api/auth/send-registration-otp -> Public manager registration OTP request
+router.post(
+  '/send-registration-otp',
+  [
+    body('name').exists().withMessage('Name is required').trim().notEmpty(),
+    body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
+    body('mobile').isMobilePhone('any').withMessage('Valid mobile is required').trim(),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('acceptedTerms')
+      .custom((value) => value === true || value === 'true')
+      .withMessage('You must accept the Terms & Privacy Policy'),
+    body('mode')
+      .optional()
+      .isIn(['trial', 'buy'])
+      .withMessage('Mode must be trial or buy')
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const { name, email, mobile, password, acceptedTerms, mode = 'trial' } = req.body;
+      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedMobile = mobile.trim();
+      const agreedToTerms = acceptedTerms === true || acceptedTerms === 'true';
+
+      const existing = await User.findOne({ $or: [{ email: normalizedEmail }, { mobile: normalizedMobile }] });
+      if (existing) {
+        return res.status(400).json({ message: 'Email or mobile already registered' });
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = Date.now() + 10 * 60 * 1000;
+      registrationOtpStore.set(normalizedEmail, {
+        otp,
+        expiresAt,
+        formData: { name, email: normalizedEmail, mobile: normalizedMobile, password, acceptedTerms: agreedToTerms, mode }
+      });
+
+      try {
+        await sendEmail({
+          to: normalizedEmail,
+          ...buildOtpEmail({ name, email: normalizedEmail, otp })
+        });
+      } catch (sendErr) {
+        console.error('Registration OTP email failed:', sendErr);
+        registrationOtpStore.delete(normalizedEmail);
+        return res.status(500).json({ message: 'Unable to send OTP email. Please try again later.' });
+      }
+
+      return res.json({ message: `OTP sent to ${normalizedEmail}. Please check your email for the verification code.` });
+    } catch (err) {
+      console.error('Registration OTP error:', err);
+      return res.status(500).json({ message: 'Server error sending OTP' });
+    }
+  }
+);
+
+// POST /api/auth/verify-registration-otp -> Verify OTP and complete manager registration
+router.post(
+  '/verify-registration-otp',
+  [
+    body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
+    body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+    body('mode')
+      .optional()
+      .isIn(['trial', 'buy'])
+      .withMessage('Mode must be trial or buy')
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, otp, mode = 'trial' } = req.body;
+    const normalizedEmail = email.trim().toLowerCase();
+    const entry = registrationOtpStore.get(normalizedEmail);
+
+    if (!entry) {
+      return res.status(400).json({ message: 'No OTP found for this email. Please request a new OTP.' });
+    }
+    if (Date.now() > entry.expiresAt) {
+      registrationOtpStore.delete(normalizedEmail);
+      return res.status(400).json({ message: 'OTP has expired. Please request a new OTP.' });
+    }
+    if (entry.otp !== otp.trim()) {
+      return res.status(400).json({ message: 'Incorrect OTP. Please try again.' });
+    }
+
+    const { name, mobile, password, acceptedTerms } = entry.formData;
+    registrationOtpStore.delete(normalizedEmail);
+
+    try {
+      const existing = await User.findOne({ $or: [{ email: normalizedEmail }, { mobile }] });
+      if (existing) {
+        return res.status(400).json({ message: 'Email or mobile already registered' });
+      }
+
+      const user = new User({
+        name,
+        email: normalizedEmail,
+        mobile,
+        password,
+        role: 'manager',
+        termsAccepted: acceptedTerms,
+        termsAcceptedVersion: acceptedTerms ? TERMS_VERSION : null,
+        termsAcceptedAt: acceptedTerms ? new Date() : null
+      });
+      await user.save();
+
+      if (mode === 'trial') {
+        await assignTrialSubscription(user._id);
+      }
+
+      sendEmail({
+        to: normalizedEmail,
+        ...buildWelcomeEmail(user)
+      }).catch((sendErr) => {
+        console.error('Welcome email failed after registration OTP:', sendErr);
+      });
+
+      return res.status(201).json({ message: 'Registration completed successfully.' });
+    } catch (err) {
+      console.error('Verify registration OTP error:', err);
+      return res.status(500).json({ message: 'Server error completing registration' });
     }
   }
 );

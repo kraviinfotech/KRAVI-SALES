@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import API from '../api/axios';
 import { validatePassword, getPasswordStrength, getPasswordStrengthColor } from '../utils/passwordUtils';
 
 const Register = () => {
   const [searchParams] = useSearchParams();
   const roleParam = searchParams.get('role');
+  const mode = searchParams.get('mode');
+  const isTrialMode = mode === 'trial';
+  const isBuyMode = mode === 'buy';
   const initialRole = 'manager';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -16,13 +21,44 @@ const Register = () => {
   const [error, setError] = useState('');
   const [passwordStrength, setPasswordStrength] = useState('Weak');
   const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
 
-  const { register } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+const sendOtpMutation = useMutation({
+  mutationFn: async () => {
+    const response = await API.post('/auth/send-registration-otp', {
+      name,
+      email,
+      mobile,
+      password,
+      acceptedTerms,
+      mode,
+    });
+    return response.data;
+  },
+});
+
+const verifyOtpMutation = useMutation({
+  mutationFn: async () => {
+    const response = await API.post('/auth/verify-registration-otp', {
+      email,
+      otp,
+      mode,
+    });
+    return response.data;
+  },
+});
+
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     setError('');
+    if (!name.trim() || !email.trim() || !mobile.trim() || !password || !confirmPassword) {
+      setError('Please fill all required fields before requesting OTP.');
+      return;
+    }
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -46,24 +82,61 @@ const Register = () => {
       setError(validation.errors.join(' '));
       return;
     }
+
     setLoading(true);
     try {
-      await register({ name, email, mobile, password, role: 'manager', acceptedTerms });
-      alert('Registration successful! Please login to continue.');
-      navigate('/login?role=manager', { replace: true });
+      await sendOtpMutation.mutateAsync();
+      setOtpSent(true);
     } catch (err) {
-      setError(typeof err === 'string' ? err : (err?.message || 'Registration failed'));
+      setError(err.response?.data?.message || err.message || 'Unable to send OTP');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!otp.trim() || otp.trim().length !== 6) {
+      setError('Please enter the 6-digit OTP.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await verifyOtpMutation.mutateAsync();
+      await login({ email, mobile, password });
+      if (isBuyMode) {
+        navigate('/manager/payment', { replace: true, state: { planId: null, justRegistered: true } });
+      } else {
+        navigate('/manager', { replace: true });
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'OTP verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const pageHeading = isTrialMode
+    ? 'Start your free trial'
+    : isBuyMode
+      ? 'Buy a subscription'
+      : 'Create Manager Account';
+
+  const pageDescription = isTrialMode
+    ? 'Register as a manager and get instant access to the manager dashboard with a 14-day free trial.'
+    : isBuyMode
+      ? 'Register as a manager and choose a paid plan to activate your subscription after signup.'
+      : 'Register as a manager to access the manager dashboard, add sellers, and start tracking sales.';
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-8">
       <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-300 max-w-md w-full">
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-          Create Manager Account
+        <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">
+          {pageHeading}
         </h2>
+        <p className="text-center text-sm text-slate-500 mb-6">{pageDescription}</p>
 
         {error && (
           <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
@@ -71,95 +144,136 @@ const Register = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              required
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              required
-            />
-          </div>
-
-          {/* Mobile */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
-            <input
-              type="tel"
-              value={mobile}
-              onChange={e => setMobile(e.target.value)}
-              className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              required
-            />
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => {
-                setPassword(e.target.value);
-                setPasswordStrength(getPasswordStrength(e.target.value));
-              }}
-              className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              required
-            />
-            <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
-              <span>Password strength: <strong>{passwordStrength}</strong></span>
-              <span className={`h-2.5 w-24 rounded-full ${getPasswordStrengthColor(passwordStrength)}`}></span>
+        {!otpSent ? (
+          <form onSubmit={handleSendOtp} className="space-y-4">
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                required
+              />
             </div>
-          </div>
 
-          {/* Confirm Password */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              required
-            />
-          </div>
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                required
+              />
+            </div>
 
-          <div className="flex items-start gap-3 text-sm text-slate-700">
-            <input
-              id="acceptedTerms"
-              type="checkbox"
-              checked={acceptedTerms}
-              onChange={() => setAcceptedTerms(prev => !prev)}
-              className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            <label htmlFor="acceptedTerms" className="leading-5">
-              I agree to the <a href="/terms-privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline">Terms &amp; Privacy Policy</a>.
-            </label>
-          </div>
+            {/* Mobile */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
+              <input
+                type="tel"
+                value={mobile}
+                onChange={e => setMobile(e.target.value)}
+                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                required
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-75 mt-2"
-          >
-            {loading ? 'Creating account...' : 'Register as Manager'}
-          </button>
-        </form>
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => {
+                  setPassword(e.target.value);
+                  setPasswordStrength(getPasswordStrength(e.target.value));
+                }}
+                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                required
+              />
+              <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+                <span>Password strength: <strong>{passwordStrength}</strong></span>
+                <span className={`h-2.5 w-24 rounded-full ${getPasswordStrengthColor(passwordStrength)}`}></span>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                required
+              />
+            </div>
+
+            <div className="flex items-start gap-3 text-sm text-slate-700">
+              <input
+                id="acceptedTerms"
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={() => setAcceptedTerms(prev => !prev)}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <label htmlFor="acceptedTerms" className="leading-5">
+                I agree to the <a href="/terms-privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline">Terms &amp; Privacy Policy</a>.
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || sendOtpMutation.isLoading}
+              className="w-full rounded bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-75 mt-2"
+            >
+              {loading || sendOtpMutation.isLoading ? 'Sending OTP...' : 'Send OTP'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyOtp} className="space-y-4">
+            <div>
+              <p className="text-sm text-slate-600">An OTP has been sent to <strong>{email}</strong>. Enter the code to verify your email and complete registration.</p>
+            </div>
+
+            <div>
+              <label htmlFor="otp-code" className="block text-sm font-medium text-gray-700 mb-1">OTP Code *</label>
+              <input
+                id="otp-code"
+                type="text"
+                value={otp}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                maxLength={6}
+                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || verifyOtpMutation.isLoading}
+              className="w-full rounded bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-75 mt-2"
+            >
+              {loading || verifyOtpMutation.isLoading ? 'Verifying OTP...' : 'Verify OTP'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setOtpSent(false);
+                setOtp('');
+                setError('');
+              }}
+              className="w-full rounded border border-slate-300 bg-white py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Back to edit details
+            </button>
+          </form>
+        )}
 
         <div className="text-center mt-4 text-sm">
           <Link to="/login?role=manager" className="text-primary hover:underline">
