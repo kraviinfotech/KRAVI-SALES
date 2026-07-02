@@ -5,21 +5,19 @@ import {
   FileText, Settings, UserCircle, LogOut, Menu, X, Layers 
 } from 'lucide-react';
 
+const menuItems = [
+  { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/admin' },
+  { name: 'Managers', icon: <Users size={20} />, path: '/admin/managers' },
+  { name: 'Subscription Plans', icon: <Layers size={20} />, path: '/admin/plans' },
+  { name: 'Subscriptions', icon: <CreditCard size={20} />, path: '/admin/subscriptions' },
+  { name: 'Payments', icon: <CreditCard size={20} />, path: '/admin/payments' },
+  { name: 'Settings', icon: <Settings size={20} />, path: '/admin/settings' },
+  { name: 'Profile', icon: <UserCircle size={20} />, path: '/admin/profile' },
+];
+
 const SuperAdminLayout = ({ children, onLogout }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const location = useLocation();
-
-  const menuItems = [
-    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/admin' },
-    
-    { name: 'Managers', icon: <Users size={20} />, path: '/admin/managers' },
-    { name: 'Subscription Plans', icon: <Layers size={20} />, path: '/admin/plans' },
-    { name: 'Subscriptions', icon: <CreditCard size={20} />, path: '/admin/subscriptions' },
-    { name: 'Payments', icon: <CreditCard size={20} />, path: '/admin/payments' },
-    
-    { name: 'Settings', icon: <Settings size={20} />, path: '/admin/settings' },
-    { name: 'Profile', icon: <UserCircle size={20} />, path: '/admin/profile' },
-  ];
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans">
@@ -46,7 +44,8 @@ const SuperAdminLayout = ({ children, onLogout }) => {
         </nav>
 
         <div className="p-4 border-t border-gray-100">
-          <button 
+          <button
+            type="button"
             onClick={onLogout}
             className="flex items-center w-full p-3 gap-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
           >
@@ -59,7 +58,7 @@ const SuperAdminLayout = ({ children, onLogout }) => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg">
+          <button type="button" onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg">
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           

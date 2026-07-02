@@ -129,7 +129,8 @@ const Managers = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">Manager Management</h1>
-        <button 
+        <button
+          type="button"
           onClick={handleAddManager}
           className="bg-[#6C3EF4] text-white px-4 py-2 rounded-xl font-semibold hover:bg-[#5a32cc] transition-all flex items-center gap-2"
         >
@@ -183,7 +184,7 @@ const Managers = () => {
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-[#6C3EF4] rounded-xl transition-all outline-none"
             />
           </div>
-          <button className="p-2 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 border border-gray-100">
+          <button type="button" className="p-2 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 border border-gray-100">
             <Filter size={18} />
           </button>
         </div>
@@ -239,29 +240,33 @@ const Managers = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button 
-                        onClick={() => handleView(manager)} 
-                        className="p-2 hover:bg-purple-50 text-[#6C3EF4] rounded-lg transition-colors" 
+                      <button
+                        type="button"
+                        onClick={() => handleView(manager)}
+                        className="p-2 hover:bg-purple-50 text-[#6C3EF4] rounded-lg transition-colors"
                         title="View Profile"
                       >
                         <Eye size={18} />
                       </button>
-                      <button 
-                        onClick={() => handleEdit(manager)} 
-                        className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" 
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(manager)}
+                        className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Edit2 size={18} />
                       </button>
-                      <button 
-                        onClick={() => handleResetPassword(manager)} 
-                        className="p-2 hover:bg-orange-50 text-orange-600 rounded-lg transition-colors" 
+                      <button
+                        type="button"
+                        onClick={() => handleResetPassword(manager)}
+                        className="p-2 hover:bg-orange-50 text-orange-600 rounded-lg transition-colors"
                         title="Reset Password"
                       >
                         <RotateCcw size={18} />
                       </button>
-                      <button 
-                        onClick={() => handleToggleActive(manager)} 
+                      <button
+                        type="button"
+                        onClick={() => handleToggleActive(manager)}
                         className={`p-2 rounded-lg transition-colors ${
                           manager.isActive 
                             ? 'hover:bg-red-50 text-red-500' 
@@ -290,7 +295,8 @@ const Managers = () => {
                 <h2 className="text-2xl font-bold">Manager Profile</h2>
                 <p className="text-purple-100 text-sm">{selectedManager.designation || 'Manager'}</p>
               </div>
-              <button 
+              <button
+                type="button"
                 onClick={() => setShowDetailDrawer(false)}
                 className="text-white hover:bg-white hover:text-[#6C3EF4] p-2 rounded-lg transition-all"
               >
@@ -367,7 +373,8 @@ const Managers = () => {
 
               {/* Action Buttons */}
               <div className="space-y-3 pt-4 border-t border-gray-200">
-                <button 
+                <button
+                  type="button"
                   onClick={() => {
                     handleEdit(selectedManager);
                     setShowDetailDrawer(false);
@@ -376,7 +383,8 @@ const Managers = () => {
                 >
                   <Edit2 size={18} /> Edit Manager
                 </button>
-                <button 
+                <button
+                  type="button"
                   onClick={() => {
                     handleResetPassword(selectedManager);
                     setShowDetailDrawer(false);
@@ -385,7 +393,8 @@ const Managers = () => {
                 >
                   <RotateCcw size={18} /> Reset Password
                 </button>
-                <button 
+                <button
+                  type="button"
                   onClick={() => {
                     handleToggleActive(selectedManager);
                     setShowDetailDrawer(false);
@@ -399,7 +408,8 @@ const Managers = () => {
                   {selectedManager.isActive ? <XCircle size={18} /> : <CheckCircle2 size={18} />}
                   {selectedManager.isActive ? 'Deactivate' : 'Activate'}
                 </button>
-                <button 
+                <button
+                  type="button"
                   onClick={() => {
                     handleDelete(selectedManager);
                   }}
@@ -425,13 +435,15 @@ const Managers = () => {
               A password reset link will be sent to <span className="font-semibold">{resetEmail}</span>
             </p>
             <div className="flex gap-3">
-              <button 
+              <button
+                type="button"
                 onClick={() => setShowResetPassword(false)}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
+                type="button"
                 onClick={confirmResetPassword}
                 className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
               >

@@ -26,7 +26,8 @@ const NotificationBell = () => {
   };
 
   return (
-    <button 
+    <button
+      type="button"
       onClick={handleBellClick}
       className="relative p-2 rounded-full hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
     >

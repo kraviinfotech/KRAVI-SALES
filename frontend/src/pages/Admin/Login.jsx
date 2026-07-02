@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff, ShieldCheck, Users, ShoppingBag, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+const roleConfig = {
+  admin: { badge: 'Master Control', title: 'Admin Access', subtitle: 'Manage System & Companies', color: 'bg-[#6C3EF4]', text: 'text-[#6C3EF4]', light: 'bg-purple-50', borderColor: 'border-purple-200' },
+  manager: { badge: 'Operations', title: 'Manager Login', subtitle: 'Oversee Sellers & Reports', color: 'bg-[#0EA5E9]', text: 'text-[#0EA5E9]', light: 'bg-blue-50', borderColor: 'border-blue-200' },
+  seller: { badge: 'Field Access', title: 'Seller Login', subtitle: 'Record Visits & Sales', color: 'bg-[#6366F1]', text: 'text-[#6366F1]', light: 'bg-indigo-50', borderColor: 'border-indigo-200' }
+};
+
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -12,12 +18,6 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [activeRole, setActiveRole] = useState('admin');
-
-  const roleConfig = {
-    admin: { badge: 'Master Control', title: 'Admin Access', subtitle: 'Manage System & Companies', color: 'bg-[#6C3EF4]', text: 'text-[#6C3EF4]', light: 'bg-purple-50', borderColor: 'border-purple-200' },
-    manager: { badge: 'Operations', title: 'Manager Login', subtitle: 'Oversee Sellers & Reports', color: 'bg-[#0EA5E9]', text: 'text-[#0EA5E9]', light: 'bg-blue-50', borderColor: 'border-blue-200' },
-    seller: { badge: 'Field Access', title: 'Seller Login', subtitle: 'Record Visits & Sales', color: 'bg-[#6366F1]', text: 'text-[#6366F1]', light: 'bg-indigo-50', borderColor: 'border-indigo-200' }
-  };
 
   const currentRole = roleConfig[activeRole];
 

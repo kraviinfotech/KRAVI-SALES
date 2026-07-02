@@ -3,6 +3,11 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Menu, X, BarChart3, Users, PlusCircle, History, LayoutDashboard } from 'lucide-react';
 
+const links = [
+  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'My Records', path: '/my-records', icon: History },
+];
+
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -17,11 +22,6 @@ const Navbar = () => {
   };
 
   const isActive = (path) => location.pathname === path;
-
-  const links = [
-    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'My Records', path: '/my-records', icon: History },
-  ];
 
   return (
     <nav className="bg-primary text-white shadow-md">
@@ -58,6 +58,7 @@ const Navbar = () => {
               <div className="text-xs text-blue-200 capitalize">{user.role}</div>
             </div>
             <button
+              type="button"
               onClick={handleLogout}
               className="flex items-center space-x-1 bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-sm font-medium transition-colors"
             >
@@ -68,6 +69,7 @@ const Navbar = () => {
 
           <div className="flex md:hidden">
             <button
+              type="button"
               onClick={() => setIsOpen(!isOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md hover:bg-primary-dark focus:outline-none"
             >
@@ -101,6 +103,7 @@ const Navbar = () => {
             );
           })}
           <button
+            type="button"
             onClick={() => {
               setIsOpen(false);
               handleLogout();
