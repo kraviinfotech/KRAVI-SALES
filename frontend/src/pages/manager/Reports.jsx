@@ -187,7 +187,7 @@ const Reports = () => {
       fetchSummary();
       fetchChartData(signal);
       fetchFilteredRecords(filters, true, signal); // quiet=true to prevent loading state
-    }, 30000);
+    }, 200000);
     
     return () => clearInterval(interval);
   }, []); // Empty deps - this is safe since we pass everything needed as parameters

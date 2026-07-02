@@ -45,7 +45,7 @@ const AddSeller = () => {
 
   useEffect(() => {
     fetchSellers();
-    const interval = setInterval(fetchSellers, 20000);
+    const interval = setInterval(fetchSellers, 200000);
     return () => clearInterval(interval);
   }, []);
 

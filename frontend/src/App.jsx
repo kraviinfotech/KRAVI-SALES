@@ -1,6 +1,8 @@
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import { QueryClientProvider } from '@tanstack/react-query';
+import queryClient from './api/queryClient';
 import SellerLayout from './components/SellerLayout';
 import ManagerLayout from './components/ManagerLayout';
 import AdminLayout from './components/AdminLayout';
@@ -62,6 +64,7 @@ const App = () => {
   const isLoginPage = location.pathname === '/login';
 
   return (
+    <QueryClientProvider client={queryClient}>
     <div className={isSellerArea || isManagerArea || isAdminArea ? 'min-h-screen bg-slate-100' : 'public-background flex flex-col min-h-screen bg-gray-50'} style={
       !(isSellerArea || isManagerArea || isAdminArea)
         ? {
@@ -143,6 +146,7 @@ const App = () => {
       </main>
       <KraviChatbot />
     </div>
+    </QueryClientProvider>
   );
 };
 

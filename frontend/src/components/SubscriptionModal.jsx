@@ -14,8 +14,9 @@ import {
   X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import API from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import useSubscriptionStatus from '../hooks/useSubscriptionStatus';
+import usePlans from '../hooks/usePlans';
 
 const formatDate = (value) => {
   if (!value) return 'Not active';
@@ -174,55 +175,22 @@ const SubscriptionModal = ({ open, onClose, forceOpen = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [internalOpen, setInternalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState(null);
-  const [plans, setPlans] = useState([]);
-  const [error, setError] = useState('');
-  const [plansWarning, setPlansWarning] = useState('');
-  const [billingCycle, setBillingCycle] = useState('yearly');
 
   const isControlled = typeof open === 'boolean';
   const isOpen = isControlled ? open : internalOpen;
-  const currentPlanId = status?.subscription?.planId?._id || status?.plan?._id;
-
   const promptKey = useMemo(() => user?._id ? `subscriptionPromptSeen_${user._id}` : null, [user?._id]);
 
-  const loadData = async () => {
-    if (user?.role !== 'manager') return;
-    setLoading(true);
-    setError('');
-    setPlansWarning('');
-    try {
-      const statusRes = await API.get('/subscriptions/my-status');
-      setStatus(statusRes.data);
-    } catch (err) {
-      setStatus({
-        canUseApp: false,
-        plan: null,
-        endDate: null,
-        daysRemaining: 0,
-        paymentSettingsReady: false
-      });
-    }
+  const { data: statusData, isLoading: statusLoading, error: statusError } = useSubscriptionStatus(Boolean(user && user.role === 'manager'));
+  const { data: plansData, isLoading: plansLoading, error: plansError } = usePlans(Boolean(user && user.role === 'manager'));
 
-    try {
-      const plansRes = await API.get('/subscriptions/plans');
-      const loadedPlans = plansRes.data || [];
-      setPlans(loadedPlans.length ? loadedPlans : fallbackPlans);
-      if (!loadedPlans.length) {
-        setPlansWarning('No active plans found. Add plans from Admin Plans to enable checkout.');
-      }
-    } catch (err) {
-      setPlans(fallbackPlans);
-      setPlansWarning(err.response?.data?.message || 'Plans API is not reachable. Showing sample cards until backend plans load.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, [user?._id]);
+  const status = statusData ?? null;
+  const plans = Array.isArray(plansData) ? plansData : [];
+  const loading = statusLoading || plansLoading;
+  const error = statusError?.message || plansError?.message || '';
+  const plansWarning = status && !status.paymentSettingsReady
+    ? 'Razorpay keys are not configured in Admin Settings yet. Managers can view plans, but checkout will be unavailable until the admin saves Key ID and Key Secret.'
+    : '';
+  const currentPlanId = status?.subscription?.planId?._id || status?.plan?._id;
 
   useEffect(() => {
     if (!user || user.role !== 'manager' || isControlled || forceOpen || !promptKey) return;

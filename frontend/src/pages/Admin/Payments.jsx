@@ -211,7 +211,7 @@ const Payments = () => {
       doc.setTextColor(150, 150, 150);
       doc.setFontSize(8);
       doc.text('Thank you for your business!', margin, pageHeight - 40);
-      doc.text('For questions, contact: support@kravi-sales.com', margin, pageHeight - 30);
+      doc.text('For questions, contact: contact@kraviinfotech.com', margin, pageHeight - 30);
       doc.text(`Generated on ${new Date().toLocaleString()}`, margin, pageHeight - 20);
 
       doc.save(`${t.id}_invoice.pdf`);
