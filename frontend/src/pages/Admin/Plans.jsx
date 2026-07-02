@@ -36,14 +36,24 @@ const PlanCard = ({ plan, onEdit, onDelete }) => {
         </div>
         <div className="flex items-center gap-3 text-sm text-gray-600">
           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-50 text-[#6C3EF4]"><Check size={12} /></div>
-          {plan.storageGb || 0} GB Storage
+          Unlimited Shop Records,Daily&Month
         </div>
-        {(plan.features || []).map((feature) => (
-          <div key={feature} className="flex items-center gap-3 text-sm text-gray-600">
-            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-50 text-[#6C3EF4]"><Check size={12} /></div>
-            {feature}
-          </div>
-        ))}
+        <div className="flex items-center gap-3 text-sm text-gray-600">
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-50 text-[#6C3EF4]"><Check size={12} /></div>
+          PDF & Excel Export
+        </div>
+        <div className="flex items-center gap-3 text-sm text-gray-600">
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-50 text-[#6C3EF4]"><Check size={12} /></div>
+          AI Chatbot Support
+        </div>
+        <div className="flex items-center gap-3 text-sm text-gray-600">
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-50 text-[#6C3EF4]"><Check size={12} /></div>
+          24×7 Premium Support
+        </div>
+        <div className="flex items-center gap-3 text-sm text-gray-600">
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-50 text-[#6C3EF4]"><Check size={12} /></div>
+          SalesTracking
+        </div>
       </div>
 
       <div className="flex gap-2 border-t border-gray-50 pt-6">
@@ -77,8 +87,8 @@ const Plans = () => {
 
   const filteredPlans = activeFilter === 'All' ? plans : plans.filter(plan => {
     if (activeFilter === 'trial') return plan.isTrial || Number(plan.price) === 0;
+    if (activeFilter === '1month') return Number(plan.durationMonths) === 1;
     if (activeFilter === '3months') return Number(plan.durationMonths) === 3;
-    if (activeFilter === '6months') return Number(plan.durationMonths) === 6;
     if (activeFilter === '1year') return Number(plan.durationMonths) === 12;
     return true;
   });
@@ -161,7 +171,7 @@ const Plans = () => {
       <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
           <Filter size={18} className="text-gray-500" />
-          {['All', 'trial', '3months', '6months', '1year'].map((filter) => (
+          {['All', 'trial', '1month', '3months', '1year'].map((filter) => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
@@ -171,7 +181,7 @@ const Plans = () => {
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              {filter === 'All' ? 'All Plans' : filter === 'trial' ? 'Free Trial' : filter === '3months' ? '3 Months' : filter === '6months' ? '6 Months' : '1 Year'}
+              {filter === 'All' ? 'All Plans' : filter === 'trial' ? 'Free Trial' : filter === '1month' ? '1 Month' : filter === '3months' ? '3 Months' : '1 Year'}
             </button>
           ))}
         </div>

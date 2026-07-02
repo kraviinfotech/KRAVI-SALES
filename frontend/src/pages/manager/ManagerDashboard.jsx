@@ -78,30 +78,41 @@ const tabs = [
   { id: 'custom', label: 'Custom Range' }
 ];
 
+let cachedSummary = null;
+let cachedRecords = null;
+let cachedChartData = null;
+let cachedCollectionStats = null;
+let cachedRecentCollections = null;
+
+let hasFetchedSummary = false;
+let hasFetchedRecords = false;
+let hasFetchedChart = false;
+let hasFetchedCollections = false;
+
 const ManagerDashboard = () => {
-  const [summary, setSummary] = useState({
+  const [summary, setSummary] = useState(cachedSummary || {
     totalSellers: 0,
     totalRecords: 0,
     monthlyTotal: 0,
     yearlyTotal: 0,
     totalPending: 0
   });
-  const [records, setRecords] = useState([]);
+  const [records, setRecords] = useState(cachedRecords || []);
   const [activeTab, setActiveTab] = useState('weekly');
   const [customRange, setCustomRange] = useState(defaultCustomRange);
   const [appliedCustomRange, setAppliedCustomRange] = useState(defaultCustomRange);
-  const [chartData, setChartData] = useState(getBlankWeeklyChart);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [recordsLoading, setRecordsLoading] = useState(true);
-  const [chartLoading, setChartLoading] = useState(true);
+  const [chartData, setChartData] = useState(cachedChartData || getBlankWeeklyChart());
+  const [summaryLoading, setSummaryLoading] = useState(!hasFetchedSummary);
+  const [recordsLoading, setRecordsLoading] = useState(!hasFetchedRecords);
+  const [chartLoading, setChartLoading] = useState(!hasFetchedChart);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const [error, setError] = useState('');
 
   // Collections State
-  const [collectionStats, setCollectionStats] = useState({ totalCollection: 0, cashCollection: 0, onlineCollection: 0, pendingCollection: 0 });
-  const [recentCollections, setRecentCollections] = useState([]);
-  const [collectionsLoading, setCollectionsLoading] = useState(true);
+  const [collectionStats, setCollectionStats] = useState(cachedCollectionStats || { totalCollection: 0, cashCollection: 0, onlineCollection: 0, pendingCollection: 0 });
+  const [recentCollections, setRecentCollections] = useState(cachedRecentCollections || []);
+  const [collectionsLoading, setCollectionsLoading] = useState(!hasFetchedCollections);
 
   const fetchCollectionData = useCallback(async (quiet = false) => {
     if (!quiet) setCollectionsLoading(true);
@@ -109,6 +120,9 @@ const ManagerDashboard = () => {
       const res = await API.get('/shoppayments/manager-recent');
       setCollectionStats(res.data.stats);
       setRecentCollections(res.data.recentPayments);
+      cachedCollectionStats = res.data.stats;
+      cachedRecentCollections = res.data.recentPayments;
+      hasFetchedCollections = true;
     } catch (err) {
       console.error('Error fetching collections', err);
     } finally {
@@ -120,10 +134,13 @@ const ManagerDashboard = () => {
     if (!quiet) setSummaryLoading(true);
     try {
       const response = await API.get('/reports/summary');
-      setSummary({
+      const newSummary = {
         ...(response.data || {}),
         totalPending: response.data?.totalPending || 0
-      });
+      };
+      setSummary(newSummary);
+      cachedSummary = newSummary;
+      hasFetchedSummary = true;
     } catch (err) {
       console.error(err);
       if (err.response?.status === 403) {
@@ -137,8 +154,8 @@ const ManagerDashboard = () => {
   }, []);
 
   const fetchChartData = useCallback(async (quiet = false) => {
-    // Only show loading if we have no data yet
-    if (!quiet && chartData.every(d => d.sales === 0)) setChartLoading(true);
+    // Only show loading if we have no cached chart yet
+    if (!quiet && !hasFetchedChart) setChartLoading(true);
     
     try {
       const response = await API.get('/reports/weekly');
@@ -147,14 +164,17 @@ const ManagerDashboard = () => {
         sales: Number(item.total || 0)
       }));
 
-      setChartData(data.length > 0 ? data : getBlankWeeklyChart());
+      const finalChartData = data.length > 0 ? data : getBlankWeeklyChart();
+      setChartData(finalChartData);
+      cachedChartData = finalChartData;
+      hasFetchedChart = true;
     } catch (err) {
       console.error(err);
       setChartData(getBlankWeeklyChart());
     } finally {
       setChartLoading(false);
     }
-  }, []);
+  }, []); // No deps - stable reference
 
   const fetchRecords = useCallback(async (quiet = false) => {
     // Only show loading if records are currently empty
@@ -166,7 +186,10 @@ const ManagerDashboard = () => {
 
     try {
       const response = await API.get(`/reports/records?${queryParams.toString()}`);
-      setRecords(Array.isArray(response.data) ? response.data.filter(r => r.sellerId) : []);
+      const newRecords = Array.isArray(response.data) ? response.data.filter(r => r.sellerId) : [];
+      setRecords(newRecords);
+      cachedRecords = newRecords;
+      hasFetchedRecords = true;
     } catch (err) {
       console.error(err);
       if (err.response?.status === 403) {
@@ -177,7 +200,7 @@ const ManagerDashboard = () => {
     } finally {
       setRecordsLoading(false);
     }
-  }, [activeTab, appliedCustomRange]);
+  }, [activeTab, appliedCustomRange]); // removed records.length - it caused infinite loop
 
   const handleDeleteSellerRecords = async (sellerId, sellerName) => {
     if (!sellerId) return;
@@ -194,14 +217,19 @@ const ManagerDashboard = () => {
   };
 
   useEffect(() => {
-    fetchSummary();
-    fetchChartData();
-    fetchCollectionData();
-  }, [fetchSummary, fetchChartData, fetchCollectionData]);
+    fetchSummary(hasFetchedSummary);
+    fetchCollectionData(hasFetchedCollections);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount only
 
   useEffect(() => {
-    fetchRecords();
-  }, [fetchRecords]);
+    fetchChartData(hasFetchedChart);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount only
+
+  useEffect(() => {
+    fetchRecords(hasFetchedRecords);
+  }, [fetchRecords, activeTab, appliedCustomRange]);
 
   useEffect(() => {
     const interval = setInterval(() => {

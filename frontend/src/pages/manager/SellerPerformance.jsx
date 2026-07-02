@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import API from '../../api/axios';
 import { Loader2, ArrowUpDown, Award, AlertCircle } from 'lucide-react';
 
+// Module-level cache for instant re-navigation
+let cachedPerformance = null;
+let hasFetchedPerformance = false;
+
 const SellerPerformance = () => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(cachedPerformance || []);
+  const [loading, setLoading] = useState(!hasFetchedPerformance);
   const [error, setError] = useState('');
   
   const [sortField, setSortField] = useState('totalSales');
@@ -15,6 +19,8 @@ const SellerPerformance = () => {
       try {
         const response = await API.get('/reports/sellers-performance');
         setData(response.data);
+        cachedPerformance = response.data;
+        hasFetchedPerformance = true;
       } catch (err) {
         console.error(err);
         setError('Failed to fetch seller performance stats.');
@@ -22,7 +28,11 @@ const SellerPerformance = () => {
         setLoading(false);
       }
     };
-    fetchPerformance();
+    if (!hasFetchedPerformance) {
+      fetchPerformance();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const handleSort = (field) => {

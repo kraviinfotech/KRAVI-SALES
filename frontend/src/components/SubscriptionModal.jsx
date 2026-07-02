@@ -39,38 +39,41 @@ const fallbackPlans = [
     price: 0,
     durationDays: 14,
     maxSellers: 1,
-    features: ['14 days access', '1 seller included', 'Basic reports'],
+    features: [],
     isTrial: true,
     isFallback: true
   },
   {
-    _id: 'fallback-pro',
-    name: 'Pro',
-    description: 'Unlock premium seller management, scanner access and reporting tools.',
-    price: 4000,
-    durationDays: 365,
+    _id: 'fallback-1-month',
+    name: '1 Month',
+    description: 'Short term plan for your business needs.',
+    price: 299,
+    durationMonths: 1,
+    durationDays: 30,
     maxSellers: 5,
-    features: ['5 sellers included', 'Scanner access', 'Advanced reports', 'Priority dashboard'],
+    features: [],
     isFallback: true
   },
   {
-    _id: 'fallback-business',
-    name: 'Business',
-    description: 'Create reports faster and manage a growing sales team with confidence.',
-    price: 6800,
-    durationDays: 365,
-    maxSellers: 15,
-    features: ['15 sellers included', 'Team performance reports', 'Payment tracking', 'Manager tools'],
+    _id: 'fallback-3-month',
+    name: '3 Months',
+    description: 'Quarterly plan to manage a growing sales team.',
+    price: 799,
+    durationMonths: 3,
+    durationDays: 90,
+    maxSellers: 12,
+    features: [],
     isFallback: true
   },
   {
-    _id: 'fallback-enterprise',
-    name: 'Enterprise',
-    description: 'For larger teams that need higher seller limits and guided setup.',
-    price: 12000,
+    _id: 'fallback-1-year',
+    name: '1 Year',
+    description: 'Best value for long term business operations.',
+    price: 2999,
+    durationMonths: 12,
     durationDays: 365,
-    maxSellers: 0,
-    features: ['Unlimited sellers', 'Full reporting suite', 'Custom setup support', 'Secure checkout'],
+    maxSellers: 20,
+    features: [],
     isFallback: true
   }
 ];
@@ -145,12 +148,27 @@ const PlanCard = ({ plan, index, currentPlanId, onSelect }) => {
       </div>
 
       <div className="mt-6 space-y-3 text-sm font-semibold text-slate-700">
-        {features.map((feature) => (
-          <div key={feature} className="flex items-start gap-2">
-            <Check size={17} className="mt-0.5 shrink-0 text-emerald-600" />
-            <span>{feature}</span>
-          </div>
-        ))}
+
+        <div className="flex items-start gap-2">
+          <Check size={17} className="mt-0.5 shrink-0 text-emerald-600" />
+          <span>Unlimited Shop Records,Daily&Month</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <Check size={17} className="mt-0.5 shrink-0 text-emerald-600" />
+          <span>PDF & Excel Export</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <Check size={17} className="mt-0.5 shrink-0 text-emerald-600" />
+          <span>AI Chatbot Support</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <Check size={17} className="mt-0.5 shrink-0 text-emerald-600" />
+          <span>24×7 Premium Support</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <Check size={17} className="mt-0.5 shrink-0 text-emerald-600" />
+          <span>SalesTracking</span>
+        </div>
       </div>
 
       <button

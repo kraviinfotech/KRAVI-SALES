@@ -24,22 +24,28 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
   maximumFractionDigits: 0
 });
 
+let cachedStats = null;
+let hasFetchedStats = false;
+
 const SellerDashboard = () => {
   const { lang } = useOutletContext(); // Get language from SellerLayout
   const t = translations[lang || 'en'];
-  const [stats, setStats] = useState({ visits: 0, sales: 0, items: 0 });
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(cachedStats || { visits: 0, sales: 0, items: 0 });
+  const [loading, setLoading] = useState(!hasFetchedStats);
   const [error, setError] = useState('');
 
   const fetchTodayStats = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true);
     try {
       const response = await API.get('/sales/today-stats');
-      setStats({
+      const newStats = {
         visits: response.data.visits || 0,
         sales: response.data.sales || 0,
         items: response.data.items || 0
-      });
+      };
+      setStats(newStats);
+      cachedStats = newStats;
+      hasFetchedStats = true;
     } catch (err) {
         console.error(err);
         setError(t.errorLoading);
@@ -49,14 +55,10 @@ const SellerDashboard = () => {
   }, [t.errorLoading]);
 
   useEffect(() => {
-    fetchTodayStats();
-  }, [fetchTodayStats]);
-
-  // Auto-refresh interval
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchTodayStats(true);
-    }, 30000);
+    fetchTodayStats(hasFetchedStats);
+    
+    // Refresh stats every 2 minutes for sellers
+    const interval = setInterval(() => fetchTodayStats(true), 2 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchTodayStats]);
 

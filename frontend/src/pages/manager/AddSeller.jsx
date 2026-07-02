@@ -8,6 +8,10 @@ import { validatePassword, getPasswordStrength, getPasswordStrengthColor } from 
 
 const STEPS = ['details', 'otp', 'done'];
 
+// Module-level cache for instant re-navigation
+let cachedSellers = null;
+let hasFetchedSellers = false;
+
 const AddSeller = () => {
   // Form fields
   const [name, setName] = useState('');
@@ -22,8 +26,8 @@ const AddSeller = () => {
   const [otp, setOtp] = useState('');
 
   // Sellers list
-  const [sellers, setSellers] = useState([]);
-  const [loadingList, setLoadingList] = useState(true);
+  const [sellers, setSellers] = useState(cachedSellers || []);
+  const [loadingList, setLoadingList] = useState(!hasFetchedSellers);
   const [visiblePasswordSellerId, setVisiblePasswordSellerId] = useState(null);
   const [locationDialog, setLocationDialog] = useState({ open: false, loading: false, error: '', location: null });
 
@@ -32,10 +36,13 @@ const AddSeller = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const fetchSellers = async () => {
+  const fetchSellers = async (quiet = false) => {
+    if (!quiet) setLoadingList(true);
     try {
       const response = await API.get('/sellers');
       setSellers(response.data);
+      cachedSellers = response.data;
+      hasFetchedSellers = true;
     } catch (err) {
       console.error(err);
     } finally {
@@ -44,8 +51,8 @@ const AddSeller = () => {
   };
 
   useEffect(() => {
-    fetchSellers();
-    const interval = setInterval(fetchSellers, 200000);
+    fetchSellers(hasFetchedSellers);
+    const interval = setInterval(() => fetchSellers(true), 20000);
     return () => clearInterval(interval);
   }, []);
 
