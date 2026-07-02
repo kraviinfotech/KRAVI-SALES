@@ -77,7 +77,7 @@ The ${appName} Team`;
 
 const buildOtpEmail = ({ name, email, otp }) => {
   const appName = process.env.APP_NAME || 'KRAVI SALES';
-  const supportEmail = process.env.SUPPORT_EMAIL || 'support@kravi-sales.com';
+  const supportEmail = process.env.SUPPORT_EMAIL || 'contact@kraviinfotech.com';
   const subject = `Your ${appName} verification code`;
   const text = `Hello ${name || 'User'},
 

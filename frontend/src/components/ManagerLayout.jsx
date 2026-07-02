@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { CreditCard, Loader2, LockKeyhole } from 'lucide-react';
 import Sidebar from './Sidebar';
 import SubscriptionModal from './SubscriptionModal';
 import { useAuth } from '../context/AuthContext';
-import API from '../api/axios';
+import useSubscriptionStatus from '../hooks/useSubscriptionStatus';
 
 const ManagerLayout = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
-  const [loadingStatus, setLoadingStatus] = useState(true);
+  const { data: statusData, isLoading: loadingStatus } = useSubscriptionStatus(true);
+  const subscriptionStatus = statusData ?? null;
   const [showSubscription, setShowSubscription] = useState(false);
 
   const handleLogout = () => {
@@ -19,30 +19,7 @@ const ManagerLayout = () => {
     navigate('/login', { replace: true });
   };
 
-  useEffect(() => {
-    let active = true;
-    const loadStatus = async () => {
-      setLoadingStatus(true);
-      try {
-        const res = await API.get('/subscriptions/my-status');
-        if (active) setSubscriptionStatus(res.data);
-      } catch (err) {
-        if (active) {
-          setSubscriptionStatus({
-            canUseApp: false,
-            message: err.response?.data?.message || 'Subscription status could not be verified.'
-          });
-        }
-      } finally {
-        if (active) setLoadingStatus(false);
-      }
-    };
-
-    loadStatus();
-    return () => {
-      active = false;
-    };
-  }, [location.state?.subscriptionActivated]);
+  // Note: subscription status is provided by react-query and will update when the user activates a subscription
 
   const isPaymentPage = location.pathname.startsWith('/manager/payment');
   const isBlocked = !loadingStatus && subscriptionStatus && !subscriptionStatus.canUseApp && !isPaymentPage;

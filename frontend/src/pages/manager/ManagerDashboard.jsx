@@ -237,7 +237,7 @@ const ManagerDashboard = () => {
       fetchChartData(true);
       fetchRecords(true);
       fetchCollectionData(true);
-    }, 30000);
+    }, 200000);
     return () => clearInterval(interval);
   }, [fetchSummary, fetchChartData, fetchRecords, fetchCollectionData]);
 

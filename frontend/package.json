@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "axios": "^1.7.2",
@@ -18,6 +19,9 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.23.1",
     "recharts": "^2.12.7"
+  },
+  "optionalDependencies": {
+    "@tanstack/react-query": "^5.7.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

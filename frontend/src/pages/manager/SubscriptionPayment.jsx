@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Loader2, ShieldCheck } from 'lucide-react';
 import API from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import SubscriptionModal from '../../components/SubscriptionModal';
+import usePlans from '../../hooks/usePlans';
 
 const loadRazorpayScript = () => new Promise((resolve) => {
   if (window.Razorpay) return resolve(true);
@@ -17,37 +18,28 @@ const loadRazorpayScript = () => new Promise((resolve) => {
 
 const SubscriptionPayment = () => {
   const { state } = useLocation();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { updateSession } = useAuth();
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState('');
   const [showPlans, setShowPlans] = useState(false);
 
+  const [selectedPlanId, setSelectedPlanId] = useState(state?.planId || null);
+  const mode = searchParams.get('mode') || state?.mode;
+  const isBuyMode = mode === 'buy';
+  const { data: plansData, isLoading: plansLoading, error: plansError } = usePlans(Boolean(true));
+  const plans = useMemo(() => (Array.isArray(plansData) ? plansData : []), [plansData]);
   const selectedPlan = useMemo(
-    () => plans.find((plan) => String(plan._id) === String(state?.planId)),
-    [plans, state?.planId]
+    () => plans.find((plan) => String(plan._id) === String(selectedPlanId)),
+    [plans, selectedPlanId]
   );
   const selectedDurationDays = selectedPlan
     ? Number(selectedPlan.durationDays || (Number(selectedPlan.durationMonths || 0) * 30) || 0)
     : 0;
-
-  useEffect(() => {
-    const loadPlans = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await API.get('/subscriptions/plans');
-        setPlans(res.data || []);
-      } catch (err) {
-        setError(err.response?.data?.message || 'Unable to load payment details');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadPlans();
-  }, []);
+  const loading = plansLoading;
+  const queryError = plansError?.message || 'Unable to load payment details';
+  const displayError = error || queryError;
 
   const clearRazorpayStorage = () => {
     try {
@@ -160,8 +152,49 @@ const SubscriptionPayment = () => {
             Loading plan...
           </div>
         ) : !selectedPlan ? (
-          <div className="mt-8 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
-            Please choose a subscription plan before starting payment.
+          <div className="mt-8 space-y-4">
+            <p className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              Choose a paid plan below to continue. The free trial plan is assigned automatically during manager registration.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {plans.map((plan) => {
+                const planDays = Number(plan.durationDays || (Number(plan.durationMonths || 0) * 30) || 0);
+                const canSelect = Number(plan.price) > 0;
+                return (
+                  <div key={plan._id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <h2 className="text-lg font-black text-slate-950">{plan.name}</h2>
+                        <p className="text-sm text-slate-500">{plan.description || 'Subscription plan'}</p>
+                      </div>
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                        {planDays} days
+                      </span>
+                    </div>
+                    <div className="mt-4 flex items-baseline gap-2">
+                      <span className="text-2xl font-black text-slate-950">Rs. {Number(plan.price || 0).toLocaleString('en-IN')}</span>
+                      <span className="text-sm text-slate-500">/{plan.durationMonths ? `${plan.durationMonths} month${Number(plan.durationMonths) > 1 ? 's' : ''}` : 'term'}</span>
+                    </div>
+                    <ul className="mt-4 space-y-2 text-sm text-slate-600">
+                      {(plan.features || []).slice(0, 4).map((feature) => (
+                        <li key={feature} className="flex items-start gap-2">
+                          <ShieldCheck size={16} className="mt-0.5 text-emerald-600" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => canSelect && setSelectedPlanId(plan._id)}
+                      disabled={!canSelect}
+                      className={`mt-6 w-full rounded-md px-3 py-2 text-sm font-black transition ${canSelect ? 'bg-slate-900 text-white hover:bg-slate-800' : 'cursor-not-allowed bg-slate-100 text-slate-500'}`}
+                    >
+                      {canSelect ? 'Choose plan' : 'Free trial plan'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ) : (
           <div className="mt-6 space-y-4">
@@ -189,8 +222,8 @@ const SubscriptionPayment = () => {
               </div>
             )}
 
-            {error && (
-              <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{error}</div>
+            {displayError && (
+              <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{displayError}</div>
             )}
 
             <button

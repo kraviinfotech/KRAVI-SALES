@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BarChart3, ClipboardList, Home, LogOut, LockKeyhole } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import API from '../api/axios';
+import useSubscriptionStatus from '../hooks/useSubscriptionStatus';
 
 const bottomLinks = [
   { label: 'Home', to: '/dashboard', icon: Home },
@@ -25,8 +25,8 @@ const SellerLayout = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
-  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
-  const [checkingSubscription, setCheckingSubscription] = useState(true);
+  const { data: statusData, isLoading: checkingSubscription } = useSubscriptionStatus(true);
+  const subscriptionStatus = statusData ?? null;
   const title = routeTitles.find((route) => location.pathname.startsWith(route.match))?.title || 'SalesFlow';
   const canGoBack = location.pathname !== '/dashboard';
   const isSellingFlow = location.pathname === '/sell' || location.pathname.startsWith('/sell/');
@@ -48,30 +48,7 @@ const SellerLayout = () => {
     localStorage.setItem('lang', newLang);
   };
 
-  useEffect(() => {
-    let active = true;
-    const loadStatus = async () => {
-      setCheckingSubscription(true);
-      try {
-        const res = await API.get('/subscriptions/my-status');
-        if (active) setSubscriptionStatus(res.data);
-      } catch (err) {
-        if (active) {
-          setSubscriptionStatus({
-            canUseApp: false,
-            message: err.response?.data?.message || 'Your manager subscription is not active.'
-          });
-        }
-      } finally {
-        if (active) setCheckingSubscription(false);
-      }
-    };
-
-    loadStatus();
-    return () => {
-      active = false;
-    };
-  }, []);
+  // subscription status is provided via react-query hook above
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">

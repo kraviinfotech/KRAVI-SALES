@@ -1,26 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, X, CheckCircle2 } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import API from '../api/axios';
+import useNotifications from '../hooks/useNotifications';
 
 const NotificationBell = () => {
-  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
-
-  const fetchNotifications = async () => {
-    try {
-      const res = await API.get('/shoppayments/notifications');
-      setUnreadCount(res.data.unreadCount);
-    } catch (err) {
-      console.error('Error fetching notifications', err);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000); // Polling every 30s
-    return () => clearInterval(interval);
-  }, []);
+  const { data: notifications = [], isLoading } = useNotifications(true);
+  const unreadCount = (notifications && notifications.unreadCount) ? notifications.unreadCount : 0;
 
 
 
@@ -30,7 +17,6 @@ const NotificationBell = () => {
     
     // If there are unread notifications, mark them as read so the dot disappears
     if (unreadCount > 0) {
-      setUnreadCount(0);
       try {
         await API.put('/shoppayments/notifications/read');
       } catch (err) {
