@@ -94,11 +94,10 @@ function ChatBubble({ role, text, timestamp }) {
         </div>
       )}
       <div
-        className={`max-w-[82%] rounded-2xl px-3 py-2 text-[13px] leading-relaxed shadow-sm whitespace-pre-wrap ${
-          isUser
+        className={`max-w-[82%] rounded-2xl px-3 py-2 text-[13px] leading-relaxed shadow-sm whitespace-pre-wrap ${isUser
             ? 'rounded-br-sm bg-[#6d28d9] text-white'
             : 'rounded-bl-sm border border-slate-200 bg-white text-slate-800'
-        }`}
+          }`}
       >
         <div>{text}</div>
         {timestamp && (
@@ -115,9 +114,9 @@ function TypingIndicator() {
   return (
     <div className="mb-3 flex justify-start">
       <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-4 py-3 shadow-sm">
-        <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.3s]" />
-        <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.15s]" />
-        <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" />
+        <span className="h-2 w-2 animate-typingDot rounded-full bg-slate-400 [animation-delay:-0.3s]" />
+        <span className="h-2 w-2 animate-typingDot rounded-full bg-slate-400 [animation-delay:-0.15s]" />
+        <span className="h-2 w-2 animate-typingDot rounded-full bg-slate-400" />
       </div>
     </div>
   );
@@ -129,7 +128,7 @@ function TopicButton({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-left text-sm font-semibold text-violet-700 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"
+      className="rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-left text-sm font-semibold text-violet-950 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-950 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {children}
     </button>
@@ -142,8 +141,7 @@ function QuestionButton({ children, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-left text-sm leading-snug text-slate-800 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"
-    >
+      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-left text-sm leading-snug text-slate-800 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"    >
       {children}
     </button>
   );
@@ -597,9 +595,8 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
   return (
     <div
       ref={rootRef}
-      className={`fixed bottom-5 right-5 z-50 flex flex-col items-end font-sans ${
-        isDragging ? 'select-none' : ''
-      }`}
+      className={`fixed bottom-5 right-5 z-50 flex flex-col items-end font-sans ${isDragging ? 'select-none' : ''
+        }`}
       style={{
         transform: `translate3d(${dragOffset.x}px, ${dragOffset.y}px, 0)`,
       }}
@@ -610,9 +607,8 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
       {isOpen && (
         <div className="mb-3 flex h-[560px] max-h-[calc(100vh-7rem)] w-[340px] max-w-[94vw] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
           <div
-            className={`flex shrink-0 touch-none items-center justify-between border-b border-slate-100 bg-white px-3.5 py-2.5 text-slate-900 ${
-              isDragging ? 'cursor-grabbing' : 'cursor-grab'
-            }`}
+            className={`flex shrink-0 touch-none items-center justify-between border-b border-slate-100 bg-white px-3.5 py-2.5 text-slate-900 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'
+              }`}
             onPointerDown={(event) => handleDragStart(event, 'header')}
           >
             <div className="flex items-center gap-3">
@@ -712,9 +708,8 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
         onPointerDown={(event) => handleDragStart(event, 'toggle')}
         onClick={handleToggleClick}
         onDragStart={(event) => event.preventDefault()}
-        className={`flex h-14 w-14 touch-none items-center justify-center overflow-hidden rounded-full border border-zinc-800 bg-white p-0.5 text-white shadow-lg transition-transform hover:scale-105 active:scale-95 ${
-          isDragging ? 'cursor-grabbing' : 'cursor-grab'
-        }`}
+        className={`flex h-14 w-14 touch-none items-center justify-center overflow-hidden rounded-full border border-zinc-800 bg-white p-0.5 text-white shadow-lg transition-transform hover:scale-105 active:scale-95 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'
+          }`}
         aria-label="Toggle KRAVI chat"
       >
         {isOpen ? (
