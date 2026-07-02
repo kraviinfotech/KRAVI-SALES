@@ -21,7 +21,7 @@
     "recharts": "^2.12.7"
   },
   "optionalDependencies": {
-    "@tanstack/react-query": "^5.7.0"
+    "@tanstack/react-query": "^5.101.2"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

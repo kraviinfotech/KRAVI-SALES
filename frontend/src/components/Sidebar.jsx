@@ -80,6 +80,7 @@ const Sidebar = ({ onLogout }) => {
         </nav>
         <div className="p-3 border-t border-slate-800">
           <button
+            type="button"
             onClick={onLogout}
             className="mt-3 w-full flex items-center justify-center px-3 py-2 bg-slate-800 hover:bg-red-600 text-white rounded-md text-xs font-semibold transition-colors"
           >
@@ -92,6 +93,7 @@ const Sidebar = ({ onLogout }) => {
       {/* Mobile Sidebar */}
       <div className="md:hidden">
         <button
+          type="button"
           onClick={toggleMenu}
           className="fixed left-3 top-3 z-50 rounded-md bg-slate-900 p-2 text-white shadow-md hover:bg-slate-800 focus:outline-none"
           aria-label="Toggle manager menu"
@@ -107,6 +109,7 @@ const Sidebar = ({ onLogout }) => {
                 <div className="flex items-center gap-3">
                   {user?.role === 'manager' && <NotificationBell />}
                   <button
+                    type="button"
                     onClick={toggleMenu}
                     className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none"
                   >
@@ -149,6 +152,7 @@ const Sidebar = ({ onLogout }) => {
               </nav>
               <div className="p-3 border-t border-slate-800">
                 <button
+                  type="button"
                   onClick={() => {
                     toggleMenu();
                     onLogout();

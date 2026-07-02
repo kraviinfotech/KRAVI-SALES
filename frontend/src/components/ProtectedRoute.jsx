@@ -2,6 +2,12 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const ROLE_REDIRECTS = {
+  admin: '/admin',
+  manager: '/manager',
+  seller: '/dashboard',
+};
+
 /**
  * ProtectedRoute component to handle Role-Based Access Control (RBAC)
  * @param {String|Array} allowedRole - String or array of allowed roles (e.g., 'admin' or ['admin', 'manager'])
@@ -27,13 +33,7 @@ const ProtectedRoute = ({ children, allowedRole, allowedRoles }) => {
   const roles = allowedRoles ? (Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]) : (allowedRole ? (typeof allowedRole === 'string' ? [allowedRole] : allowedRole) : []);
 
   if (roles.length > 0 && !roles.includes(user.role)) {
-    // If unauthorized for this specific role, send them to their allowed dashboard
-    const roleRedirects = {
-      admin: '/admin',
-      manager: '/manager',
-      seller: '/dashboard'
-    };
-    return <Navigate to={roleRedirects[user.role] || '/login'} replace />;
+    return <Navigate to={ROLE_REDIRECTS[user.role] || '/login'} replace />;
   }
 
   return children;

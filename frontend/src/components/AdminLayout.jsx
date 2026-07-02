@@ -3,6 +3,14 @@ import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, CreditCard, Settings, LogOut, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+const navItems = [
+  { icon: LayoutDashboard, label: 'Overview', path: '/admin' },
+  { icon: Users, label: 'Managers', path: '/admin/managers' },
+  { icon: CreditCard, label: 'Plans', path: '/admin/plans' },
+  { icon: Settings, label: 'Payments', path: '/admin/payments' },
+  { icon: Settings, label: 'Settings', path: '/admin/settings' },
+];
+
 const AdminLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -12,17 +20,6 @@ const AdminLayout = () => {
     navigate('/login?role=manager');
   };
 
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Overview', path: '/admin' },
-  
-    { icon: Users, label: 'Managers', path: '/admin/managers' },
-    { icon: CreditCard, label: 'Plans', path: '/admin/plans' },
-    { icon: Settings, label: 'Payments', path: '/admin/payments' },
-
-    { icon: Settings, label: 'Settings', path: '/admin/settings' }
-  ];
-
-  
   return (
     <div className="flex h-screen bg-slate-50">
       <aside className="w-64 bg-slate-900 text-white flex flex-col">
@@ -44,6 +41,7 @@ const AdminLayout = () => {
         </nav>
         <div className="p-4 border-t border-slate-800">
           <button
+            type="button"
             onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 w-full text-left text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
           >

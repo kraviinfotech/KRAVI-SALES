@@ -68,7 +68,8 @@ const AddManagerForm = () => {
         </div>
         <h2 className="text-2xl font-bold text-gray-800">Manager Added!</h2>
         <p className="text-gray-500 mt-2"><strong>{formData.name}</strong> has been successfully registered.</p>
-        <button 
+        <button
+          type="button"
           onClick={() => { setIsSubmitted(false); setFormData({ ...formData, name: '', email: '' }); }}
           className="mt-8 w-full bg-[#6C3EF4] text-white py-3 rounded-xl font-bold hover:bg-[#5a32cc] transition-colors"
         >
@@ -85,7 +86,8 @@ const AddManagerForm = () => {
           <h2 className="text-xl font-bold text-gray-800">Add New Manager</h2>
           <p className="text-sm text-gray-500">Enter details manually or use a registration QR code</p>
         </div>
-        <button 
+        <button
+          type="button"
           onClick={() => setShowScanner(true)}
           className="flex items-center gap-2 bg-[#6C3EF4] text-white px-4 py-2.5 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-200 transition-all"
         >
@@ -181,7 +183,7 @@ const AddManagerForm = () => {
           <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden">
             <div className="p-4 border-b flex justify-between items-center">
               <h3 className="font-bold">Scan Manager QR</h3>
-              <button onClick={() => setShowScanner(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20}/></button>
+              <button type="button" onClick={() => setShowScanner(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20}/></button>
             </div>
             <div id="reader" className="w-full"></div>
           </div>

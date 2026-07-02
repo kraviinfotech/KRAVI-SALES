@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, Calendar, MoreVertical, Eye, Edit2, Trash2, Download, Building, X, Upload } from 'lucide-react';
 import API from '../../api/axios';
 
+const tabs = ['All', 'Active', 'Expired', 'Trial'];
+
 const Companies = () => {
   const [activeTab, setActiveTab] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -111,9 +113,7 @@ const Companies = () => {
         });
     }
   };
-  
-  const tabs = ['All', 'Active', 'Expired', 'Trial'];
-  
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Active': return 'bg-green-100 text-green-700';
@@ -133,7 +133,7 @@ const Companies = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">Company Management</h1>
-        <button onClick={handleAddCompany} className="bg-[#6C3EF4] text-white px-4 py-2 rounded-xl font-semibold hover:bg-[#5a32cc] transition-all flex items-center gap-2">
+        <button type="button" onClick={handleAddCompany} className="bg-[#6C3EF4] text-white px-4 py-2 rounded-xl font-semibold hover:bg-[#5a32cc] transition-all flex items-center gap-2">
           + Add Company
         </button>
       </div>
@@ -151,7 +151,7 @@ const Companies = () => {
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-[#6C3EF4] rounded-xl transition-all outline-none" 
             />
           </div>
-          <button className="p-2 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 border border-gray-100">
+          <button type="button" className="p-2 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 border border-gray-100">
             <Filter size={18} />
           </button>
         </div>
@@ -161,14 +161,15 @@ const Companies = () => {
             <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input type="date" className="pl-10 pr-3 py-2 bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-[#6C3EF4] rounded-lg transition-all outline-none" />
           </div>
-          <button className="px-3 py-2 bg-[#6C3EF4] text-white rounded-lg text-sm font-medium hover:bg-[#5a32cc] transition-all">
+          <button type="button" className="px-3 py-2 bg-[#6C3EF4] text-white rounded-lg text-sm font-medium hover:bg-[#5a32cc] transition-all">
             Apply
           </button>
         </div>
 
         <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
           {tabs.map(tab => (
-            <button 
+            <button
+              type="button"
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === tab ? 'bg-white text-[#6C3EF4] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
@@ -230,9 +231,9 @@ const Companies = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => handleView(company)} className="p-2 hover:bg-purple-50 text-[#6C3EF4] rounded-lg transition-colors" title="View"><Eye size={18} /></button>
-                      <button onClick={() => handleEdit(company)} className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" title="Edit"><Edit2 size={18} /></button>
-                      <button onClick={() => handleDelete(company)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors" title="Delete"><Trash2 size={18} /></button>
+                      <button type="button" onClick={() => handleView(company)} className="p-2 hover:bg-purple-50 text-[#6C3EF4] rounded-lg transition-colors" title="View"><Eye size={18} /></button>
+                      <button type="button" onClick={() => handleEdit(company)} className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" title="Edit"><Edit2 size={18} /></button>
+                      <button type="button" onClick={() => handleDelete(company)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors" title="Delete"><Trash2 size={18} /></button>
                     </div>
                   </td>
                 </tr>
@@ -252,7 +253,8 @@ const Companies = () => {
                 <h2 className="text-2xl font-bold">Company Details</h2>
                 <p className="text-purple-100 text-sm">{selectedCompany.name}</p>
               </div>
-              <button 
+              <button
+                type="button"
                 onClick={() => setShowDetailDrawer(false)}
                 className="text-white hover:bg-white hover:text-[#6C3EF4] p-2 rounded-lg transition-all"
               >

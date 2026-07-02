@@ -75,6 +75,7 @@ const Dashboard = () => {
           <div className="flex gap-2 flex-wrap">
             {['Today', 'This Week', 'This Month', 'All Time'].map((filter) => (
               <button
+                type="button"
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
@@ -167,7 +168,7 @@ const Dashboard = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <h3 className="font-bold text-gray-800">Recently Added Companies</h3>
-          <button className="text-[#6C3EF4] text-sm font-semibold hover:underline">View All</button>
+          <button type="button" className="text-[#6C3EF4] text-sm font-semibold hover:underline">View All</button>
         </div>
         <table className="w-full text-left">
           <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-medium">

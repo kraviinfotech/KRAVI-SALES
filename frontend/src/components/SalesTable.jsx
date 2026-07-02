@@ -224,7 +224,8 @@ const SalesTable = ({ records }) => {
           onClick={() => setSelectedImage(null)}
         >
           <div className="relative max-w-3xl max-h-[85vh] bg-white rounded-lg p-2 shadow-2xl animate-fade-in" onClick={(e) => e.stopPropagation()}>
-            <button 
+            <button
+              type="button"
               onClick={() => setSelectedImage(null)}
               className="absolute -top-10 right-0 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors focus:outline-none"
             >
