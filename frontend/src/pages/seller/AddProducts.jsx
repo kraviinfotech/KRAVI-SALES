@@ -11,6 +11,176 @@ const translations = {
 
 const emptyItem = { productName: '', unit: 'quantity', quantity: '', weight: '', price: '' };
 
+const ProductCard = ({
+  item,
+  index,
+  totalItems,
+  isLast,
+  lastCardRef,
+  wrapperRefs,
+  t,
+  amount,
+  suggestionsOpen,
+  searchQuery,
+  filteredProducts,
+  onSearchInput,
+  onOpenSuggestions,
+  onToggleSuggestions,
+  onProductSelection,
+  onUnitChange,
+  onItemChange,
+  onRemove
+}) => (
+  <div
+    key={item.productName ? `${item.productName}-${index}` : `item-${index}`}
+    ref={isLast ? lastCardRef : null}
+    className="space-y-4 rounded border border-gray-200 bg-gray-50 p-4"
+  >
+    {totalItems > 1 && (
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-gray-700">Product {index + 1}</span>
+        <button
+          type="button"
+          onClick={() => onRemove(index)}
+          className="flex h-8 w-8 items-center justify-center rounded text-gray-500 hover:bg-red-50 hover:text-red-600"
+          aria-label="Remove product"
+        >
+          <X size={18} />
+        </button>
+      </div>
+    )}
+
+    <div className="relative" ref={el => wrapperRefs.current[index] = el}>
+      <label className="mb-1 block text-sm font-medium text-gray-700">{t.pName}</label>
+      <div className="relative">
+        <div className="flex rounded-md border border-gray-300 bg-white focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+          <input
+            value={searchQuery}
+            onChange={(event) => onSearchInput(index, event.target.value)}
+            onFocus={() => onOpenSuggestions(index)}
+            placeholder="Type to search manager products..."
+            className={`flex-1 rounded-l-md border-0 bg-transparent px-3 py-2 text-sm focus:outline-none ${suggestionsOpen[index] ? 'rounded-b-none' : 'rounded-r-md'}`}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => onToggleSuggestions(index)}
+            className="flex items-center justify-center rounded-r-md border-l border-gray-300 bg-gray-50 px-3 py-2 text-gray-600 text-sm leading-none transition hover:bg-gray-100"
+            aria-label="Toggle product dropdown"
+          >
+            <ChevronDown size={18} />
+          </button>
+        </div>
+
+        {suggestionsOpen[index] && (
+          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-b-md border border-t-0 border-gray-300 bg-white shadow-lg">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => (
+                <button
+                  key={product._id || product.name}
+                  type="button"
+                  onMouseDown={() => onProductSelection(index, product.name)}
+                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  {product.name}
+                </button>
+              ))
+            ) : (
+              <div className="px-3 py-2 text-sm text-gray-500">No available product</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-700">{t.unit}</label>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => onUnitChange(index, 'quantity')}
+          className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+            item.unit === 'quantity'
+              ? 'bg-primary text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          {t.qtyBtn}
+        </button>
+        <button
+          type="button"
+          onClick={() => onUnitChange(index, 'weight')}
+          className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+            item.unit === 'weight'
+              ? 'bg-primary text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          {t.weightBtn}
+        </button>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-2 gap-4">
+      {item.unit === 'quantity' && (
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">{t.qty}</label>
+          <input
+            type="number"
+            min="1"
+            value={item.quantity || ''}
+            onChange={(event) => onItemChange(index, 'quantity', event.target.value)}
+            placeholder="Enter quantity"
+            className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            required
+          />
+        </div>
+      )}
+
+      {item.unit === 'weight' && (
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">{t.weight}</label>
+          <input
+            type="number"
+            min="0.1"
+            step="0.1"
+            value={item.weight || ''}
+            onChange={(event) => onItemChange(index, 'weight', event.target.value)}
+            placeholder="2.5"
+            className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            required
+          />
+        </div>
+      )}
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-700">{t.price}</label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={item.price || item.rate || ''}
+          onChange={(event) => onItemChange(index, 'price', event.target.value)}
+          placeholder="120"
+          className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          required
+        />
+      </div>
+    </div>
+
+    <div>
+      <label className="mb-1 block text-sm font-medium text-gray-700">{t.amt}</label>
+      <input
+        type="text"
+        value={amount ? amount.toFixed(0) : ''}
+        readOnly
+        placeholder="0"
+        className="w-full rounded border border-gray-300 bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-900 outline-none"
+      />
+    </div>
+  </div>
+);
+
 const AddProducts = () => {
   const { formData, setFormData, lang } = useOutletContext();
   const t = translations[lang || 'en'];
@@ -227,155 +397,30 @@ const AddProducts = () => {
         const amount = item.unit === 'quantity'
           ? (Number(item.quantity) || 0) * price
           : (Number(item.weight) || 0) * price;
+        const searchQuery = searchQueries[index] !== undefined ? searchQueries[index] : item.productName || '';
 
         return (
-          <div
+          <ProductCard
             key={item.productName ? `${item.productName}-${index}` : `item-${index}`}
-            ref={index === formData.items.length - 1 ? lastCardRef : null}
-            className="space-y-4 rounded border border-gray-200 bg-gray-50 p-4"
-          >
-            {formData.items.length > 1 && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-gray-700">Product {index + 1}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemove(index)}
-                  className="flex h-8 w-8 items-center justify-center rounded text-gray-500 hover:bg-red-50 hover:text-red-600"
-                  aria-label="Remove product"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            )}
-
-            <div className="relative" ref={el => wrapperRefs.current[index] = el}>
-              <label className="mb-1 block text-sm font-medium text-gray-700">{t.pName}</label>
-              <div className="relative">
-                <div className="flex rounded-md border border-gray-300 bg-white focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-                  <input
-                    value={searchQueries[index] !== undefined ? searchQueries[index] : item.productName || ''}
-                    onChange={(event) => handleSearchInput(index, event.target.value)}
-                    onFocus={() => openSuggestions(index)}
-                    placeholder="Type to search manager products..."
-                    className={`flex-1 rounded-l-md border-0 bg-transparent px-3 py-2 text-sm focus:outline-none ${suggestionsOpen[index] ? 'rounded-b-none' : 'rounded-r-md'}`}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => toggleSuggestions(index)}
-                    className="flex items-center justify-center rounded-r-md border-l border-gray-300 bg-gray-50 px-3 py-2 text-gray-600 text-sm leading-none transition hover:bg-gray-100"
-                    aria-label="Toggle product dropdown"
-                  >
-                    <ChevronDown size={18} />
-                  </button>
-                </div>
-
-                {suggestionsOpen[index] && (
-                  <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-b-md border border-t-0 border-gray-300 bg-white shadow-lg">
-                      {getFilteredProducts(searchQueries[index] !== undefined ? searchQueries[index] : item.productName).length > 0 ? (
-                      getFilteredProducts(searchQueries[index] !== undefined ? searchQueries[index] : item.productName).map((p) => (
-                        <button
-                          key={p._id || p.name}
-                          type="button"
-                          onMouseDown={() => handleProductSelection(index, p.name)}
-                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          {p.name}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-sm text-gray-500">No available product</div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">{t.unit}</label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleUnitChange(index, 'quantity')}
-                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${item.unit === 'quantity'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                >
-                  {t.qtyBtn}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleUnitChange(index, 'weight')}
-                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${item.unit === 'weight'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                >
-                  {t.weightBtn}
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {item.unit === 'quantity' && (
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">{t.qty}</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.quantity || ''}
-                    onChange={(event) => handleItemChange(index, 'quantity', event.target.value)}
-                    placeholder="Enter quantity"
-                    className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    required
-                  />
-                </div>
-              )}
-
-              {item.unit === 'weight' && (
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">{t.weight}</label>
-                  <input
-                    type="number"
-                    min="0.1"
-                    step="0.1"
-                    value={item.weight || ''}
-                    onChange={(event) => handleItemChange(index, 'weight', event.target.value)}
-                    placeholder="2.5"
-                    className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    required
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">{t.price}</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={item.price || item.rate || ''}
-                  onChange={(event) => handleItemChange(index, 'price', event.target.value)}
-                  placeholder="120"
-                  className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">{t.amt}</label>
-              <input
-                type="text"
-                value={amount ? amount.toFixed(0) : ''}
-                readOnly
-                placeholder="0"
-                className="w-full rounded border border-gray-300 bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-900 outline-none"
-              />
-            </div>
-          </div>
+            item={item}
+            index={index}
+            totalItems={formData.items.length}
+            isLast={index === formData.items.length - 1}
+            lastCardRef={lastCardRef}
+            wrapperRefs={wrapperRefs}
+            t={t}
+            amount={amount}
+            suggestionsOpen={suggestionsOpen}
+            searchQuery={searchQuery}
+            filteredProducts={getFilteredProducts(searchQuery)}
+            onSearchInput={handleSearchInput}
+            onOpenSuggestions={openSuggestions}
+            onToggleSuggestions={toggleSuggestions}
+            onProductSelection={handleProductSelection}
+            onUnitChange={handleUnitChange}
+            onItemChange={handleItemChange}
+            onRemove={handleRemove}
+          />
         );
       })}
 

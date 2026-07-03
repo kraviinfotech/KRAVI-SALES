@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import API from '../api/axios';
 
-export const SUBSCRIPTION_STATUS_KEY = ['subscription', 'status'];
+const SUBSCRIPTION_STATUS_KEY = ['subscription', 'status'];
 
 export function useSubscriptionStatus(enabled = true) {
   return useQuery({

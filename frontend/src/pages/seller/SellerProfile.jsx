@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Phone, UserCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+const getInitials = (name) => {
+  if (!name) return '?';
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+};
+
 const SellerProfile = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-
-  const getInitials = (name) => {
-    if (!name) return '?';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
 
   const handleLogout = () => {
     logout();

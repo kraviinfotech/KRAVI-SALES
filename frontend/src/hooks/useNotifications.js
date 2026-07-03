@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import API from '../api/axios';
 
-export const NOTIFICATIONS_KEY = ['notifications'];
+const NOTIFICATIONS_KEY = ['notifications'];
 
 export function useNotifications(enabled = true) {
   return useQuery({

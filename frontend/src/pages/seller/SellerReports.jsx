@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import API from '../../api/axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -16,25 +17,24 @@ const safeDate = (v) => {
   } catch { return 'N/A'; }
 };
 
-let cachedRecords = null;
-let hasFetchedRecords = false;
+const SELLER_REPORTS_QUERY_KEY = ['seller', 'reports'];
+
+const fetchSellerRecords = async () => {
+  const res = await API.get('/sales/my-records?lite=1');
+  return Array.isArray(res.data) ? res.data : [];
+};
 
 const SellerReports = () => {
-  const [records, setRecords] = useState(cachedRecords || []);
-  const [loading, setLoading] = useState(!hasFetchedRecords);
-  const [error,   setError]   = useState('');
+  const {
+    data: records = [],
+    isPending: loading,
+    isError,
+  } = useQuery({
+    queryKey: SELLER_REPORTS_QUERY_KEY,
+    queryFn: fetchSellerRecords,
+  });
 
-  useEffect(() => {
-    if (!hasFetchedRecords) setLoading(true);
-    API.get('/sales/my-records?lite=1')
-      .then(res => {
-        setRecords(res.data);
-        cachedRecords = res.data;
-        hasFetchedRecords = true;
-      })
-      .catch(() => setError('Reports could not be loaded.'))
-      .finally(() => setLoading(false));
-  }, []);
+  const error = isError ? 'Reports could not be loaded.' : '';
 
   /* ── Aggregated stats ─────────────────────────── */
   const stats = useMemo(() => {

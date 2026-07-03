@@ -25,14 +25,14 @@ const navigation = [
   { name: 'Profile', to: '/manager/profile', icon: UserCircle },
 ];
 
+const getInitials = (name) => {
+  if (!name) return 'M';
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+};
+
 const Sidebar = ({ onLogout }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
-
-  const getInitials = (name) => {
-    if (!name) return 'M';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
 
   const toggleMenu = () => setMobileOpen(!mobileOpen);
 
@@ -102,7 +102,16 @@ const Sidebar = ({ onLogout }) => {
         </button>
         {mobileOpen && (
           <aside className="fixed inset-0 z-40 flex">
-            <div className="fixed inset-0 bg-black/35" onClick={toggleMenu}></div>
+            {/* Fully accessible backdrop overlay */}
+            <div 
+              className="fixed inset-0 bg-black/35 outline-none" 
+              role="button"
+              tabIndex={0}
+              aria-label="Close menu layout overlay"
+              onClick={toggleMenu}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleMenu()}
+            ></div>
+            
             <div className="relative flex min-h-screen w-64 flex-col bg-slate-900 text-white shadow-xl">
               <div className="flex items-center justify-between px-4 border-b border-slate-800 h-14">
                 <span className="text-sm font-bold tracking-wide text-white">SalesFlow Menu</span>

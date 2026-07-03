@@ -1,8 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Building, Calendar, Edit2, Eye, Filter, Search, Trash2, X } from 'lucide-react';
 import API from '../../api/axios';
 
 const TABS = ['All', 'Active', 'Expired', 'Trial'];
+const COMPANIES_QUERY_KEY = ['admin', 'companies'];
+
+const fetchCompanies = async () => {
+  const res = await API.get('/companies');
+  return Array.isArray(res.data) ? res.data : [];
+};
 
 const getStatusColor = (status) => {
   if (status === 'Active') return 'bg-green-100 text-green-700';
@@ -245,19 +252,18 @@ const getCompanyPayload = (company = null) => {
 };
 
 const Companies = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('All');
-  const [companies, setCompanies] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    setLoading(true);
-    API.get('/companies')
-      .then((res) => setCompanies(res.data))
-      .catch((err) => console.error('Failed to load companies', err))
-      .finally(() => setLoading(false));
-  }, []);
+  const {
+    data: companies = [],
+    isPending: loading,
+  } = useQuery({
+    queryKey: COMPANIES_QUERY_KEY,
+    queryFn: fetchCompanies,
+  });
 
   const filteredCompanies = useMemo(() => companies.filter((company) => {
     const matchesSearch = (company.name || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -274,7 +280,12 @@ const Companies = () => {
       status: 'Active',
       subscriptionDetails: { users: 0, activeUsers: 0, storage: '0 GB', features: [] },
     })
-      .then((res) => setCompanies((prev) => [res.data, ...prev]))
+      .then((res) =>
+        queryClient.setQueryData(COMPANIES_QUERY_KEY, (prev = []) => [
+          res.data,
+          ...prev,
+        ])
+      )
       .catch((err) => {
         console.error(err);
         window.alert('Failed to create company');
@@ -288,9 +299,11 @@ const Companies = () => {
 
     API.patch(`/companies/${company._id || company.id}`, payload)
       .then((res) => {
-        setCompanies((prev) => prev.map((item) =>
-          (item._id || item.id) === (res.data._id || res.data.id) ? res.data : item
-        ));
+        queryClient.setQueryData(COMPANIES_QUERY_KEY, (prev = []) =>
+          prev.map((item) =>
+            (item._id || item.id) === (res.data._id || res.data.id) ? res.data : item
+          )
+        );
         setSelectedCompany((current) =>
           current && (current._id || current.id) === (res.data._id || res.data.id) ? res.data : current
         );
@@ -306,9 +319,11 @@ const Companies = () => {
 
     API.delete(`/companies/${company._id || company.id}`)
       .then(() => {
-        setCompanies((prev) => prev.filter((item) =>
-          (item._id || item.id) !== (company._id || company.id)
-        ));
+        queryClient.setQueryData(COMPANIES_QUERY_KEY, (prev = []) =>
+          prev.filter((item) =>
+            (item._id || item.id) !== (company._id || company.id)
+          )
+        );
         if ((selectedCompany?._id || selectedCompany?.id) === (company._id || company.id)) {
           setSelectedCompany(null);
         }

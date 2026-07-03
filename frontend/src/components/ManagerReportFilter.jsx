@@ -1,6 +1,8 @@
-
 import React, { useReducer } from 'react';
 import { RotateCcw, Download } from 'lucide-react';
+
+// Static references declared outside the component to preserve reference identity across renders
+const EMPTY_SELLERS = [];
 
 const initialFilterState = {
   sellerId: '',
@@ -36,7 +38,7 @@ const filterReducer = (state, action) => {
 const ManagerReportFilter = ({
   onFilter,
   onDownloadCSV,
-  sellers = [],
+  sellers = EMPTY_SELLERS, // Uses the static reference safely
 }) => {
   const [filters, dispatch] = useReducer(
     filterReducer,
@@ -267,4 +269,3 @@ const ManagerReportFilter = ({
 };
 
 export default ManagerReportFilter;
-

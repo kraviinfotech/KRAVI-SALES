@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, ShieldCheck, UserRound, ArrowRight} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -48,6 +48,14 @@ const Login = () => {
   const currentRole = roleConfig[selectedRole];
   const Icon = currentRole.icon;
 
+  // FIXED: Track selectedRole in a mutable Ref so the asynchronous Google Callback 
+  // can instantly access the fresh value without running a state calculation chain.
+  const selectedRoleRef = useRef(selectedRole);
+  useEffect(() => {
+    selectedRoleRef.current = selectedRole;
+  }, [selectedRole]);
+
+  // Initialize Google SDK cleanly on mount
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (!clientId) {
@@ -64,12 +72,16 @@ const Login = () => {
             try {
               setLoading(true);
               const userData = await googleLogin(response.credential);
+              
+              // Read directly from the updated reference value safely
+              const activeRole = selectedRoleRef.current;
               const isAuthorized =
-                (selectedRole === 'seller' && userData.role === 'seller') ||
-                (selectedRole === 'manager' && (userData.role === 'manager' || userData.role === 'admin'));
+                (activeRole === 'seller' && userData.role === 'seller') ||
+                (activeRole === 'manager' && (userData.role === 'manager' || userData.role === 'admin'));
+                
               if (!isAuthorized) {
                 logout();
-                setError(`Please use a ${selectedRole === 'manager' ? 'manager' : 'seller'} account for this form.`);
+                setError(`Please use a ${activeRole === 'manager' ? 'manager' : 'seller'} account for this form.`);
                 return;
               }
               navigate(roleRoutes[userData.role], { replace: true });
@@ -83,7 +95,8 @@ const Login = () => {
       });
       setGoogleReady(true);
     }
-  }, [googleLogin, logout, navigate, selectedRole]);
+    // FIXED: Removed selectedRole out of dependencies to cut off the effect chains entirely.
+  }, [googleLogin, logout, navigate]);
 
   const handleRoleChange = (role) => {
     setSelectedRole(role);
@@ -145,23 +158,22 @@ const Login = () => {
   return (
     <>
       {showIntroVideo && (
-  <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black">
-    <video
-      className="h-full w-full object-cover cursor-pointer"
-      src={videoSrc}
-      autoPlay
-      muted
-      playsInline
-      onEnded={() => setShowIntroVideo(false)}
-      onClick={() => setShowIntroVideo(false)}
-    />
-    <div className="pointer-events-none absolute inset-0 bg-black/40" />
-
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white text-sm font-medium animate-pulse">
-      Tap anywhere to skip
-    </div>
-  </div>
-)}
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black">
+          <video
+            className="h-full w-full object-cover cursor-pointer"
+            src={videoSrc}
+            autoPlay
+            muted
+            playsInline
+            onEnded={() => setShowIntroVideo(false)}
+            onClick={() => setShowIntroVideo(false)}
+          />
+          <div className="pointer-events-none absolute inset-0 bg-black/40" />
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white text-sm font-medium animate-pulse">
+            Tap anywhere to skip
+          </div>
+        </div>
+      )}
 
       <div className="min-h-screen flex items-start justify-center px-4 pt-28 pb-8 bg-transparent sm:items-center sm:py-8 lg:justify-end lg:pl-4 lg:pr-16">
         <div className="w-full max-w-md">
@@ -206,7 +218,7 @@ const Login = () => {
                 <p className="text-sm font-medium text-gray-500">{currentRole.subtitle}</p>
               </div>
             </div>
-           
+            
             {error && (
               <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
                 {error}
@@ -268,7 +280,6 @@ const Login = () => {
                   <GoogleLoginButton onSuccess={() => { }} onFailure={handleGoogleFailure} disabled={loading} />
                 </div>
               )}
-
             </form>
 
             <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
@@ -291,8 +302,8 @@ const Login = () => {
           </div>
         </div>
       </div>
-
-    </>)
+    </>
+  );
 };
 
 export default Login;

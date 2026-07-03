@@ -16,6 +16,20 @@ const loadRazorpayScript = () => new Promise((resolve) => {
   document.body.appendChild(script);
 });
 
+const clearRazorpayStorage = () => {
+  try {
+    // Razorpay SDK automatically stores some keys in localStorage.
+    // We clean them up for better security/privacy.
+    Object.keys(localStorage).forEach((key) => {
+      if (key.toLowerCase().includes('rzp') || key.toLowerCase().includes('razorpay')) {
+        localStorage.removeItem(key);
+      }
+    });
+  } catch (e) {
+    console.error('Failed to clear Razorpay storage', e);
+  }
+};
+
 const SubscriptionPayment = () => {
   const { state } = useLocation();
   const [searchParams] = useSearchParams();
@@ -40,20 +54,6 @@ const SubscriptionPayment = () => {
   const loading = plansLoading;
   const queryError = plansError?.message || 'Unable to load payment details';
   const displayError = error || queryError;
-
-  const clearRazorpayStorage = () => {
-    try {
-      // Razorpay SDK automatically stores some keys in localStorage.
-      // We clean them up for better security/privacy.
-      Object.keys(localStorage).forEach((key) => {
-        if (key.toLowerCase().includes('rzp') || key.toLowerCase().includes('razorpay')) {
-          localStorage.removeItem(key);
-        }
-      });
-    } catch (e) {
-      console.error('Failed to clear Razorpay storage', e);
-    }
-  };
 
   const startPayment = async () => {
     if (!selectedPlan) return;
