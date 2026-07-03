@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import SuperAdminLayout from './admin/SuperAdminLayout';
 import Dashboard from './admin/Dashboard';
+import Companies from './admin/Companies';
 import Plans from './admin/Plans';
 import Payments from './admin/Payments';
 import AddManagerForm from './admin/AddManagerForm';
+import Reports from './admin/Reports';
 import Settings from './admin/Settings';
 // Using the role-based login and register pages from the pages folder
-import Login from './frontend/src/pages/Login';
-import Register from './frontend/src/pages/Register';
+import Login from '../Login';
+import Register from '../Register';
 
 function App() {
   // Check if user was previously logged in
@@ -48,9 +50,11 @@ function App() {
               <Routes>
                 <Route index element={<Navigate to="/admin" replace />} />
                 <Route path="admin" element={<Dashboard />} />
+                <Route path="admin/companies" element={<Companies />} />
                 <Route path="admin/plans" element={<Plans />} />
                 <Route path="admin/payments" element={<Payments />} />
                 <Route path="admin/managers" element={<div className="space-y-6"><AddManagerForm /></div>} />
+                <Route path="admin/reports" element={<Reports />} />
                 <Route path="admin/settings" element={<Settings />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>

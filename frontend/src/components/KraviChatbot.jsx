@@ -1,215 +1,101 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Send, X } from 'lucide-react';
 import API from '../api/axios';
-import { PRIMARY_SUPPORT_TOPIC_LIMIT, supportFaqTopics } from '../data/supportFaqs';
-import {
-  LANGUAGE_OPTIONS,
-  getChatbotCopy,
-  getLocalizedAnswer,
-  getLocalizedQuestion,
-  getLocalizedTopicTitle,
-  getSupportedLanguage,
-} from '../data/supportFaqTranslations';
 import kraviAssistantImage from '../images/kravi-ai-assistant.png';
+import { format } from 'date-fns';
+import { PRIMARY_SUPPORT_TOPIC_LIMIT, supportFaqTopics } from '../data/supportFaqs';
 
-const DRAG_MARGIN = 12;
-const DRAG_CLICK_THRESHOLD = 4;
-const AI_TYPING_DELAY_MS = 700;
+const WELCOME_MESSAGES = {
+hi: " Namaste! Main KRAVI AI Assistant hoon. Main aapki kaise sahayata kar sakta hoon?",
+en: " Hello! I am KRAVI AI Assistant. How can I assist you today?",
+mr: " Namaskar! Mi KRAVI AI Assistant aahe. Mi tumhala kashi madat karu shakto?"
+};
 
-function clamp(value, min, max) {
-  if (max < min) {
-    return value;
-  }
+const PLACEHOLDER_TEXT = 'Apna sawaal type karein...';
 
-  return Math.min(Math.max(value, min), max);
-}
+function ChatBubble({ role, text }) {
+  const isUser = role === 'user';
 
-function wait(milliseconds) {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, milliseconds);
-  });
-}
-
-function formatDateLabel(date = new Date()) {
-  return date
-    .toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
-    .toUpperCase();
-}
-
-function formatTimeLabel(date = new Date()) {
-  return date
-    .toLocaleTimeString('en-IN', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    })
-    .toLowerCase();
-}
-
-function createMessage(role, text) {
-  return {
-    role,
-    text,
-    timestamp: formatTimeLabel(),
-  };
-}
-
-function getInitialMessages(language) {
-  const welcomeMessages = getChatbotCopy(language).welcome;
-  const timestamp = formatTimeLabel();
-
-  return welcomeMessages.map((text) => ({
-    role: 'assistant',
-    text,
-    timestamp,
-  }));
-}
-
-function DateDivider() {
   return (
-    <div className="my-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-400">
+    <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
+      <div
+        className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+          isUser
+              ? 'bg-blue-500 text-white rounded-br-sm shadow-lg shadow-blue-500/20'
+              : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm shadow-sm'
+        }`}
+      >
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function MessageBubble({ role, text, timestamp }) {
+  const formattedTime = timestamp ? format(new Date(timestamp), 'h:mm a') : null;
+
+  return (
+    <div className="flex w-full mb-3">
+      <div
+        className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+          role === 'user'
+            ? 'ml-auto rounded-br-sm bg-blue-500 text-white shadow-lg shadow-blue-500/20'
+            : 'rounded-bl-sm bg-white text-slate-800 border border-slate-200 shadow-sm'
+        }`}
+      >
+        <div>{text}</div>
+        {formattedTime && (
+          <div className="mt-2 text-[10px] text-slate-400 text-right">{formattedTime}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DateDivider({ date }) {
+  if (!date) return null;
+
+  return (
+    <div className="flex items-center gap-3 py-2 text-xs text-slate-500 uppercase tracking-[0.25em]">
       <span className="h-px flex-1 bg-slate-200" />
-      <span>{formatDateLabel()}</span>
+      <span>{date}</span>
       <span className="h-px flex-1 bg-slate-200" />
     </div>
   );
 }
 
-function ChatBubble({ role, text, timestamp }) {
-  const isUser = role === 'user';
-
+function TopicButton({ label, onClick, active }) {
   return (
-    <div className={`mb-3 flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}>
-      {!isUser && (
-        <div className="mr-2 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white p-0.5 shadow-sm">
-          <img
-            src={kraviAssistantImage}
-            alt="KRAVI Bot"
-            className="h-full w-full rounded-full object-cover object-top"
-          />
-        </div>
-      )}
-      <div
-        className={`max-w-[82%] rounded-2xl px-3 py-2 text-[13px] leading-relaxed shadow-sm whitespace-pre-wrap ${isUser
-            ? 'rounded-br-sm bg-[#6d28d9] text-white'
-            : 'rounded-bl-sm border border-slate-200 bg-white text-slate-800'
-          }`}
-      >
-        <div>{text}</div>
-        {timestamp && (
-          <div className={`mt-1 text-right text-[10px] ${isUser ? 'text-white/70' : 'text-slate-400'}`}>
-            {timestamp}
-          </div>
-        )}
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-2xl border px-3 py-2 text-sm font-medium transition-colors ${
+        active
+          ? 'bg-blue-500 text-white border-blue-500 shadow'
+          : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 
 function TypingIndicator() {
   return (
-    <div className="mb-3 flex justify-start">
-      <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-4 py-3 shadow-sm">
-        <span className="h-2 w-2 animate-typingDot rounded-full bg-slate-400 [animation-delay:-0.3s]" />
-        <span className="h-2 w-2 animate-typingDot rounded-full bg-slate-400 [animation-delay:-0.15s]" />
-        <span className="h-2 w-2 animate-typingDot rounded-full bg-slate-400" />
-      </div>
-    </div>
-  );
-}
-
-function TopicButton({ children, onClick, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-left text-sm font-semibold text-violet-950 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-950 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {children}
-    </button>
-  );
-}
-
-function QuestionButton({ children, onClick, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-left text-sm leading-snug text-slate-800 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"    >
-      {children}
-    </button>
-  );
-}
-
-function SupportOptions({
-  mode,
-  selectedTopic,
-  language,
-  isLoading,
-  onSelectTopic,
-  onSelectQuestion,
-  onShowOther,
-}) {
-  const primaryTopics = supportFaqTopics.slice(0, PRIMARY_SUPPORT_TOPIC_LIMIT);
-  const otherTopics = supportFaqTopics.slice(PRIMARY_SUPPORT_TOPIC_LIMIT);
-  const copy = getChatbotCopy(language);
-
-  if (mode === 'chat') {
-    return null;
-  }
-
-  if (mode === 'questions' && selectedTopic) {
-    return (
-      <div className="mb-4 ml-10 space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          {getLocalizedTopicTitle(selectedTopic, language)}
-        </p>
-        <div className="space-y-2">
-          {selectedTopic.questions.map((item) => (
-            <QuestionButton
-              key={item.question}
-              onClick={() => onSelectQuestion(item)}
-              disabled={isLoading}
-            >
-              {getLocalizedQuestion(item, language)}
-            </QuestionButton>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const isOtherMode = mode === 'other';
-  const topics = isOtherMode ? otherTopics : primaryTopics;
-
-  return (
-    <div className="mb-4 ml-10 space-y-3">
-      {isOtherMode && (
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          {copy.otherSupportTopics}
-        </p>
-      )}
-      <div className="flex flex-wrap gap-2.5">
-        {topics.map((topic) => (
-          <TopicButton
-            key={topic.id}
-            onClick={() => onSelectTopic(topic)}
-            disabled={isLoading}
-          >
-            {getLocalizedTopicTitle(topic, language)}
-          </TopicButton>
-        ))}
-        {!isOtherMode && (
-          <TopicButton onClick={onShowOther} disabled={isLoading}>
-            {copy.other}
-          </TopicButton>
-        )}
+    <div className="flex justify-start mb-3">
+      <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm shadow-sm px-4 py-3 flex items-center gap-1">
+        <span
+          className="h-2 w-2 rounded-full bg-slate-400"
+          style={{ animation: 'dot-pop 0.6s cubic-bezier(0.16, 1, 0.3, 1) infinite', animationDelay: '-0.3s' }}
+        />
+        <span
+          className="h-2 w-2 rounded-full bg-slate-400"
+          style={{ animation: 'dot-pop 0.6s cubic-bezier(0.16, 1, 0.3, 1) infinite', animationDelay: '-0.15s' }}
+        />
+        <span
+          className="h-2 w-2 rounded-full bg-slate-400"
+          style={{ animation: 'dot-pop 0.6s cubic-bezier(0.16, 1, 0.3, 1) infinite' }}
+        />
       </div>
     </div>
   );
@@ -234,196 +120,38 @@ function toApiMessages(messages) {
 }
 
 export default function KraviChatbot({ initialLanguage = 'hi' }) {
-  const [language, setLanguage] = useState(() =>
-    getSupportedLanguage(localStorage.getItem('kravi-chat-language') || initialLanguage)
-  );
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState(() => getInitialMessages(language));
+  const [isOpen, setIsOpen] = useState(true);
+  const [messages, setMessages] = useState([
+    {
+      role: 'assistant',
+      text: WELCOME_MESSAGES[initialLanguage] || WELCOME_MESSAGES.hi,
+      timestamp: new Date().toISOString(),
+    },
+    {
+      role: 'assistant',
+      text: 'Aap in topics me se choose kar sakte hain ya niche buttons par click karein.',
+      timestamp: new Date().toISOString(),
+    },
+  ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [menuMode, setMenuMode] = useState('main');
   const [selectedTopicId, setSelectedTopicId] = useState(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const rootRef = useRef(null);
+  const [showOtherTopics, setShowOtherTopics] = useState(false);
+  const [showTopicPanel, setShowTopicPanel] = useState(true);
+  const [language, setLanguage] = useState(initialLanguage);
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
-  const dragStateRef = useRef(null);
-  const pendingReplyTimeoutRef = useRef(null);
-  const chatRequestIdRef = useRef(0);
-  const suppressNextToggleClickRef = useRef(false);
 
-  const selectedTopic = useMemo(
-    () => supportFaqTopics.find((topic) => topic.id === selectedTopicId),
-    [selectedTopicId]
-  );
-  const copy = getChatbotCopy(language);
-
-  const clearPendingAssistantReply = () => {
-    if (pendingReplyTimeoutRef.current) {
-      window.clearTimeout(pendingReplyTimeoutRef.current);
-      pendingReplyTimeoutRef.current = null;
-    }
-
-    chatRequestIdRef.current += 1;
-  };
-
-  const resetChat = (nextLanguage = language) => {
-    clearPendingAssistantReply();
-    setMessages(getInitialMessages(nextLanguage));
-    setInput('');
-    setError(null);
-    setIsLoading(false);
-    setMenuMode('main');
-    setSelectedTopicId(null);
-  };
-
-  const closeChat = () => {
-    resetChat();
-    setIsOpen(false);
-  };
-
-  const toggleChat = () => {
-    if (isOpen) {
-      closeChat();
-      return;
-    }
-
-    resetChat();
-    setIsOpen(true);
-  };
-
-  const keepChatInViewport = () => {
-    const rect = rootRef.current?.getBoundingClientRect();
-
-    if (!rect) {
-      return;
-    }
-
-    let nextXAdjustment = 0;
-    let nextYAdjustment = 0;
-
-    if (rect.left < DRAG_MARGIN) {
-      nextXAdjustment = DRAG_MARGIN - rect.left;
-    } else if (rect.right > window.innerWidth - DRAG_MARGIN) {
-      nextXAdjustment = window.innerWidth - DRAG_MARGIN - rect.right;
-    }
-
-    if (rect.top < DRAG_MARGIN) {
-      nextYAdjustment = DRAG_MARGIN - rect.top;
-    } else if (rect.bottom > window.innerHeight - DRAG_MARGIN) {
-      nextYAdjustment = window.innerHeight - DRAG_MARGIN - rect.bottom;
-    }
-
-    if (nextXAdjustment || nextYAdjustment) {
-      setDragOffset((currentOffset) => ({
-        x: currentOffset.x + nextXAdjustment,
-        y: currentOffset.y + nextYAdjustment,
-      }));
-    }
-  };
-
-  const handleDragStart = (event, source) => {
-    if (event.button !== undefined && event.button !== 0) {
-      return;
-    }
-
-    if (event.target.closest?.('[data-no-drag="true"]')) {
-      return;
-    }
-
-    const rect = rootRef.current?.getBoundingClientRect();
-
-    if (!rect) {
-      return;
-    }
-
-    dragStateRef.current = {
-      pointerId: event.pointerId,
-      source,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      startOffset: dragOffset,
-      startRect: rect,
-      hasMoved: false,
-    };
-
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    setIsDragging(true);
-  };
-
-  const handleDragMove = (event) => {
-    const dragState = dragStateRef.current;
-
-    if (!dragState || dragState.pointerId !== event.pointerId) {
-      return;
-    }
-
-    const deltaX = event.clientX - dragState.startClientX;
-    const deltaY = event.clientY - dragState.startClientY;
-
-    if (
-      !dragState.hasMoved &&
-      Math.hypot(deltaX, deltaY) > DRAG_CLICK_THRESHOLD
-    ) {
-      dragState.hasMoved = true;
-
-      if (dragState.source === 'toggle') {
-        suppressNextToggleClickRef.current = true;
-      }
-    }
-
-    if (!dragState.hasMoved) {
-      return;
-    }
-
-    event.preventDefault();
-
-    const minDeltaX = DRAG_MARGIN - dragState.startRect.left;
-    const maxDeltaX = window.innerWidth - DRAG_MARGIN - dragState.startRect.right;
-    const minDeltaY = DRAG_MARGIN - dragState.startRect.top;
-    const maxDeltaY = window.innerHeight - DRAG_MARGIN - dragState.startRect.bottom;
-
-    setDragOffset({
-      x: dragState.startOffset.x + clamp(deltaX, minDeltaX, maxDeltaX),
-      y: dragState.startOffset.y + clamp(deltaY, minDeltaY, maxDeltaY),
-    });
-  };
-
-  const handleDragEnd = (event) => {
-    const dragState = dragStateRef.current;
-
-    if (!dragState || dragState.pointerId !== event.pointerId) {
-      return;
-    }
-
-    if (dragState.source === 'toggle' && dragState.hasMoved) {
-      window.setTimeout(() => {
-        suppressNextToggleClickRef.current = false;
-      }, 200);
-    }
-
-    dragStateRef.current = null;
-    setIsDragging(false);
-  };
-
-  const handleToggleClick = (event) => {
-    if (suppressNextToggleClickRef.current) {
-      event.preventDefault();
-      event.stopPropagation();
-      suppressNextToggleClickRef.current = false;
-      return;
-    }
-
-    toggleChat();
-  };
+  const getTitle = (topic) => topic[`title_${language}`] || topic.title;
+  const getQuestionText = (q) => q[`question_${language}`] || q.question;
+  const getAnswerText = (q) => q[`answer_${language}`] || q.answer;
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading, menuMode, selectedTopicId]);
+  }, [messages, isLoading]);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -431,134 +159,25 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    const frameId = window.requestAnimationFrame(keepChatInViewport);
-
-    return () => window.cancelAnimationFrame(frameId);
-  }, [isOpen]);
-
-  useEffect(() => {
-    window.addEventListener('resize', keepChatInViewport);
-
-    return () => window.removeEventListener('resize', keepChatInViewport);
-  }, []);
-
-  useEffect(() => () => clearPendingAssistantReply(), []);
-
-  const queueAssistantReply = ({
-    userText,
-    assistantText,
-    onBeforeTyping,
-    onAfterReply,
-  }) => {
-    if (isLoading) {
-      return;
-    }
-
-    clearPendingAssistantReply();
-    const requestId = chatRequestIdRef.current;
-
-    onBeforeTyping?.();
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      createMessage('user', userText),
-    ]);
-    setError(null);
-    setIsLoading(true);
-
-    pendingReplyTimeoutRef.current = window.setTimeout(() => {
-      if (chatRequestIdRef.current !== requestId) {
-        return;
-      }
-
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        createMessage('assistant', assistantText),
-      ]);
-      onAfterReply?.();
-      setIsLoading(false);
-      pendingReplyTimeoutRef.current = null;
-    }, AI_TYPING_DELAY_MS);
-  };
-
-  const handleTopicSelect = (topic) => {
-    const topicTitle = getLocalizedTopicTitle(topic, language);
-
-    queueAssistantReply({
-      userText: topicTitle,
-      assistantText: `${topicTitle}\n${copy.chooseQuestion}`,
-      onBeforeTyping: () => {
-        setSelectedTopicId(null);
-        setMenuMode('chat');
-      },
-      onAfterReply: () => {
-        setSelectedTopicId(topic.id);
-        setMenuMode('questions');
-      },
-    });
-  };
-
-  const handleShowOther = () => {
-    queueAssistantReply({
-      userText: copy.other,
-      assistantText: `${copy.otherSupportTopics}.`,
-      onBeforeTyping: () => {
-        setMenuMode('chat');
-        setSelectedTopicId(null);
-      },
-      onAfterReply: () => {
-        setMenuMode('other');
-        setSelectedTopicId(null);
-      },
-    });
-  };
-
-  const handleQuestionSelect = (item) => {
-    queueAssistantReply({
-      userText: getLocalizedQuestion(item, language),
-      assistantText: getLocalizedAnswer(item, language),
-      onBeforeTyping: () => {
-        setMenuMode('chat');
-        setSelectedTopicId(null);
-      },
-    });
-  };
-
-  const handleLanguageChange = (event) => {
-    const nextLanguage = getSupportedLanguage(event.target.value);
-    localStorage.setItem('kravi-chat-language', nextLanguage);
-    setLanguage(nextLanguage);
-    resetChat(nextLanguage);
-  };
-
   const sendMessage = async () => {
     const trimmed = input.trim();
     if (!trimmed || isLoading) {
       return;
     }
 
-    const nextMessages = [...messages, createMessage('user', trimmed)];
-    clearPendingAssistantReply();
-    const requestId = chatRequestIdRef.current;
+    const nextMessages = [
+      ...messages,
+      { role: 'user', text: trimmed, timestamp: new Date().toISOString() },
+    ];
     setMessages(nextMessages);
     setInput('');
     setIsLoading(true);
     setError(null);
-    setMenuMode('chat');
-    setSelectedTopicId(null);
-
-    const minimumTypingDelay = wait(AI_TYPING_DELAY_MS);
 
     try {
       const response = await API.post('/kravi-chat', {
         messages: toApiMessages(nextMessages),
-        language,
       });
-      await minimumTypingDelay;
-
-      if (chatRequestIdRef.current !== requestId) {
-        return;
-      }
 
       const replyText = response.data?.reply;
       if (!replyText) {
@@ -567,23 +186,50 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
 
       setMessages((currentMessages) => [
         ...currentMessages,
-        createMessage('assistant', replyText),
+        { role: 'assistant', text: replyText, timestamp: new Date().toISOString() },
       ]);
     } catch (err) {
-      await minimumTypingDelay;
-
-      if (chatRequestIdRef.current !== requestId) {
-        return;
-      }
-
       console.error('KRAVI Bot error:', err);
-      setError(copy.error);
+      setError('Kuch gadbad ho gayi. Please thodi der baad try karein.');
     } finally {
-      if (chatRequestIdRef.current === requestId) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
+
+  const selectedTopic = supportFaqTopics.find((topic) => topic.id === selectedTopicId) || null;
+
+  const mainTopics = supportFaqTopics.slice(0, PRIMARY_SUPPORT_TOPIC_LIMIT);
+  const otherTopics = supportFaqTopics.slice(PRIMARY_SUPPORT_TOPIC_LIMIT);
+
+  const insertFaqResponse = (question, answer) => {
+    const newMessages = [
+      ...messages,
+      { role: 'user', text: question, timestamp: new Date().toISOString() },
+      { role: 'assistant', text: answer, timestamp: new Date().toISOString() },
+    ];
+    setMessages(newMessages);
+    setSelectedTopicId(null);
+    setShowOtherTopics(false);
+    setShowTopicPanel(false);
+  };
+
+  const handleTopicClick = (topicId) => {
+    setSelectedTopicId(topicId);
+  };
+
+  const handleOtherClick = () => {
+    setSelectedTopicId(null);
+    setShowOtherTopics(true);
+  };
+
+  const handleBackToTopics = () => {
+    setSelectedTopicId(null);
+    setShowOtherTopics(false);
+  };
+
+  const chatDate = messages[0]?.timestamp
+    ? format(new Date(messages[0].timestamp), 'EEEE, MMM d')
+    : null;
 
   const handleKeyDown = (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -593,26 +239,12 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
   };
 
   return (
-    <div
-      ref={rootRef}
-      className={`fixed bottom-5 right-5 z-50 flex flex-col items-end font-sans ${isDragging ? 'select-none' : ''
-        }`}
-      style={{
-        transform: `translate3d(${dragOffset.x}px, ${dragOffset.y}px, 0)`,
-      }}
-      onPointerMove={handleDragMove}
-      onPointerUp={handleDragEnd}
-      onPointerCancel={handleDragEnd}
-    >
+    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end font-sans">
       {isOpen && (
-        <div className="mb-3 flex h-[560px] max-h-[calc(100vh-7rem)] w-[340px] max-w-[94vw] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-          <div
-            className={`flex shrink-0 touch-none items-center justify-between border-b border-slate-100 bg-white px-3.5 py-2.5 text-slate-900 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'
-              }`}
-            onPointerDown={(event) => handleDragStart(event, 'header')}
-          >
+        <div className="mb-3 w-[360px] max-w-[92vw] h-[520px] max-h-[75vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+          <div className="bg-white text-slate-900 px-4 py-3 flex items-center justify-between shrink-0 border-b border-slate-200">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 overflow-hidden rounded-full bg-[#6d28d9] p-0.5">
+              <div className="w-10 h-10 rounded-full bg-slate-100 p-2 overflow-hidden shadow-sm">
                 <img
                   src={kraviAssistantImage}
                   alt="KRAVI AI Assistant"
@@ -620,29 +252,27 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
                 />
               </div>
               <div>
-                <p className="text-sm font-semibold leading-tight">KRAVI Support</p>
-                <p className="text-[11px] leading-tight text-slate-500">{copy.supportStatus}</p>
+                <p className="font-semibold text-sm leading-tight text-slate-900">KRAVI Bot</p>
+                <p className="text-[11px] text-slate-500 leading-tight">
+                  24/7 Support
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <select
-                data-no-drag="true"
                 value={language}
-                onChange={handleLanguageChange}
-                className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-none transition-colors hover:border-violet-300 focus:border-transparent focus:ring-2 focus:ring-violet-400"
-                aria-label="Chat language"
+                onChange={(e) => setLanguage(e.target.value)}
+                className="rounded-md text-sm px-2 py-1 bg-slate-100 text-slate-900"
+                aria-label="Select language"
               >
-                {LANGUAGE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
+                <option value="hi">हिन्दी</option>
+                <option value="en">English</option>
+                <option value="mr">मराठी</option>
               </select>
               <button
-                data-no-drag="true"
                 type="button"
-                onClick={closeChat}
-                className="rounded-full p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setIsOpen(false)}
+                className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full p-1.5 transition-colors"
                 aria-label="Close chat"
               >
                 <X size={18} />
@@ -650,11 +280,10 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
             </div>
           </div>
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto bg-slate-50 px-3.5 py-3">
-            <div className="min-h-[72px]" />
-            <DateDivider />
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 bg-slate-50">
+            <DateDivider date={chatDate} />
             {messages.map((message, index) => (
-              <ChatBubble
+              <MessageBubble
                 key={`${message.role}-${index}`}
                 role={message.role}
                 text={message.text}
@@ -663,64 +292,90 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
             ))}
             {isLoading && <TypingIndicator />}
             {error && (
-              <div className="mb-2 mt-1 text-center text-xs text-red-500">
+              <div className="text-center text-xs text-red-500 mt-1 mb-2">
                 {error}
               </div>
             )}
-            <SupportOptions
-              mode={menuMode}
-              selectedTopic={selectedTopic}
-              language={language}
-              isLoading={isLoading}
-              onSelectTopic={handleTopicSelect}
-              onSelectQuestion={handleQuestionSelect}
-              onShowOther={handleShowOther}
-            />
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 bg-white px-2.5 py-2.5">
+          {showTopicPanel && (
+            <div className="border-t border-slate-200 bg-white px-4 py-4 shrink-0">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                {selectedTopic ? (
+                  <span className="text-sm font-semibold text-slate-800">{getTitle(selectedTopic)}</span>
+                ) : (
+                  <>
+                    <span className="text-sm font-semibold text-slate-800">Choose a topic</span>
+                    <span className="text-xs text-slate-500">Tap a category to see subquestions</span>
+                  </>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {selectedTopic
+                  ? selectedTopic.questions.map((item) => (
+                      <TopicButton
+                        key={getQuestionText(item)}
+                        label={getQuestionText(item)}
+                        onClick={() => insertFaqResponse(getQuestionText(item), getAnswerText(item))}
+                      />
+                    ))
+                  : (showOtherTopics ? otherTopics : mainTopics).map((topic) => (
+                      <TopicButton
+                        key={topic.id}
+                        label={getTitle(topic)}
+                        onClick={() => handleTopicClick(topic.id)}
+                        active={selectedTopicId === topic.id}
+                      />
+                    ))}
+                {!selectedTopic && !showOtherTopics && (
+                  <TopicButton label="Other" onClick={handleOtherClick} />
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="border-t border-slate-200 bg-white px-3 py-3 shrink-0">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={copy.placeholder}
+                placeholder={PLACEHOLDER_TEXT}
                 rows={1}
-                className="max-h-20 flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[13px] text-slate-800 placeholder:text-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-400"
+                className="flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent max-h-24"
               />
               <button
                 type="button"
                 onClick={sendMessage}
                 disabled={!input.trim() || isLoading}
-                className="shrink-0 rounded-xl bg-[#7c3aed] p-2 text-white transition-colors hover:bg-[#6d28d9] disabled:bg-slate-200 disabled:text-slate-400"
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-xl p-2.5 transition-colors shrink-0"
                 aria-label="Send message"
               >
-                <Send size={16} />
+                <Send size={18} />
               </button>
             </div>
+            <p className="text-[10px] text-slate-400 mt-1.5 text-center">
+              Hindi | English | Marathi mein poochein
+            </p>
           </div>
         </div>
       )}
 
       <button
         type="button"
-        onPointerDown={(event) => handleDragStart(event, 'toggle')}
-        onClick={handleToggleClick}
-        onDragStart={(event) => event.preventDefault()}
-        className={`flex h-14 w-14 touch-none items-center justify-center overflow-hidden rounded-full border border-zinc-800 bg-white p-0.5 text-white shadow-lg transition-transform hover:scale-105 active:scale-95 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'
-          }`}
+        onClick={() => setIsOpen((currentValue) => !currentValue)}
+        className="w-16 h-16 rounded-full bg-blue-600 shadow-xl border border-blue-700 p-0.5 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-transform overflow-hidden"
         aria-label="Toggle KRAVI chat"
       >
         {isOpen ? (
-          <span className="flex h-full w-full items-center justify-center rounded-full bg-[#7c3aed]">
-            <X size={22} />
+          <span className="w-full h-full rounded-full bg-gradient-to-br from-[#0b1a4a] to-[#1b5cff] flex items-center justify-center">
+            <X size={24} />
           </span>
         ) : (
           <img
             src={kraviAssistantImage}
             alt="Open KRAVI chat"
-            draggable={false}
             className="h-full w-full rounded-full object-cover object-top"
           />
         )}
