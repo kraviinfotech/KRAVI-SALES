@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
 import { validatePassword, getPasswordStrength, getPasswordStrengthColor } from '../utils/passwordUtils';
 
 const Register = () => {
-  const [searchParams] = useSearchParams();
-  const roleParam = searchParams.get('role');
-  const mode = searchParams.get('mode');
-  const isTrialMode = mode === 'trial';
-  const isBuyMode = mode === 'buy';
+
   const initialRole = 'manager';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -27,6 +23,7 @@ const Register = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+
 const sendOtpMutation = useMutation({
   mutationFn: async () => {
     const response = await API.post('/auth/send-registration-otp', {
@@ -35,7 +32,6 @@ const sendOtpMutation = useMutation({
       mobile,
       password,
       acceptedTerms,
-      mode,
     });
     return response.data;
   },
@@ -46,7 +42,6 @@ const verifyOtpMutation = useMutation({
     const response = await API.post('/auth/verify-registration-otp', {
       email,
       otp,
-      mode,
     });
     return response.data;
   },
@@ -105,12 +100,12 @@ const verifyOtpMutation = useMutation({
     setLoading(true);
     try {
       await verifyOtpMutation.mutateAsync();
+
+
       await login({ email, mobile, password });
-      if (isBuyMode) {
-        navigate('/manager/payment', { replace: true, state: { planId: null, justRegistered: true } });
-      } else {
-        navigate('/manager', { replace: true });
-      }
+navigate('/manager', { replace: true });
+
+
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'OTP verification failed');
     } finally {
@@ -118,17 +113,11 @@ const verifyOtpMutation = useMutation({
     }
   };
 
-  const pageHeading = isTrialMode
-    ? 'Start your free trial'
-    : isBuyMode
-      ? 'Buy a subscription'
-      : 'Create Manager Account';
+  const pageHeading = 'Create Manager Account';
 
-  const pageDescription = isTrialMode
-    ? 'Register as a manager and get instant access to the manager dashboard with a 14-day free trial.'
-    : isBuyMode
-      ? 'Register as a manager and choose a paid plan to activate your subscription after signup.'
-      : 'Register as a manager to access the manager dashboard, add sellers, and start tracking sales.';
+  const pageDescription =
+  'Register as a manager and receive a free 14-day trial automatically. After the trial ends, you can purchase a subscription to continue using the service.';
+
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-8">

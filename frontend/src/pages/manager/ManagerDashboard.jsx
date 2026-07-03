@@ -205,16 +205,15 @@ const ManagerDashboard = () => {
     }
   };
 
+ 
   useEffect(() => {
-    fetchSummary(hasFetchedSummary);
-    fetchCollectionData(hasFetchedCollections);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount only
+  fetchSummary(hasFetchedSummary);
+  fetchCollectionData(hasFetchedCollections);
+}, [fetchSummary, fetchCollectionData]);
 
-  useEffect(() => {
-    fetchChartData(hasFetchedChart);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount only
+useEffect(() => {
+  fetchChartData(hasFetchedChart);
+}, [fetchChartData]);
 
   useEffect(() => {
     fetchRecords(hasFetchedRecords);
