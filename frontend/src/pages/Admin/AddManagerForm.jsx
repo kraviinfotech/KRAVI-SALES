@@ -105,8 +105,9 @@ const AddManagerForm = () => {
       <form onSubmit={handleSubmit} className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Form Fields */}
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-gray-700">Manager Name</label>
+          <label htmlFor="manager-name" className="text-sm font-semibold text-gray-700">Manager Name</label>
           <input 
+            id="manager-name"
             type="text" required value={formData.name}
             onChange={(e) => setFormData({...formData, name: e.target.value})}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#6C3EF4] focus:border-transparent outline-none transition-all"
@@ -115,8 +116,9 @@ const AddManagerForm = () => {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-gray-700">Email Address</label>
+          <label htmlFor="manager-email" className="text-sm font-semibold text-gray-700">Email Address</label>
           <input 
+            id="manager-email"
             type="email" required value={formData.email}
             onChange={(e) => setFormData({...formData, email: e.target.value})}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#6C3EF4] outline-none"
@@ -125,8 +127,9 @@ const AddManagerForm = () => {
         </div>
 
         <div className="space-y-1 relative">
-          <label className="text-sm font-semibold text-gray-700">Password</label>
+          <label htmlFor="manager-password" className="text-sm font-semibold text-gray-700">Password</label>
           <input 
+            id="manager-password"
             type={showPassword ? "text" : "password"} required
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#6C3EF4] outline-none"
           />
@@ -136,8 +139,9 @@ const AddManagerForm = () => {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-gray-700">Phone Number</label>
+          <label htmlFor="manager-phone" className="text-sm font-semibold text-gray-700">Phone Number</label>
           <input 
+            id="manager-phone"
             type="tel" required value={formData.phone}
             onChange={(e) => setFormData({...formData, phone: e.target.value})}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#6C3EF4] outline-none"
@@ -146,8 +150,9 @@ const AddManagerForm = () => {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-gray-700">Assign Company</label>
+          <label htmlFor="manager-company" className="text-sm font-semibold text-gray-700">Assign Company</label>
           <select 
+            id="manager-company"
             value={formData.company}
             onChange={(e) => setFormData({...formData, company: e.target.value})}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#6C3EF4] outline-none appearance-none bg-white"
@@ -158,19 +163,19 @@ const AddManagerForm = () => {
           </select>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-semibold text-gray-700">Status</label>
+        <fieldset className="space-y-1">
+          <legend className="text-sm font-semibold text-gray-700">Status</legend>
           <div className="flex gap-4 p-1">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="status" checked={formData.status === 'Active'} onChange={() => setFormData({...formData, status: 'Active'})} className="accent-[#6C3EF4]" />
+            <label htmlFor="manager-status-active" className="flex items-center gap-2 cursor-pointer">
+              <input id="manager-status-active" type="radio" name="status" checked={formData.status === 'Active'} onChange={() => setFormData({...formData, status: 'Active'})} className="accent-[#6C3EF4]" />
               <span className="text-sm">Active</span>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="status" checked={formData.status === 'Inactive'} onChange={() => setFormData({...formData, status: 'Inactive'})} className="accent-[#6C3EF4]" />
+            <label htmlFor="manager-status-inactive" className="flex items-center gap-2 cursor-pointer">
+              <input id="manager-status-inactive" type="radio" name="status" checked={formData.status === 'Inactive'} onChange={() => setFormData({...formData, status: 'Inactive'})} className="accent-[#6C3EF4]" />
               <span className="text-sm">Inactive</span>
             </label>
           </div>
-        </div>
+        </fieldset>
 
         <button type="submit" className="md:col-span-2 mt-4 bg-[#6C3EF4] text-white py-4 rounded-xl font-bold text-lg hover:shadow-xl hover:shadow-purple-100 transition-all">
           Register Manager

@@ -13,7 +13,6 @@ const SalesTable = ({ records }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const dialogRef = useRef(null);
 
-  // FIXED: Handle modal open/close imperatively inside the user actions directly
   const handleOpenImage = (imgUrl) => {
     setSelectedImage(imgUrl);
     if (dialogRef.current) {
@@ -66,11 +65,11 @@ const SalesTable = ({ records }) => {
 
               return (
                 <React.Fragment key={record._id}>
+                  {/* FIXED: Removed table-row role="button" layout hack for clean screen-reader semantics */}
                   <tr
                     onClick={() => toggleExpand(record._id)}
                     onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleExpand(record._id)}
                     tabIndex={0}
-                    role="button"
                     aria-expanded={isExpanded}
                     className={`hover:bg-blue-50/40 transition-colors cursor-pointer text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 ${isExpanded ? 'bg-blue-50/30' : ''}`}
                   >
@@ -180,7 +179,6 @@ const SalesTable = ({ records }) => {
                                   <button
                                     type="button"
                                     onClick={() => handleOpenImage(record.shopImage)}
-                                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleOpenImage(record.shopImage)}
                                     aria-label="View shop photo"
                                     className="w-full h-24 rounded border border-gray-200 overflow-hidden cursor-pointer hover:opacity-90 hover:border-blue-500 transition-all bg-gray-100 flex items-center justify-center relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                   >
@@ -201,7 +199,6 @@ const SalesTable = ({ records }) => {
                                   <button
                                     type="button"
                                     onClick={() => handleOpenImage(record.scannerPhoto)}
-                                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleOpenImage(record.scannerPhoto)}
                                     aria-label="View payment proof"
                                     className="w-full h-24 rounded border border-gray-200 overflow-hidden cursor-pointer hover:opacity-90 hover:border-blue-500 transition-all bg-gray-100 flex items-center justify-center relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                   >
@@ -239,14 +236,8 @@ const SalesTable = ({ records }) => {
         className="backdrop:bg-black/80 backdrop:backdrop-blur-xs rounded-lg p-0 shadow-2xl overflow-hidden"
         onCancel={handleCloseImage}
       >
-        <div 
-          role="button"
-          tabIndex={0}
-          aria-label="Close image preview"
-          onClick={(e) => e.target === e.currentTarget && handleCloseImage()}
-          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget && handleCloseImage()}
-          className="p-2 outline-none focus:outline-none max-w-3xl max-h-[85vh] flex flex-col items-center justify-center relative focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
-        >
+        {/* FIXED: Swapped click-mask div out for native close actions & native HTML button semantics */}
+        <div className="p-2 max-w-3xl max-h-[85vh] flex flex-col items-center justify-center relative rounded-lg">
           <button
             type="button"
             onClick={handleCloseImage}

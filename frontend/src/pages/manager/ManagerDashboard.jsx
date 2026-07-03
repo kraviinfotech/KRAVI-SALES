@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api/axios';
 import { AlertCircle, Loader2, Users, FileSpreadsheet, IndianRupee, TrendingUp } from 'lucide-react';
@@ -102,6 +102,11 @@ const ManagerDashboard = () => {
   const [collectionStats, setCollectionStats] = useState(cachedCollectionStats || { totalCollection: 0, cashCollection: 0, onlineCollection: 0, pendingCollection: 0 });
   const [recentCollections, setRecentCollections] = useState(cachedRecentCollections || []);
   const [collectionsLoading, setCollectionsLoading] = useState(!hasFetchedCollections);
+  const recordsRef = useRef(records);
+
+  useEffect(() => {
+    recordsRef.current = records;
+  }, [records]);
 
   const fetchCollectionData = useCallback(async (quiet = false) => {
     if (!quiet) setCollectionsLoading(true);
@@ -167,7 +172,7 @@ const ManagerDashboard = () => {
 
   const fetchRecords = useCallback(async (quiet = false) => {
     // Only show loading if records are currently empty
-    if (!quiet && records.length === 0) setRecordsLoading(true);
+    if (!quiet && recordsRef.current.length === 0) setRecordsLoading(true);
     setError('');
 
     const selectedRange = activeTab === 'custom' ? appliedCustomRange : getRange(activeTab);

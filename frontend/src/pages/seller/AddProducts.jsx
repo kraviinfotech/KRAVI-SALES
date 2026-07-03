@@ -51,10 +51,11 @@ const ProductCard = ({
     )}
 
     <div className="relative" ref={el => wrapperRefs.current[index] = el}>
-      <label className="mb-1 block text-sm font-medium text-gray-700">{t.pName}</label>
+      <label htmlFor={`product-name-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t.pName}</label>
       <div className="relative">
         <div className="flex rounded-md border border-gray-300 bg-white focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
           <input
+            id={`product-name-${index}`}
             value={searchQuery}
             onChange={(event) => onSearchInput(index, event.target.value)}
             onFocus={() => onOpenSuggestions(index)}
@@ -94,8 +95,9 @@ const ProductCard = ({
     </div>
 
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">{t.unit}</label>
-      <div className="flex gap-2">
+      <fieldset>
+        <legend className="mb-1 block text-sm font-medium text-gray-700">{t.unit}</legend>
+        <div className="flex gap-2">
         <button
           type="button"
           onClick={() => onUnitChange(index, 'quantity')}
@@ -118,14 +120,16 @@ const ProductCard = ({
         >
           {t.weightBtn}
         </button>
-      </div>
+        </div>
+      </fieldset>
     </div>
 
     <div className="grid grid-cols-2 gap-4">
       {item.unit === 'quantity' && (
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">{t.qty}</label>
+          <label htmlFor={`product-quantity-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t.qty}</label>
           <input
+            id={`product-quantity-${index}`}
             type="number"
             min="1"
             value={item.quantity || ''}
@@ -139,8 +143,9 @@ const ProductCard = ({
 
       {item.unit === 'weight' && (
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">{t.weight}</label>
+          <label htmlFor={`product-weight-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t.weight}</label>
           <input
+            id={`product-weight-${index}`}
             type="number"
             min="0.1"
             step="0.1"
@@ -154,8 +159,9 @@ const ProductCard = ({
       )}
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">{t.price}</label>
+        <label htmlFor={`product-price-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t.price}</label>
         <input
+          id={`product-price-${index}`}
           type="number"
           min="0"
           step="0.01"
@@ -169,8 +175,9 @@ const ProductCard = ({
     </div>
 
     <div>
-      <label className="mb-1 block text-sm font-medium text-gray-700">{t.amt}</label>
+      <label htmlFor={`product-amount-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t.amt}</label>
       <input
+        id={`product-amount-${index}`}
         type="text"
         value={amount ? amount.toFixed(0) : ''}
         readOnly

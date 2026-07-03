@@ -10,7 +10,7 @@ import API from '../api/axios';
  *   { staleTime: 60000 }
  * );
  */
-export default function useAPIQuery(key, url, options = {}) {
+function useAPIQuery(key, url, options = {}) {
   return useQuery({
     queryKey: key,
     queryFn: async ({ signal }) => {
@@ -22,3 +22,5 @@ export default function useAPIQuery(key, url, options = {}) {
     ...options,
   });
 }
+
+export default useAPIQuery;

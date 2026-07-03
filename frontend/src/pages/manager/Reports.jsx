@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import API from '../../api/axios';
 import ReportFilter from '../../components/ReportFilter';
 import ReportsHeader from './components/ReportsHeader';
@@ -7,6 +7,7 @@ import ReportsChartsSection from './components/ReportsChartsSection';
 import SellerSummaryTable from './components/SellerSummaryTable';
 import ReportsVisitLogs from './components/ReportsVisitLogs';
 import { exportRecordsCSV } from '../../utils/recordsExport';
+import { AlertCircle } from 'lucide-react'; // Added for UI presentation
 
 // Helper function for blank chart data
 const getBlankChartData = (activeTab) => {
@@ -45,10 +46,15 @@ const Reports = () => {
   const [records, setRecords] = useState(cachedRecords || []);
   const [sellers, setSellers] = useState(cachedSellers || []);
   const [loading, setLoading] = useState(!hasFetchedReports);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState(''); // Kept state because we now display it below
   const [filters, setFilters] = useState({ sellerId: '', sellerName: '', shopName: '', shopType: '', status: '', from: '', to: '' });
 
-  const abortControllerRef = React.useRef(null);
+  const abortControllerRef = useRef(null);
+  const filtersRef = useRef(filters);
+
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
 
   const fetchSummary = useCallback(async () => {
     try {
@@ -74,7 +80,9 @@ const Reports = () => {
     if (!hasFetchedReports) fetchSellers();
   }, []);
 
-  useEffect(() => { fetchSummary(); }, []);
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   const fetchChartData = useCallback(async (signal) => {
     try {
@@ -97,7 +105,7 @@ const Reports = () => {
     }
   }, [activeTab]);
 
-  const recordsLengthRef = React.useRef(0);
+  const recordsLengthRef = useRef(0);
 
   const fetchFilteredRecords = useCallback(async (currentFilters, quiet = false, signal) => {
     if (!quiet && recordsLengthRef.current === 0) setLoading(true);
@@ -161,10 +169,10 @@ const Reports = () => {
       const signal = abortControllerRef.current.signal;
       fetchSummary();
       fetchChartData(signal);
-      fetchFilteredRecords(filters, true, signal);
+      fetchFilteredRecords(filtersRef.current, true, signal);
     }, 200000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchSummary, fetchChartData, fetchFilteredRecords]);
 
   const handleFilterChange = useCallback((newFilters) => { setFilters(newFilters); }, []);
 
@@ -235,6 +243,14 @@ const Reports = () => {
     <div className="space-y-8 bg-slate-50/30 p-2 sm:p-0">
       {/* 1. Header + Tab Switcher */}
       <ReportsHeader activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* FIXED: Added UI Banner to clear the react-doctor warning and show errors to managers */}
+      {errorMsg && (
+        <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+          <AlertCircle size={16} />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       {/* 2. Summary Cards */}
       <ReportsSummaryCards summary={summary} stats={stats} />

@@ -112,10 +112,11 @@ const Login = () => {
           )}
 
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-gray-700">Email Address</label>
+            <label htmlFor="admin-login-email" className="text-sm font-semibold text-gray-700">Email Address</label>
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
+                id="admin-login-email"
                 type="email" required value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-[#6C3EF4] focus:ring-4 focus:ring-purple-50 outline-none transition-all font-medium text-sm"
@@ -125,10 +126,11 @@ const Login = () => {
           </div>
 
           <div className="space-y-1.5 pb-2">
-            <label className="text-sm font-semibold text-gray-700">Password</label>
+            <label htmlFor="admin-login-password" className="text-sm font-semibold text-gray-700">Password</label>
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
+                id="admin-login-password"
                 type={showPassword ? "text" : "password"} required value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-12 pr-12 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-[#6C3EF4] focus:ring-4 focus:ring-purple-50 outline-none transition-all font-medium text-sm"

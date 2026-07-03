@@ -170,7 +170,7 @@ const ProductsOverview = () => {
               {p.baseRate > 0 && (
                 <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded ml-1">₹{p.baseRate}</span>
               )}
-              <button onClick={() => handleDeleteProduct(p._id)} className="text-slate-400 hover:text-red-600 ml-1">×</button>
+              <button type="button" onClick={() => handleDeleteProduct(p._id)} className="text-slate-400 hover:text-red-600 ml-1">×</button>
             </span>
           ))}
         </div>

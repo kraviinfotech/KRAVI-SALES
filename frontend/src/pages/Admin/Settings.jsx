@@ -85,7 +85,7 @@ const Settings = () => {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-800">System Settings</h1>
-            <button onClick={handleSave} disabled={loading} className="bg-[#6C3EF4] text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-[#5a32cc] transition-all shadow-lg shadow-purple-100 disabled:opacity-60">
+            <button type="button" onClick={handleSave} disabled={loading} className="bg-[#6C3EF4] text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-[#5a32cc] transition-all shadow-lg shadow-purple-100 disabled:opacity-60">
               <Save size={18} /> {loading ? 'Saving...' : 'Save All Changes'}
             </button>
           </div>
@@ -97,12 +97,12 @@ const Settings = () => {
               <SettingSection title="General Settings" icon={Globe}>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500">App Name</label>
-                    <input value={form.appName} onChange={(e) => handleChange('appName', e.target.value)} type="text" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
+                    <label htmlFor="settings-app-name" className="text-xs font-bold text-gray-500">App Name</label>
+                    <input id="settings-app-name" value={form.appName} onChange={(e) => handleChange('appName', e.target.value)} type="text" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500">Trial Days</label>
-                    <input value={form.trialDays} onChange={(e) => handleChange('trialDays', Number(e.target.value))} type="number" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
+                    <label htmlFor="settings-trial-days" className="text-xs font-bold text-gray-500">Trial Days</label>
+                    <input id="settings-trial-days" value={form.trialDays} onChange={(e) => handleChange('trialDays', Number(e.target.value))} type="number" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
                   </div>
                 </div>
               </SettingSection>

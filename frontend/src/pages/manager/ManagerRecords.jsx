@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import API from '../../api/axios';
 import SalesTable from '../../components/SalesTable';
@@ -27,7 +27,6 @@ const ManagerRecords = () => {
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [selectedSellerId, setSelectedSellerId] = useState('');
   
   // Initialize filters from URL search params
   const filters = {
@@ -39,8 +38,6 @@ const ManagerRecords = () => {
     from: searchParams.get('from') || '',
     to: searchParams.get('to') || ''
   };
-
-  const [summary, setSummary] = useState({ total: 0, active: 0, inactive: 0, newThisMonth: 0, totalPending: 0 });
 
   // Load sellers for filter dropdown
   useEffect(() => {
@@ -55,7 +52,7 @@ const ManagerRecords = () => {
     fetchSellers();
   }, []);
 
-  const fetchRecords = async () => {
+  const fetchRecords = useCallback(async () => {
     setLoading(true);
     try {
       const response = await API.get(`/reports/records?${searchParams.toString()}`);
@@ -71,13 +68,14 @@ const ManagerRecords = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchRecords();
   }, [searchParams]);
 
   useEffect(() => {
+    fetchRecords();
+  }, [fetchRecords]);
+
+  // FIXED: Derive the values on the fly during rendering loop with useMemo instead of copying to state
+  const summary = useMemo(() => {
     const total = records.length;
     const active = records.filter(r => r.paymentStatus === 'Paid').length;
     const inactive = records.filter(r => r.paymentStatus !== 'Paid').length;
@@ -87,7 +85,8 @@ const ManagerRecords = () => {
       return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
     }).length;
     const totalPending = records.reduce((sum, r) => sum + Number(r.pendingAmount || 0), 0);
-    setSummary({ total, active, inactive, newThisMonth, totalPending });
+
+    return { total, active, inactive, newThisMonth, totalPending };
   }, [records]);
 
   const handleFilterChange = (newFilters) => {
@@ -100,7 +99,6 @@ const ManagerRecords = () => {
 
   const handleDownloadCSV = () => exportRecordsCSV(records, 'manager_records');
 
-  // Stub for Excel export – currently reuses CSV logic with .xlsx extension
   const handleExportExcel = () => {
     alert('Excel export is not yet implemented. CSV will be exported instead.');
     handleDownloadCSV();

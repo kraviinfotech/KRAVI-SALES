@@ -84,8 +84,9 @@ const ForgotPassword = () => {
       {step === 'request' && (
         <form onSubmit={handleSendOtp} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email or Mobile Number</label>
+            <label htmlFor="forgot-password-identifier" className="block text-sm font-medium text-gray-700 mb-1">Email or Mobile Number</label>
             <input
+              id="forgot-password-identifier"
               type="text"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
@@ -112,8 +113,9 @@ const ForgotPassword = () => {
       {step === 'reset' && (
         <form onSubmit={handleResetPassword} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">OTP Code</label>
+            <label htmlFor="forgot-password-otp" className="block text-sm font-medium text-gray-700 mb-1">OTP Code</label>
             <input
+              id="forgot-password-otp"
               type="text"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
@@ -123,8 +125,9 @@ const ForgotPassword = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+            <label htmlFor="forgot-password-new" className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
             <input
+              id="forgot-password-new"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -133,8 +136,9 @@ const ForgotPassword = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+            <label htmlFor="forgot-password-confirm" className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
             <input
+              id="forgot-password-confirm"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

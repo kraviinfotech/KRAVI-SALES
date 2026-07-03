@@ -209,22 +209,22 @@ const AddShop = () => {
 
         {/* Shop Name */}
         <div className="mb-3">
-          <label className={labelCls}>{t.name}</label>
-          <input type="text" value={shopName} onChange={e => setShopName(e.target.value)}
+          <label htmlFor="shop-name" className={labelCls}>{t.name}</label>
+          <input id="shop-name" type="text" value={shopName} onChange={e => setShopName(e.target.value)}
             placeholder="Gupta Store" className={inputCls} required />
         </div>
 
         {/* Mobile */}
         <div className="mb-3">
-          <label className={labelCls}>{t.mobile}</label>
-          <input type="tel" value={mobile} onChange={e => setMobile(e.target.value.replace(/\D/g, ''))}
+          <label htmlFor="shop-mobile" className={labelCls}>{t.mobile}</label>
+          <input id="shop-mobile" type="tel" value={mobile} onChange={e => setMobile(e.target.value.replace(/\D/g, ''))}
             placeholder="9876543210" maxLength={10} className={inputCls} required />
         </div>
 
         {/* Address */}
         <div className="mb-3">
-          <label className={labelCls}>{t.addr}</label>
-          <textarea value={shopAddress} onChange={e => setShopAddress(e.target.value)}
+          <label htmlFor="shop-address" className={labelCls}>{t.addr}</label>
+          <textarea id="shop-address" value={shopAddress} onChange={e => setShopAddress(e.target.value)}
             placeholder="MG Road, Indore" rows={2}
             className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 transition" required />
         </div>
@@ -232,13 +232,13 @@ const AddShop = () => {
         {/* Landmark + Shop Type side by side */}
         <div className="mb-3 grid grid-cols-2 gap-3">
           <div>
-            <label className={labelCls}>{t.land}</label>
-            <input type="text" value={landmark} onChange={e => setLandmark(e.target.value)}
+            <label htmlFor="shop-landmark" className={labelCls}>{t.land}</label>
+            <input id="shop-landmark" type="text" value={landmark} onChange={e => setLandmark(e.target.value)}
               placeholder="Near SBI Bank" className={inputCls} />
           </div>
           <div>
-            <label className={labelCls}>{t.type}</label>
-            <select value={shopType} onChange={e => setShopType(e.target.value)} className={inputCls} required>
+            <label htmlFor="shop-type" className={labelCls}>{t.type}</label>
+            <select id="shop-type" value={shopType} onChange={e => setShopType(e.target.value)} className={inputCls} required>
               <option value="Retail">General Store</option>
               <option value="Wholesale">Wholesale</option>
               <option value="Distributor">Distributor</option>
@@ -249,9 +249,9 @@ const AddShop = () => {
 
         {/* Location */}
         <div className="mb-3">
-          <label className={labelCls}>Location</label>
+          <label htmlFor="shop-location" className={labelCls}>Location</label>
           <div className="flex gap-2">
-            <input type="text" value={locationUrl} readOnly
+            <input id="shop-location" type="text" value={locationUrl} readOnly
               placeholder="Location URL will appear here"
               className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs text-gray-500 cursor-not-allowed" />
             <button type="button" onClick={captureLocation} disabled={locLoading}
@@ -269,7 +269,7 @@ const AddShop = () => {
 
         {/* Shop Image — compact preview */}
         <div>
-          <label className={labelCls}>{t.img}</label>
+          <label htmlFor="image-upload" className={labelCls}>{t.img}</label>
 
           <div className="flex items-center gap-3">
             {/* Camera Trigger */}

@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import API from '../../api/axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AlertCircle, BarChart3, Download, Loader2, Package, ShoppingBag, TrendingUp } from 'lucide-react';
+import useAPIQuery from '../../hooks/useAPIQuery';
 
 const fmt = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 
@@ -19,20 +18,12 @@ const safeDate = (v) => {
 
 const SELLER_REPORTS_QUERY_KEY = ['seller', 'reports'];
 
-const fetchSellerRecords = async () => {
-  const res = await API.get('/sales/my-records?lite=1');
-  return Array.isArray(res.data) ? res.data : [];
-};
-
 const SellerReports = () => {
   const {
     data: records = [],
     isPending: loading,
     isError,
-  } = useQuery({
-    queryKey: SELLER_REPORTS_QUERY_KEY,
-    queryFn: fetchSellerRecords,
-  });
+  } = useAPIQuery(SELLER_REPORTS_QUERY_KEY, '/sales/my-records?lite=1');
 
   const error = isError ? 'Reports could not be loaded.' : '';
 
@@ -161,6 +152,7 @@ const SellerReports = () => {
           <h1 className="text-base font-black text-slate-900">My Reports</h1>
         </div>
         <button
+          type="button"
           onClick={handleDownloadPDF}
           disabled={!records.length}
           className="flex items-center gap-1.5 rounded-lg bg-blue-700 px-3 py-2 text-[11px] font-black text-white shadow-sm hover:bg-blue-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -227,3 +219,4 @@ const SellerReports = () => {
 };
 
 export default SellerReports;
+

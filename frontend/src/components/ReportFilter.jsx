@@ -92,11 +92,12 @@ const ReportFilter = ({
       <div className="flex flex-nowrap overflow-x-auto items-end gap-4 pb-2">
         {/* Seller */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="report-filter-seller" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Seller
           </label>
 
           <select
+            id="report-filter-seller"
             value={filterState.sellerId}
             onChange={(e) =>
               handleFieldChange(
@@ -123,11 +124,12 @@ const ReportFilter = ({
 
         {/* Seller Name */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="report-filter-seller-name" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Seller Name
           </label>
 
           <input
+            id="report-filter-seller-name"
             type="text"
             value={filterState.sellerName}
             onChange={(e) =>
@@ -143,11 +145,12 @@ const ReportFilter = ({
 
         {/* Shop Name */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="report-filter-shop-name" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Shop Name
           </label>
 
           <input
+            id="report-filter-shop-name"
             type="text"
             value={filterState.shopName}
             onChange={(e) =>
@@ -163,11 +166,12 @@ const ReportFilter = ({
 
         {/* Shop Type */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="report-filter-shop-type" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Shop Type
           </label>
 
           <select
+            id="report-filter-shop-type"
             value={filterState.shopType}
             onChange={(e) =>
               handleFieldChange(
@@ -201,11 +205,12 @@ const ReportFilter = ({
 
         {/* Status */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="report-filter-status" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Status
           </label>
 
           <select
+            id="report-filter-status"
             value={filterState.status}
             onChange={(e) =>
               handleFieldChange(
@@ -235,11 +240,12 @@ const ReportFilter = ({
 
         {/* From Date */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="report-filter-from" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             From Date
           </label>
 
           <input
+            id="report-filter-from"
             type="date"
             value={filterState.from}
             onChange={(e) =>
@@ -254,11 +260,12 @@ const ReportFilter = ({
 
         {/* To Date */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="report-filter-to" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             To Date
           </label>
 
           <input
+            id="report-filter-to"
             type="date"
             value={filterState.to}
             onChange={(e) =>

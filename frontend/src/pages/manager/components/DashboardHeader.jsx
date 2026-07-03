@@ -15,6 +15,7 @@ const DashboardHeader = ({ onAddNew, currentDate }) => {
       </div>
       <div className="flex items-center gap-3">
         <button
+          type="button"
           onClick={onAddNew}
           className="flex h-9 items-center gap-2 rounded-md bg-blue-700 px-4 text-xs font-black text-white shadow-sm transition-colors hover:bg-blue-800"
         >

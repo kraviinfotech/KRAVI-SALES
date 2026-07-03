@@ -137,8 +137,9 @@ navigate('/manager', { replace: true });
           <form onSubmit={handleSendOtp} className="space-y-4">
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+              <label htmlFor="register-name" className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
               <input
+                id="register-name"
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
@@ -149,8 +150,9 @@ navigate('/manager', { replace: true });
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+              <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
               <input
+                id="register-email"
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -161,8 +163,9 @@ navigate('/manager', { replace: true });
 
             {/* Mobile */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
+              <label htmlFor="register-mobile" className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
               <input
+                id="register-mobile"
                 type="tel"
                 value={mobile}
                 onChange={e => setMobile(e.target.value)}
@@ -173,8 +176,9 @@ navigate('/manager', { replace: true });
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+              <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
               <input
+                id="register-password"
                 type="password"
                 value={password}
                 onChange={e => {
@@ -192,8 +196,9 @@ navigate('/manager', { replace: true });
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+              <label htmlFor="register-confirm-password" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
               <input
+                id="register-confirm-password"
                 type="password"
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}

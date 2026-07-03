@@ -113,6 +113,7 @@ const RecordsHeader = ({ count, onDownloadPDF }) => (
       )}
     </div>
     <button
+      type="button"
       onClick={onDownloadPDF}
       disabled={!count}
       className="flex items-center gap-1.5 rounded-lg bg-blue-700 px-3 py-2 text-[11px] font-black text-white shadow-sm hover:bg-blue-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -204,6 +205,7 @@ const RecordCard = ({ record, onReceivePayment }) => {
           {status !== 'Paid' && (
             <div className="mt-3">
               <button
+                type="button"
                 onClick={() => onReceivePayment(record)}
                 className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 transition-colors"
               >
@@ -261,8 +263,9 @@ const OnlinePaymentFields = ({
     )}
 
     <div>
-      <label className="block text-xs font-bold text-slate-700 mb-1">Transaction ID (Optional)</label>
+      <label htmlFor="payment-txn-id" className="block text-xs font-bold text-slate-700 mb-1">Transaction ID (Optional)</label>
       <input
+        id="payment-txn-id"
         type="text"
         value={txnId}
         onChange={(e) => onTxnIdChange(e.target.value)}
@@ -272,7 +275,7 @@ const OnlinePaymentFields = ({
     </div>
 
     <div>
-      <label className="block text-xs font-bold text-slate-700 mb-1">Upload Payment Photo (Optional)</label>
+      <label htmlFor="payment-photo-upload" className="block text-xs font-bold text-slate-700 mb-1">Upload Payment Photo (Optional)</label>
       {paymentPhoto ? (
         <div className="relative inline-block">
           <img src={paymentPhoto} alt="Payment" className="h-24 w-auto rounded border border-gray-300 object-cover" />
@@ -324,7 +327,7 @@ const ReceivePaymentModal = ({
     <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
       <div className="flex items-center justify-between border-b border-slate-100 p-4 bg-slate-50">
         <h3 className="font-bold text-slate-800">Receive Payment</h3>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 border border-slate-200">
+        <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 border border-slate-200">
           <X size={16} />
         </button>
       </div>
@@ -347,8 +350,9 @@ const ReceivePaymentModal = ({
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Amount Received (Rs.)</label>
+            <label htmlFor="payment-amount" className="block text-xs font-bold text-slate-700 mb-1">Amount Received (Rs.)</label>
             <input
+              id="payment-amount"
               type="number"
               max={record.pendingAmount}
               value={paymentForm.amount}
@@ -361,11 +365,13 @@ const ReceivePaymentModal = ({
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Payment Mode</label>
-            <PaymentModePicker
-              mode={paymentForm.mode}
-              onChange={(mode) => onPaymentFieldChange('mode', mode)}
-            />
+            <fieldset>
+              <legend className="block text-xs font-bold text-slate-700 mb-1">Payment Mode</legend>
+              <PaymentModePicker
+                mode={paymentForm.mode}
+                onChange={(mode) => onPaymentFieldChange('mode', mode)}
+              />
+            </fieldset>
           </div>
 
           {paymentForm.mode === 'Online' && (
@@ -381,8 +387,9 @@ const ReceivePaymentModal = ({
           )}
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Remarks (Optional)</label>
+            <label htmlFor="payment-remarks" className="block text-xs font-bold text-slate-700 mb-1">Remarks (Optional)</label>
             <textarea
+              id="payment-remarks"
               rows={2}
               value={paymentForm.remarks}
               onChange={(e) => onPaymentFieldChange('remarks', e.target.value)}

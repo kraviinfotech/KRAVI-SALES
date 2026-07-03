@@ -67,7 +67,7 @@ const ProductSummaryRow = ({ item, index }) => {
   const amount = quantity * rate;
 
   return (
-    <div key={`${item.productName}-${index}`} className="flex items-center justify-between gap-4 text-base border-b border-slate-200 last:border-0 pb-3 last:pb-0">
+    <div key={`${item.productName || 'product'}-${item.id || item._id || item.productId || item.name || item.sku || index}`} className="flex items-center justify-between gap-4 text-base border-b border-slate-200 last:border-0 pb-3 last:pb-0">
       <span className="font-semibold text-indigo-700">{item.productName || '-'}</span>
       <span className="font-semibold text-slate-700">{displayLabel} x Rs.{rate} = Rs.{amount.toFixed(2)}</span>
     </div>
@@ -81,7 +81,7 @@ const ProductsSection = ({ items }) => (
     </div>
     <div className="space-y-2 bg-white p-4 rounded-[22px] border border-slate-200 shadow-sm">
       {(items || []).map((item, index) => (
-        <ProductSummaryRow key={`${item.productName}-${index}`} item={item} index={index} />
+        <ProductSummaryRow key={`${item.productName || 'product'}-${item.id || item._id || item.productId || item.name || item.sku || index}`} item={item} index={index} />
       ))}
     </div>
   </section>
@@ -159,8 +159,9 @@ const PaymentDetailsSection = ({
       </div>
 
       <div>
-        <label className="mb-1 block text-base font-semibold text-slate-700">Pending Amount (Rs.)</label>
+        <label htmlFor="review-pending-amount" className="mb-1 block text-base font-semibold text-slate-700">Pending Amount (Rs.)</label>
         <input
+          id="review-pending-amount"
           type="text"
           value={currencyFormatter.format(pendingAmount)}
           readOnly
@@ -256,10 +257,11 @@ const ScannerModal = ({
             )}
 
             <div className="flex flex-col gap-3">
-              <label className="flex cursor-pointer items-center justify-center gap-2 rounded border-2 border-dashed border-blue-500 bg-blue-50 px-4 py-6 text-sm font-medium text-blue-600 hover:bg-blue-100 transition">
+              <label htmlFor="capture-proof-input" className="flex cursor-pointer items-center justify-center gap-2 rounded border-2 border-dashed border-blue-500 bg-blue-50 px-4 py-6 text-sm font-medium text-blue-600 hover:bg-blue-100 transition">
                 <Camera size={18} />
                 Capture Your Own Proof
                 <input
+                  id="capture-proof-input"
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"

@@ -115,7 +115,6 @@ const Dashboard = () => {
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 min-h-[400px]">
           <h3 className="font-bold text-gray-800 mb-6">Revenue Growth</h3>
           <div className="h-64 flex items-end justify-between gap-2">
-          <div className="h-64 flex items-end justify-between gap-2">{ /* simple visual using monthlyRevenue if available */}
             {(overview && overview.monthlyRevenue) ?
               (() => {
                 const base = overview.monthlyRevenue / 12 || 10;
@@ -189,17 +188,15 @@ const Dashboard = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {(overview && overview.recentCompanies) ? overview.recentCompanies.map((c) => (
+            {(overview && overview.recentCompanies && overview.recentCompanies.length > 0) ? overview.recentCompanies.map((c) => (
               <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 font-medium">{c.name}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">-</td>
                 <td className="px-6 py-4"><span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Active</span></td>
                 <td className="px-6 py-4 text-sm text-gray-500">{new Date(c.createdAt).toLocaleDateString()}</td>
               </tr>
-            )) : [1,2,3].map((i) => (
-              <tr key={`sample-company-${i}`} className="hover:bg-gray-50 transition-colors">
             )) : [1, 2, 3].map((i) => (
-              <tr key={i} className="hover:bg-gray-50 transition-colors">
+              <tr key={`sample-company-${i}`} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 font-medium">TechNova Solutions</td>
                 <td className="px-6 py-4 text-sm text-gray-600">Enterprise</td>
                 <td className="px-6 py-4"><span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Active</span></td>

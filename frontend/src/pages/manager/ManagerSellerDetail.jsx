@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../../api/axios';
 import SalesTable from '../../components/SalesTable';
@@ -13,7 +13,6 @@ const ManagerSellerDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // FIXED: Pre-compute the target identifier cleanly to avoid reactive effect synchronization cascades
   const decodedSellerId = decodeURIComponent(sellerId);
 
   const [filters, setFilters] = useState({
@@ -25,7 +24,32 @@ const ManagerSellerDetail = () => {
     to: '',
   });
 
-  // Fetch static seller details clean on initialization or mount
+  // Consolidated operational fetch utility decoupled from continuous effect validation loops
+  const fetchRecords = useCallback(async (activeFilters) => {
+    if (!sellerId) return;
+
+    setLoading(true);
+    setError('');
+    try {
+      const queryParams = new URLSearchParams();
+      const currentFilters = { ...activeFilters, sellerId: decodedSellerId };
+
+      Object.keys(currentFilters).forEach(key => {
+        if (currentFilters[key]) {
+          queryParams.append(key, currentFilters[key]);
+        }
+      });
+      
+      const response = await API.get(`/reports/records?${queryParams.toString()}`);
+      setRecords(response.data);
+    } catch (err) {
+      console.error('Failed to fetch records:', err);
+      setError(err.response?.data?.message || 'Records could not be loaded.');
+    } finally {
+      setLoading(false);
+    }
+  }, [sellerId, decodedSellerId]);
+
   useEffect(() => {
     const fetchSellerDetails = async () => {
       try {
@@ -36,43 +60,18 @@ const ManagerSellerDetail = () => {
         setError('Seller details could not be loaded.');
       }
     };
-    
+
     fetchSellerDetails();
   }, [sellerId]);
 
-  // FIXED: Single declarative side-effect data fetch handling filter updates seamlessly
   useEffect(() => {
-    const fetchRecords = async () => {
-      if (!sellerId) return;
-      
-      if (records.length === 0) setLoading(true);
-      setError('');
-      try {
-        const queryParams = new URLSearchParams();
-        
-        // Always enforce active URL state seller token mapping explicitly
-        const currentFilters = { ...filters, sellerId: decodedSellerId };
+    fetchRecords(filters);
+  }, [filters, fetchRecords]);
 
-        Object.keys(currentFilters).forEach(key => {
-          if (currentFilters[key]) {
-            queryParams.append(key, currentFilters[key]);
-          }
-        });
-        const response = await API.get(`/reports/records?${queryParams.toString()}`);
-        setRecords(response.data);
-      } catch (err) {
-        console.error('Failed to fetch records:', err);
-        setError(err.response?.data?.message || 'Records could not be loaded.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRecords();
-  }, [filters, sellerId, decodedSellerId]);
-
+  // Clean event handler executing calculations and explicitly invoking data loading pipelines
   const handleFilterChange = (newFilters) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    const updatedFilters = { ...filters, ...newFilters };
+    setFilters(updatedFilters);
   };
 
   return (
