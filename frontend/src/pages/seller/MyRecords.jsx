@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useReducer } from 'react';
 import API from '../../api/axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -26,33 +26,118 @@ const statusColors = {
 let cachedRecords = null;
 let hasFetchedRecords = false;
 
-const MyRecords = () => {
-  const [records, setRecords] = useState(cachedRecords || []);
-  const [loading, setLoading] = useState(!hasFetchedRecords);
-  const [error, setError]   = useState('');
 
-  // Payment Modal State
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState(null);
-  const [paymentForm, setPaymentForm] = useState({ amount: '', mode: 'Cash', txnId: '', remarks: '' });
-  const [paymentLoading, setPaymentLoading] = useState(false);
-  const [paymentError, setPaymentError] = useState('');
-  
-  // Payment Scanner & Photo Upload State
-  const [defaultScannerPhoto, setDefaultScannerPhoto] = useState(null);
-  const [managerScannerLoaded, setManagerScannerLoaded] = useState(false);
-  const [paymentPhoto, setPaymentPhoto] = useState(null);
+const createInitialState = () => ({
+  records: cachedRecords || [],
+  loading: !hasFetchedRecords,
+  error: '',
+  showPaymentModal: false,
+  selectedRecord: null,
+  paymentForm: {
+    amount: '',
+    mode: 'Cash',
+    txnId: '',
+    remarks: '',
+  },
+  paymentLoading: false,
+  paymentError: '',
+  defaultScannerPhoto: null,
+  managerScannerLoaded: false,
+  paymentPhoto: null,
+});
+
+const recordsReducer = (state, action) => {
+  switch (action.type) {
+    case 'SET_FIELD':
+      return {
+        ...state,
+        [action.field]: action.value,
+      };
+
+    case 'PATCH':
+      return {
+        ...state,
+        ...action.payload,
+      };
+
+    case 'SET_PAYMENT_FIELD':
+      return {
+        ...state,
+        paymentForm: {
+          ...state.paymentForm,
+          [action.field]: action.value,
+        },
+      };
+
+    case 'OPEN_PAYMENT':
+      return {
+        ...state,
+        selectedRecord: action.record,
+        paymentForm: {
+          amount: '',
+          mode: 'Cash',
+          txnId: '',
+          remarks: '',
+        },
+        paymentError: '',
+        paymentPhoto: null,
+        showPaymentModal: true,
+      };
+
+    case 'CLOSE_PAYMENT':
+      return {
+        ...state,
+        showPaymentModal: false,
+      };
+
+    default:
+      return state;
+  }
+};
+
+const MyRecords = () => {
+  const [state, dispatch] = useReducer(recordsReducer, undefined, createInitialState);
+
+  const {
+    records,
+    loading,
+    error,
+    showPaymentModal,
+    selectedRecord,
+    paymentForm,
+    paymentLoading,
+    paymentError,
+    defaultScannerPhoto,
+    managerScannerLoaded,
+    paymentPhoto,
+  } = state;
+
+  const setField = (field, value) => {
+    dispatch({
+      type: 'SET_FIELD',
+      field,
+      value,
+    });
+  };
+
+  const setPaymentField = (field, value) => {
+    dispatch({
+      type: 'SET_PAYMENT_FIELD',
+      field,
+      value,
+    });
+  };
 
   const fetchRecords = (quiet = false) => {
-    if (!quiet) setLoading(true);
+    if (!quiet) setField('loading', true);
     API.get('/sales/my-records')
       .then(res => {
-        setRecords(res.data);
+        setField('records', res.data);
         cachedRecords = res.data;
         hasFetchedRecords = true;
       })
-      .catch(() => setError('Records load nahi ho paaye.'))
-      .finally(() => setLoading(false));
+      .catch(() => setField('error', 'Records load nahi ho paaye.'))
+      .finally(() => setField('loading', false));
   };
 
   useEffect(() => {
@@ -63,35 +148,34 @@ const MyRecords = () => {
       try {
         const response = await API.get('/auth/manager-scanner');
         if (response.data && response.data.scannerPhoto) {
-          setDefaultScannerPhoto(response.data.scannerPhoto);
+          setField('defaultScannerPhoto', response.data.scannerPhoto);
         }
       } catch (err) {
         console.error("Failed to load manager scanner:", err);
       } finally {
-        setManagerScannerLoaded(true);
+        setField('managerScannerLoaded', true);
       }
     };
     loadDefaultScanner();
   }, []);
 
   const handleOpenPayment = (record) => {
-    setSelectedRecord(record);
-    setPaymentForm({ amount: '', mode: 'Cash', txnId: '', remarks: '' });
-    setPaymentError('');
-    setPaymentPhoto(null);
-    setShowPaymentModal(true);
+    dispatch({
+      type: 'OPEN_PAYMENT',
+      record,
+    });
   };
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        setPaymentError('Only image files are allowed');
+        setField('paymentError', 'Only image files are allowed');
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPaymentPhoto(reader.result);
+        setField('paymentPhoto', reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -99,15 +183,15 @@ const MyRecords = () => {
 
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
-    setPaymentError('');
+    setField('paymentError', '');
     
     if (!paymentForm.amount || Number(paymentForm.amount) <= 0) {
-      setPaymentError('Please enter a valid amount.');
+      setField('paymentError', 'Please enter a valid amount.');
       return;
     }
 
 
-    setPaymentLoading(true);
+    setField('paymentLoading', true);
     try {
       await API.post('/shoppayments/receive', {
         salesRecordId: selectedRecord._id,
@@ -118,12 +202,12 @@ const MyRecords = () => {
         paymentPhoto
       });
       alert('Payment Received Successfully');
-      setShowPaymentModal(false);
+      dispatch({ type: 'CLOSE_PAYMENT' });
       fetchRecords(); // refresh records
     } catch (err) {
-      setPaymentError(err.response?.data?.message || 'Error receiving payment');
+      setField('paymentError', err.response?.data?.message || 'Error receiving payment');
     } finally {
-      setPaymentLoading(false);
+      setField('paymentLoading', false);
     }
   };
 
@@ -380,7 +464,7 @@ const MyRecords = () => {
                           const displayQty = item.unit === 'weight' ? `${item.weight}kg` : `${item.quantity}pcs`;
                           const price = Number(item.price || item.rate || 0);
                           return (
-                            <li key={i} className="flex items-center justify-between text-[11px] font-medium text-slate-700">
+                            <li key={item._id || item.productId || `${item.productName}-${i}`} className="flex items-center justify-between text-[11px] font-medium text-slate-700">
                               <span className="truncate pr-2">• {item.productName}</span>
                               <span className="shrink-0 text-slate-500">{displayQty} x ₹{price}</span>
                             </li>
@@ -416,7 +500,7 @@ const MyRecords = () => {
           <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between border-b border-slate-100 p-4 bg-slate-50">
               <h3 className="font-bold text-slate-800">Receive Payment</h3>
-              <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 border border-slate-200">
+              <button onClick={() => setField('showPaymentModal', false)} className="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 border border-slate-200">
                 <X size={16} />
               </button>
             </div>
@@ -444,7 +528,7 @@ const MyRecords = () => {
                     type="number"
                     max={selectedRecord.pendingAmount}
                     value={paymentForm.amount}
-                    onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
+                    onChange={(e) => setPaymentField('amount', e.target.value)}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold"
                     placeholder="E.g. 5000"
                     required
@@ -459,7 +543,7 @@ const MyRecords = () => {
                       <button
                         type="button"
                         key={m}
-                        onClick={() => setPaymentForm({ ...paymentForm, mode: m })}
+                        onClick={() => setPaymentField('mode', m)}
                         className={`py-1.5 text-xs font-bold rounded-md border transition-colors ${
                           paymentForm.mode === m 
                             ? 'bg-indigo-600 text-white border-indigo-600' 
@@ -492,7 +576,7 @@ const MyRecords = () => {
                       <input
                         type="text"
                         value={paymentForm.txnId}
-                        onChange={(e) => setPaymentForm({ ...paymentForm, txnId: e.target.value })}
+                        onChange={(e) => setPaymentField('txnId', e.target.value)}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         placeholder="Enter TXN ID"
                       />
@@ -505,7 +589,7 @@ const MyRecords = () => {
                           <img src={paymentPhoto} alt="Payment" className="h-24 w-auto rounded border border-gray-300 object-cover" />
                           <button
                             type="button"
-                            onClick={() => setPaymentPhoto(null)}
+                            onClick={() => setField('paymentPhoto', null)}
                             className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-1 hover:bg-red-200"
                           >
                             <X size={14} />
@@ -538,7 +622,7 @@ const MyRecords = () => {
                   <textarea
                     rows={2}
                     value={paymentForm.remarks}
-                    onChange={(e) => setPaymentForm({ ...paymentForm, remarks: e.target.value })}
+                    onChange={(e) => setPaymentField('remarks', e.target.value)}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     placeholder="Any notes..."
                   />

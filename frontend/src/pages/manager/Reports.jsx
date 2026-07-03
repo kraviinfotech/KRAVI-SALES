@@ -246,7 +246,11 @@ const Reports = () => {
   const stats = useMemo(() => {
     const totalSales = (records || []).reduce((sum, r) => sum + Number(r.totalAmount || 0), 0);
     const totalItems = (records || []).reduce((sum, r) => sum + (r.items?.reduce((is, i) => is + Number(i.quantity || 0), 0) || 0), 0);
-    const uniqueShops = new Set((records || []).map(r => r?.shopName).filter(Boolean)).size;
+    const uniqueShops = new Set(
+      (records || []).flatMap((record) =>
+        record?.shopName ? [record.shopName] : []
+      )
+    ).size;
     return { totalSales, totalItems, uniqueShops, totalRecords: (records || []).length };
   }, [records]);
 
@@ -511,8 +515,8 @@ const Reports = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {sellerTableData.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+              {sellerTableData.map((row) => (
+                <tr key={row.sellerId || row.name} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 text-sm font-bold text-slate-900">{row.name}</td>
                   <td className="p-4 text-sm text-center font-medium text-slate-600">{row.records}</td>
                   <td className="p-4 text-sm text-center font-medium text-slate-600">{row.shops.size}</td>

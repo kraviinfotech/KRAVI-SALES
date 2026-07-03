@@ -303,8 +303,8 @@ const ManagerRecords = () => {
           { label: 'Unpaid/Pending', value: summary.inactive, icon: XCircle, color: 'text-slate-600', bg: 'bg-slate-100' },
           { label: 'Total Pending', value: currencyFormatter.format(summary.totalPending), icon: DollarSign, color: 'text-red-600', bg: 'bg-red-50' },
           { label: 'New This Month', value: summary.newThisMonth, icon: Calendar, color: 'text-violet-600', bg: 'bg-violet-50' },
-        ].map((stat, i) => (
-          <div key={i} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 transition-hover hover:shadow-md">
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 transition-hover hover:shadow-md">
             <div className={`p-3 rounded-lg ${stat.bg} ${stat.color}`}>
               <stat.icon size={24} />
             </div>

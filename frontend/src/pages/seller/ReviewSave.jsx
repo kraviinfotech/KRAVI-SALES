@@ -49,7 +49,7 @@ const ReviewSave = () => {
     }
   }, 0), [items]);
 
-  const pendingAmount = useMemo(() => totalAmount - payingAmount, [totalAmount, payingAmount]);
+  const pendingAmount = totalAmount - Number(payingAmount || 0);
 
   // Effect to update payment status based on paid amount removed. Seller manually selects status.
 
@@ -291,7 +291,7 @@ const ReviewSave = () => {
             <input
               id="payingAmount"
               type="number"
-              min=" "
+              min="0"
               step="0.01"
               value={payingAmount || ''}
               onChange={(e) => setPayingAmount(Number(e.target.value))}

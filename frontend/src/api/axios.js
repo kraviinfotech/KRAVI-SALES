@@ -3,6 +3,7 @@ import axios from 'axios';
 const API = axios.create({
   // Prefer explicit VITE_API_URL; fall back to the local backend port from backend/.env
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5002/api',
+  withCredentials: true,
 });
 
 
