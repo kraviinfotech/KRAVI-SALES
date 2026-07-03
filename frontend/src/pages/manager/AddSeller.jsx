@@ -140,19 +140,19 @@ const AddSeller = () => {
     }
   };
 
-  // Step indicator badge
-  const StepBadge = ({ num, label, active, done }) => (
-    <div className={`flex items-center gap-2`}>
-      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-colors ${
-        done ? 'bg-emerald-500 text-white' : active ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-400'
-      }`}>
-        {done ? <CheckCircle2 size={14} /> : num}
-      </div>
-      <span className={`text-xs font-bold hidden sm:block ${active ? 'text-blue-700' : done ? 'text-emerald-600' : 'text-gray-400'}`}>
-        {label}
-      </span>
+// Step indicator badge (module scope to avoid re-definition on each render)
+const StepBadge = ({ num, label, active, done }) => (
+  <div className={`flex items-center gap-2`}>
+    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-colors ${
+      done ? 'bg-emerald-500 text-white' : active ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-400'
+    }`}>
+      {done ? <CheckCircle2 size={14} /> : num}
     </div>
-  );
+    <span className={`text-xs font-bold hidden sm:block ${active ? 'text-blue-700' : done ? 'text-emerald-600' : 'text-gray-400'}`}>
+      {label}
+    </span>
+  </div>
+);
 
   return (
     <>

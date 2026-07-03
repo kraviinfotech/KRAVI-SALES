@@ -216,7 +216,7 @@ const AddProducts = () => {
 
         return (
           <div
-            key={index}
+            key={item.productName ? `${item.productName}-${index}` : `item-${index}`}
             ref={index === formData.items.length - 1 ? lastCardRef : null}
             className="space-y-4 rounded border border-gray-200 bg-gray-50 p-4"
           >
@@ -258,10 +258,10 @@ const AddProducts = () => {
 
                 {suggestionsOpen[index] && (
                   <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-b-md border border-t-0 border-gray-300 bg-white shadow-lg">
-                    {getFilteredProducts(searchQueries[index] !== undefined ? searchQueries[index] : item.productName).length > 0 ? (
-                      getFilteredProducts(searchQueries[index] !== undefined ? searchQueries[index] : item.productName).map((p, idx) => (
+                      {getFilteredProducts(searchQueries[index] !== undefined ? searchQueries[index] : item.productName).length > 0 ? (
+                      getFilteredProducts(searchQueries[index] !== undefined ? searchQueries[index] : item.productName).map((p) => (
                         <button
-                          key={p._id || idx}
+                          key={p._id || p.name}
                           type="button"
                           onMouseDown={() => handleProductSelection(index, p.name)}
                           className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
