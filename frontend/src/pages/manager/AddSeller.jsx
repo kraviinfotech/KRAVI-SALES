@@ -12,91 +12,19 @@ const STEPS = ['details', 'otp', 'done'];
 let cachedSellers = null;
 let hasFetchedSellers = false;
 
-
-const createInitialState = () => ({
-  name: '',
-  mobile: '',
-  email: '',
-  password: '',
-  passwordStrength: 'Weak',
-  showPassword: false,
-  step: 'details',
-  otp: '',
-  sellers: cachedSellers || [],
-  loadingList: !hasFetchedSellers,
-  visiblePasswordSellerId: null,
-  locationDialog: {
-    open: false,
-    loading: false,
-    error: '',
-    location: null,
-  },
-  loadingSubmit: false,
-  error: '',
-  success: '',
-});
-
-const addSellerReducer = (state, action) => {
-  switch (action.type) {
-    case 'SET_FIELD':
-      return {
-        ...state,
-        [action.field]: action.value,
-      };
-
-    case 'PATCH':
-      return {
-        ...state,
-        ...action.payload,
-      };
-
-    case 'PASSWORD_CHANGED':
-      return {
-        ...state,
-        password: action.value,
-        passwordStrength: getPasswordStrength(action.value),
-      };
-
-    case 'RESET_FORM':
-      return {
-        ...state,
-        name: '',
-        mobile: '',
-        email: '',
-        password: '',
-        passwordStrength: 'Weak',
-        showPassword: false,
-        step: 'details',
-        otp: '',
-        error: '',
-        success: '',
-        locationDialog: {
-          open: false,
-          loading: false,
-          error: '',
-          location: null,
-        },
-      };
-
-    default:
-      return state;
-  }
-};
-
-const StepBadge = ({ num, label, active, done }) => (
-  <div className="flex items-center gap-2">
-    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-colors ${
-      done ? 'bg-emerald-500 text-white' : active ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-400'
-    }`}>
-      {done ? <CheckCircle2 size={14} /> : num}
+ // Step indicator badge
+  const StepBadge = ({ num, label, active, done }) => (
+    <div className={`flex items-center gap-2`}>
+      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-colors ${
+        done ? 'bg-emerald-500 text-white' : active ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-400'
+      }`}>
+        {done ? <CheckCircle2 size={14} /> : num}
+      </div>
+      <span className={`text-xs font-bold hidden sm:block ${active ? 'text-blue-700' : done ? 'text-emerald-600' : 'text-gray-400'}`}>
+        {label}
+      </span>
     </div>
-    <span className={`text-xs font-bold hidden sm:block ${
-      active ? 'text-blue-700' : done ? 'text-emerald-600' : 'text-gray-400'
-    }`}>
-      {label}
-    </span>
-  </div>
-);
+  );
 
 const AddSeller = () => {
   const [state, dispatch] = useReducer(
@@ -227,7 +155,7 @@ const AddSeller = () => {
     }
   };
 
-
+ 
 
   return (
     <>
