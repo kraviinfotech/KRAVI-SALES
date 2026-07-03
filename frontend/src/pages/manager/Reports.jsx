@@ -511,8 +511,8 @@ const Reports = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {sellerTableData.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+              {sellerTableData.map((row) => (
+                <tr key={row.sellerId || row.name} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 text-sm font-bold text-slate-900">{row.name}</td>
                   <td className="p-4 text-sm text-center font-medium text-slate-600">{row.records}</td>
                   <td className="p-4 text-sm text-center font-medium text-slate-600">{row.shops.size}</td>

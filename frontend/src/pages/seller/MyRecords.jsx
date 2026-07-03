@@ -380,7 +380,7 @@ const MyRecords = () => {
                           const displayQty = item.unit === 'weight' ? `${item.weight}kg` : `${item.quantity}pcs`;
                           const price = Number(item.price || item.rate || 0);
                           return (
-                            <li key={i} className="flex items-center justify-between text-[11px] font-medium text-slate-700">
+                            <li key={item._id || item.productId || `${item.productName}-${i}`} className="flex items-center justify-between text-[11px] font-medium text-slate-700">
                               <span className="truncate pr-2">• {item.productName}</span>
                               <span className="shrink-0 text-slate-500">{displayQty} x ₹{price}</span>
                             </li>

@@ -10,7 +10,14 @@ const SHOP_TYPES = ['Retail', 'Wholesale', 'Distributor', 'Other'];
 const PAYMENT_STATUSES = ['Paid', 'Partial', 'Pending'];
 const UNITS = ['quantity', 'weight'];
 
-const emptyItem = () => ({ productName: '', unit: 'quantity', quantity: 1, weight: 0.5, price: '' });
+const emptyItem = () => ({ id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, productName: '', unit: 'quantity', quantity: 1, weight: 0.5, price: '' });
+
+const SectionTitle = ({ icon: Icon, title, color = 'text-blue-700', bg = 'bg-blue-50' }) => (
+  <div className={`flex items-center gap-2 px-5 py-3 border-b border-slate-100 ${bg}`}>
+    <Icon size={16} className={color} />
+    <h3 className={`text-xs font-black uppercase tracking-widest ${color}`}>{title}</h3>
+  </div>
+);
 
 const ManagerAddRecord = () => {
   const navigate = useNavigate();
@@ -149,12 +156,7 @@ const ManagerAddRecord = () => {
     }
   };
 
-  const SectionTitle = ({ icon: Icon, title, color = 'text-blue-700', bg = 'bg-blue-50' }) => (
-    <div className={`flex items-center gap-2 px-5 py-3 border-b border-slate-100 ${bg}`}>
-      <Icon size={16} className={color} />
-      <h3 className={`text-xs font-black uppercase tracking-widest ${color}`}>{title}</h3>
-    </div>
-  );
+  
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -193,8 +195,9 @@ const ManagerAddRecord = () => {
           <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Seller */}
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Seller *</label>
+              <label htmlFor="sellerId" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Seller *</label>
               <select
+                id="sellerId"
                 value={sellerId}
                 onChange={e => setSellerId(e.target.value)}
                 required
@@ -209,8 +212,9 @@ const ManagerAddRecord = () => {
 
             {/* Visit Date/Time */}
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Visit Date & Time *</label>
+              <label htmlFor="visitDatetime" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Visit Date & Time *</label>
               <input
+                id="visitDatetime"
                 type="datetime-local"
                 value={visitDatetime}
                 onChange={e => setVisitDatetime(e.target.value)}
@@ -221,8 +225,9 @@ const ManagerAddRecord = () => {
 
             {/* Shop Type */}
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Shop Type *</label>
+              <label htmlFor="shopType" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Shop Type *</label>
               <select
+                id="shopType"
                 value={shopType}
                 onChange={e => setShopType(e.target.value)}
                 required
@@ -239,8 +244,9 @@ const ManagerAddRecord = () => {
           <SectionTitle icon={Store} title="Shop Information" color="text-violet-700" bg="bg-violet-50" />
           <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Shop Name *</label>
+              <label htmlFor="shopName" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Shop Name *</label>
               <input
+                id="shopName"
                 type="text"
                 value={shopName}
                 onChange={e => setShopName(e.target.value)}
@@ -250,8 +256,9 @@ const ManagerAddRecord = () => {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Mobile</label>
+              <label htmlFor="mobile" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Mobile</label>
               <input
+                id="mobile"
                 type="tel"
                 value={mobile}
                 onChange={e => setMobile(e.target.value)}
@@ -260,8 +267,9 @@ const ManagerAddRecord = () => {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Shop Address *</label>
+              <label htmlFor="shopAddress" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Shop Address *</label>
               <input
+                id="shopAddress"
                 type="text"
                 value={shopAddress}
                 onChange={e => setShopAddress(e.target.value)}
@@ -271,8 +279,9 @@ const ManagerAddRecord = () => {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Landmark</label>
+              <label htmlFor="landmark" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Landmark</label>
               <input
+                id="landmark"
                 type="text"
                 value={landmark}
                 onChange={e => setLandmark(e.target.value)}
@@ -288,27 +297,27 @@ const ManagerAddRecord = () => {
           <SectionTitle icon={Package} title="Items Sold" color="text-emerald-700" bg="bg-emerald-50" />
           <div className="p-5 space-y-3">
             {items.map((item, idx) => (
-              <div key={idx} className="grid grid-cols-12 gap-2 items-end bg-slate-50 rounded-lg p-3 border border-slate-100">
+              <div key={item.id} className="grid grid-cols-12 gap-2 items-end bg-slate-50 rounded-lg p-3 border border-slate-100">
                 {/* Product Name */}
                 <div className="col-span-12 sm:col-span-4">
-                  {idx === 0 && <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Product *</label>}
+                  {idx === 0 && <div className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Product *</div>}
                   <input
                     type="text"
-                    list={`products-list-${idx}`}
+                    list={`products-list-${item.id}`}
                     value={item.productName}
                     onChange={e => updateItem(idx, 'productName', e.target.value)}
                     required
                     placeholder="Product name"
                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                   />
-                  <datalist id={`products-list-${idx}`}>
+                  <datalist id={`products-list-${item.id}`}>
                     {masterProducts.map(p => <option key={p._id} value={p.name} />)}
                   </datalist>
                 </div>
 
                 {/* Unit */}
                 <div className="col-span-5 sm:col-span-2">
-                  {idx === 0 && <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Unit</label>}
+                  {idx === 0 && <div className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Unit</div>}
                   <select
                     value={item.unit}
                     onChange={e => updateItem(idx, 'unit', e.target.value)}
@@ -320,9 +329,9 @@ const ManagerAddRecord = () => {
 
                 {/* Qty / Weight */}
                 <div className="col-span-7 sm:col-span-2">
-                  {idx === 0 && <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">
+                  {idx === 0 && <div className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">
                     {item.unit === 'weight' ? 'Weight (kg)' : 'Qty'}
-                  </label>}
+                  </div>}
                   <input
                     type="number"
                     min={item.unit === 'weight' ? 0.1 : 1}
@@ -336,7 +345,7 @@ const ManagerAddRecord = () => {
 
                 {/* Price */}
                 <div className="col-span-5 sm:col-span-2">
-                  {idx === 0 && <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Price (₹) *</label>}
+                  {idx === 0 && <div className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Price (₹) *</div>}
                   <input
                     type="number"
                     min={0.01}
@@ -351,7 +360,7 @@ const ManagerAddRecord = () => {
 
                 {/* Amount preview */}
                 <div className="col-span-5 sm:col-span-1">
-                  {idx === 0 && <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Amount</label>}
+                  {idx === 0 && <div className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Amount</div>}
                   <div className="px-2 py-2 text-sm font-black text-slate-900 text-right">
                     ₹{((item.unit === 'weight' ? Number(item.weight || 0) : Number(item.quantity || 0)) * Number(item.price || 0)).toFixed(0)}
                   </div>
@@ -389,7 +398,7 @@ const ManagerAddRecord = () => {
           <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total (read-only) */}
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Total Amount</label>
+              <div className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Total Amount</div>
               <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-black text-slate-900">
                 ₹{totalAmount.toFixed(2)}
               </div>
@@ -397,8 +406,9 @@ const ManagerAddRecord = () => {
 
             {/* Payment Status */}
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Payment Status *</label>
+              <label htmlFor="paymentStatus" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Payment Status *</label>
               <select
+                id="paymentStatus"
                 value={paymentStatus}
                 onChange={e => setPaymentStatus(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
@@ -410,8 +420,9 @@ const ManagerAddRecord = () => {
             {/* Paid Amount (only if Partial) */}
             {paymentStatus === 'Partial' && (
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Paid Amount (₹)</label>
+                <label htmlFor="paidAmount" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Paid Amount (₹)</label>
                 <input
+                  id="paidAmount"
                   type="number"
                   min={0}
                   step={0.01}
@@ -425,7 +436,7 @@ const ManagerAddRecord = () => {
 
             {/* Pending Amount (read-only) */}
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Pending Amount</label>
+              <div className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Pending Amount</div>
               <div className={`w-full rounded-lg border px-3 py-2.5 text-sm font-black ${computedPending > 0 ? 'border-red-200 bg-red-50 text-red-700' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
                 ₹{computedPending.toFixed(2)}
               </div>
@@ -433,8 +444,9 @@ const ManagerAddRecord = () => {
 
             {/* Payment Method */}
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Payment Method</label>
+              <label htmlFor="paymentMethod" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Payment Method</label>
               <select
+                id="paymentMethod"
                 value={paymentMethod}
                 onChange={e => setPaymentMethod(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
