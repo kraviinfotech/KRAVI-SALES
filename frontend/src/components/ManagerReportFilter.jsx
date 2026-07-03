@@ -74,11 +74,12 @@ const ManagerReportFilter = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {/* Seller Dropdown */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="manager-report-filter-seller" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Seller
           </label>
 
           <select
+            id="manager-report-filter-seller"
             value={filters.sellerId}
             onChange={(e) =>
               handleFieldChange('sellerId', e.target.value)
@@ -100,11 +101,12 @@ const ManagerReportFilter = ({
 
         {/* Seller Name Search */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="manager-report-filter-seller-name" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Seller Name
           </label>
 
           <input
+            id="manager-report-filter-seller-name"
             type="text"
             value={filters.sellerName}
             onChange={(e) =>
@@ -120,11 +122,12 @@ const ManagerReportFilter = ({
 
         {/* Shop Name Search */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="manager-report-filter-shop-name" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Shop Name
           </label>
 
           <input
+            id="manager-report-filter-shop-name"
             type="text"
             value={filters.shopName}
             onChange={(e) =>
@@ -140,11 +143,12 @@ const ManagerReportFilter = ({
 
         {/* Shop Type */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="manager-report-filter-shop-type" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Shop Type
           </label>
 
           <select
+            id="manager-report-filter-shop-type"
             value={filters.shopType}
             onChange={(e) =>
               handleFieldChange(
@@ -172,11 +176,12 @@ const ManagerReportFilter = ({
 
         {/* Status Filter */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="manager-report-filter-status" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Status
           </label>
 
           <select
+            id="manager-report-filter-status"
             value={filters.status}
             onChange={(e) =>
               handleFieldChange(
@@ -203,11 +208,12 @@ const ManagerReportFilter = ({
 
         {/* From Date */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="manager-report-filter-from" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             From Date
           </label>
 
           <input
+            id="manager-report-filter-from"
             type="date"
             value={filters.from}
             onChange={(e) =>
@@ -222,11 +228,12 @@ const ManagerReportFilter = ({
 
         {/* To Date */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="manager-report-filter-to" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             To Date
           </label>
 
           <input
+            id="manager-report-filter-to"
             type="date"
             value={filters.to}
             onChange={(e) =>

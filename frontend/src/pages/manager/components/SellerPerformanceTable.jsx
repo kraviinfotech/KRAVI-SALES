@@ -146,6 +146,7 @@ const SellerPerformanceTable = ({
                     <td className="px-4 py-3 text-center">
                       {row.sellerId && (
                         <button 
+                          type="button"
                           onClick={(e) => { e.stopPropagation(); onDeleteRecords(row.sellerId, row.seller); }}
                           className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
                           title="Delete records"

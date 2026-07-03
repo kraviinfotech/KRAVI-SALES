@@ -28,6 +28,7 @@ const RecordsToolbar = ({
         
         <div className="flex flex-wrap items-center gap-2">
           <button 
+            type="button"
             onClick={onExportExcel} 
             className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-xs"
           >
@@ -35,6 +36,7 @@ const RecordsToolbar = ({
             Excel
           </button>
           <button 
+            type="button"
             onClick={onExportPDF} 
             className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-xs"
           >
@@ -42,6 +44,7 @@ const RecordsToolbar = ({
             PDF
           </button>
           <button 
+            type="button"
             onClick={onPrint} 
             className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-xs"
           >
@@ -50,6 +53,7 @@ const RecordsToolbar = ({
           </button>
           <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
           <button 
+            type="button"
             onClick={onDownloadCSV} 
             className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm"
           >

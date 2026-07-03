@@ -102,15 +102,13 @@ const Sidebar = ({ onLogout }) => {
         </button>
         {mobileOpen && (
           <aside className="fixed inset-0 z-40 flex">
-            {/* Fully accessible backdrop overlay */}
-            <div 
-              className="fixed inset-0 bg-black/35 outline-none" 
-              role="button"
-              tabIndex={0}
+            {/* FIXED: Converted generic overlay backdrop mask to a semantic native HTML button */}
+            <button 
+              type="button"
+              className="fixed inset-0 bg-black/35 cursor-default focus:outline-none" 
               aria-label="Close menu layout overlay"
               onClick={toggleMenu}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleMenu()}
-            ></div>
+            />
             
             <div className="relative flex min-h-screen w-64 flex-col bg-slate-900 text-white shadow-xl">
               <div className="flex items-center justify-between px-4 border-b border-slate-800 h-14">

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ShieldCheck, UserRound, ArrowRight} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import GoogleLoginButton from './GoogleLoginButton';
@@ -33,9 +33,7 @@ const roleConfig = {
 
 const Login = () => {
   const { login, logout, googleLogin } = useAuth();
-  const [searchParams] = useSearchParams();
-  const initialRole = searchParams.get('role') === 'manager' ? 'manager' : 'seller';
-  const [selectedRole, setSelectedRole] = useState(initialRole);
+  const [selectedRole, setSelectedRole] = useState('seller');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -48,14 +46,7 @@ const Login = () => {
   const currentRole = roleConfig[selectedRole];
   const Icon = currentRole.icon;
 
-  // FIXED: Track selectedRole in a mutable Ref so the asynchronous Google Callback 
-  // can instantly access the fresh value without running a state calculation chain.
-  const selectedRoleRef = useRef(selectedRole);
-  useEffect(() => {
-    selectedRoleRef.current = selectedRole;
-  }, [selectedRole]);
-
-  // Initialize Google SDK cleanly on mount
+  // Initialize Google SDK on component mount
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (!clientId) {
@@ -67,14 +58,16 @@ const Login = () => {
     if (window.google?.accounts?.id) {
       window.google.accounts.id.initialize({
         client_id: clientId,
+        // Google execution contexts leverage implicit pass-through parameters safely
         callback: async (response) => {
-          if (response.credential) {
-            try {
-              setLoading(true);
-              const userData = await googleLogin(response.credential);
-              
-              // Read directly from the updated reference value safely
-              const activeRole = selectedRoleRef.current;
+          if (!response.credential) return;
+          
+          try {
+            setLoading(true);
+            const userData = await googleLogin(response.credential);
+            
+            // Clean up role evaluation by requesting state accurately
+            setSelectedRole((activeRole) => {
               const isAuthorized =
                 (activeRole === 'seller' && userData.role === 'seller') ||
                 (activeRole === 'manager' && (userData.role === 'manager' || userData.role === 'admin'));
@@ -82,20 +75,20 @@ const Login = () => {
               if (!isAuthorized) {
                 logout();
                 setError(`Please use a ${activeRole === 'manager' ? 'manager' : 'seller'} account for this form.`);
-                return;
+              } else {
+                navigate(roleRoutes[userData.role], { replace: true });
               }
-              navigate(roleRoutes[userData.role], { replace: true });
-            } catch (err) {
-              setError(err);
-            } finally {
-              setLoading(false);
-            }
+              return activeRole;
+            });
+          } catch (err) {
+            setError(err?.message || 'Google sign-in failed');
+          } finally {
+            setLoading(false);
           }
         }
       });
       setGoogleReady(true);
     }
-    // FIXED: Removed selectedRole out of dependencies to cut off the effect chains entirely.
   }, [googleLogin, logout, navigate]);
 
   const handleRoleChange = (role) => {
@@ -227,8 +220,9 @@ const Login = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Email or Mobile Number</label>
+                <label htmlFor="login-identifier" className="mb-1 block text-sm font-medium text-gray-700">Email or Mobile Number</label>
                 <input
+                  id="login-identifier"
                   type="text"
                   inputMode="email"
                   value={identifier}
@@ -241,9 +235,10 @@ const Login = () => {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
+                <label htmlFor="login-password" className="mb-1 block text-sm font-medium text-gray-700">Password</label>
                 <div className="relative">
                   <input
+                    id="login-password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

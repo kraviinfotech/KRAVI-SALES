@@ -16,6 +16,7 @@ const RecentCollectionsTable = ({ recentCollections, collectionsLoading, onViewA
           <h2 className="text-base font-black text-slate-950">Recent Collections</h2>
         </div>
         <button 
+          type="button"
           onClick={onViewAll}
           className="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition-colors"
         >

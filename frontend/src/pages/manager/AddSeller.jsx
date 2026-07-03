@@ -68,8 +68,9 @@ const SellerDetailsStep = ({
 }) => (
   <form onSubmit={onSubmit} className="space-y-4" autoComplete="off">
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+      <label htmlFor="seller-name" className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
       <input
+        id="seller-name"
         type="text"
         value={name}
         onChange={(e) => onFieldChange('name', e.target.value)}
@@ -79,8 +80,9 @@ const SellerDetailsStep = ({
       />
     </div>
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
+      <label htmlFor="seller-mobile" className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
       <input
+        id="seller-mobile"
         type="tel"
         value={mobile}
         onChange={(e) => onFieldChange('mobile', e.target.value)}
@@ -90,8 +92,9 @@ const SellerDetailsStep = ({
       />
     </div>
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+      <label htmlFor="seller-email" className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
       <input
+        id="seller-email"
         type="email"
         value={email}
         onChange={(e) => onFieldChange('email', e.target.value)}
@@ -102,9 +105,10 @@ const SellerDetailsStep = ({
       />
     </div>
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+      <label htmlFor="seller-password" className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
       <div className="relative">
         <input
+          id="seller-password"
           type={showPassword ? 'text' : 'password'}
           value={password}
           onChange={(e) => onPasswordChange(e.target.value)}
@@ -157,8 +161,9 @@ const OtpStep = ({ email, otp, loadingSubmit, onSubmit, onBack, onOtpChange }) =
     </div>
 
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Enter 6-Digit OTP *</label>
+      <label htmlFor="seller-otp" className="block text-sm font-medium text-gray-700 mb-1">Enter 6-Digit OTP *</label>
       <input
+        id="seller-otp"
         type="text"
         inputMode="numeric"
         maxLength={6}
@@ -204,6 +209,7 @@ const DoneStep = ({ onReset }) => (
       The seller can now log in with their email and password.
     </p>
     <button
+      type="button"
       onClick={onReset}
       className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2.5 rounded flex items-center justify-center gap-2 text-sm transition-colors"
     >

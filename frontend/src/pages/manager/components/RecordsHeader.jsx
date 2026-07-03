@@ -9,6 +9,7 @@ const RecordsHeader = ({ onAddNew }) => {
         <p className="text-sm font-medium text-slate-500">Manage and track all shop visits and sales</p>
       </div>
       <button 
+        type="button"
         onClick={onAddNew} 
         className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
       >

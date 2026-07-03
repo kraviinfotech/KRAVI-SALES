@@ -44,8 +44,9 @@ const ResetPassword = () => {
       {error && <p className="text-red-600 mb-4 text-center">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+          <label htmlFor="reset-password-new" className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
           <input
+            id="reset-password-new"
             type="password"
             value={newPassword}
             onChange={(e) => {
@@ -61,8 +62,9 @@ const ResetPassword = () => {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+          <label htmlFor="reset-password-confirm" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
           <input
+            id="reset-password-confirm"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}

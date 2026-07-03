@@ -13,6 +13,7 @@ const ReportsHeader = ({ activeTab, onTabChange }) => (
       {TABS.map((tab) => (
         <button
           key={tab}
+          type="button"
           onClick={() => onTabChange(tab)}
           className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
             activeTab === tab

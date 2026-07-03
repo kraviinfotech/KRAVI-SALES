@@ -28,9 +28,10 @@ const ReportsChartsSection = ({ chartData, sellerPerformance, shopPerformance, c
     <ChartCard icon={TrendingUp} iconClass="text-blue-700" title="Sales Trend Chart">
       <LineChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-        <XAxis dataKey="name" fontSize={10} fontWeight="bold" stroke="#64748b" axisLine={false} tickLine={false} />
-        <YAxis fontSize={10} fontWeight="bold" stroke="#64748b" axisLine={false} tickLine={false} tickFormatter={v => `₹${v}`} />
-        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
+        {/* FIXED: Increased fontSize to 12 for readable labels */}
+        <XAxis dataKey="name" fontSize={12} fontWeight="bold" stroke="#64748b" axisLine={false} tickLine={false} />
+        <YAxis fontSize={12} fontWeight="bold" stroke="#64748b" axisLine={false} tickLine={false} tickFormatter={v => `₹${v}`} />
+        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px' }} />
         <Line type="monotone" dataKey="sales" stroke="#1D4ED8" strokeWidth={3} dot={{ r: 4, fill: '#1D4ED8' }} activeDot={{ r: 6 }} />
       </LineChart>
     </ChartCard>
@@ -39,12 +40,12 @@ const ReportsChartsSection = ({ chartData, sellerPerformance, shopPerformance, c
     <ChartCard icon={PieIcon} iconClass="text-emerald-600" title="Category Wise Sales">
       <PieChart>
         <Pie data={categoryWiseData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-          {categoryWiseData.map((_, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          {categoryWiseData.map((item, index) => (
+            <Cell key={`${item.name || 'category'}-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>
-        <Tooltip />
-        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+        <Tooltip contentStyle={{ fontSize: '12px' }} />
+        <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
       </PieChart>
     </ChartCard>
 
@@ -52,9 +53,10 @@ const ReportsChartsSection = ({ chartData, sellerPerformance, shopPerformance, c
     <ChartCard icon={Users} iconClass="text-violet-600" title="Seller Performance">
       <BarChart data={sellerPerformance} layout="vertical">
         <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-        <XAxis type="number" fontSize={10} stroke="#64748b" />
-        <YAxis dataKey="name" type="category" fontSize={10} fontWeight="bold" stroke="#64748b" width={80} />
-        <Tooltip />
+        {/* FIXED: Increased fontSize to 12 for vertical layout tracking */}
+        <XAxis type="number" fontSize={12} stroke="#64748b" />
+        <YAxis dataKey="name" type="category" fontSize={12} fontWeight="bold" stroke="#64748b" width={90} />
+        <Tooltip contentStyle={{ fontSize: '12px' }} />
         <Bar dataKey="sales" fill="#8B5CF6" radius={[0, 4, 4, 0]} name="Revenue" />
         <Bar dataKey="records" fill="#DDD6FE" radius={[0, 4, 4, 0]} name="Records" />
       </BarChart>
@@ -69,16 +71,18 @@ const ReportsChartsSection = ({ chartData, sellerPerformance, shopPerformance, c
           nameKey="name"
           cx="50%"
           cy="50%"
-          outerRadius={110}
-          innerRadius={50}
+          outerRadius={100}
+          innerRadius={45}
           paddingAngle={3}
+          // FIXED: Adjusted inline fallback string label sizing slightly for symmetry
           label={({ name, percent }) =>
-            percent > 0.04 ? `${name.slice(0, 12)}… ${(percent * 100).toFixed(1)}%` : ''
+            percent > 0.05 ? `${name.slice(0, 10)}… ${(percent * 100).toFixed(0)}%` : ''
           }
           labelLine={false}
+          style={{ fontSize: '12px', fontWeight: 600 }}
         >
-          {shopPerformance.map((_, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          {shopPerformance.map((item, index) => (
+            <Cell key={`${item.name || 'shop'}-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>
         <Tooltip
@@ -88,8 +92,9 @@ const ReportsChartsSection = ({ chartData, sellerPerformance, shopPerformance, c
         <Legend
           iconType="circle"
           iconSize={10}
+          // FIXED: Bumped inline style font size to 12 to resolve the accessibility bug cleanly
           formatter={(value) => (
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#334155' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>
               {value.slice(0, 18)}{value.length > 18 ? '…' : ''}
             </span>
           )}
