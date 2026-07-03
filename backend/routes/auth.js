@@ -142,10 +142,7 @@ router.post(
     body('acceptedTerms')
       .custom((value) => value === true || value === 'true')
       .withMessage('You must accept the Terms & Privacy Policy'),
-    body('mode')
-      .optional()
-      .isIn(['trial', 'buy'])
-      .withMessage('Mode must be trial or buy')
+
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -154,7 +151,7 @@ router.post(
     }
 
     try {
-      const { name, email, mobile, password, acceptedTerms, mode = 'trial' } = req.body;
+const { name, email, mobile, password, acceptedTerms } = req.body;
       const normalizedEmail = email.trim().toLowerCase();
       const normalizedMobile = mobile.trim();
       const agreedToTerms = acceptedTerms === true || acceptedTerms === 'true';
@@ -169,8 +166,13 @@ router.post(
       registrationOtpStore.set(normalizedEmail, {
         otp,
         expiresAt,
-        formData: { name, email: normalizedEmail, mobile: normalizedMobile, password, acceptedTerms: agreedToTerms, mode }
-      });
+formData: {
+  name,
+  email: normalizedEmail,
+  mobile: normalizedMobile,
+  password,
+  acceptedTerms: agreedToTerms
+}      });
 
       try {
         await sendEmail({
@@ -197,10 +199,7 @@ router.post(
   [
     body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
     body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
-    body('mode')
-      .optional()
-      .isIn(['trial', 'buy'])
-      .withMessage('Mode must be trial or buy')
+  
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -208,7 +207,7 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, otp, mode = 'trial' } = req.body;
+const { email, otp } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
     const entry = registrationOtpStore.get(normalizedEmail);
 
@@ -244,9 +243,7 @@ router.post(
       });
       await user.save();
 
-      if (mode === 'trial') {
-        await assignTrialSubscription(user._id);
-      }
+      await assignTrialSubscription(user._id);
 
       sendEmail({
         to: normalizedEmail,

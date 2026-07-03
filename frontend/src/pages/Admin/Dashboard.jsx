@@ -78,11 +78,10 @@ const Dashboard = () => {
                 type="button"
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  activeFilter === filter
-                    ? 'bg-[#6C3EF4] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${activeFilter === filter
+                  ? 'bg-[#6C3EF4] text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
               >
                 {filter}
               </button>
@@ -97,8 +96,15 @@ const Dashboard = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, idx) => (
-          <StatCard key={idx} {...stat} />
+        {stats.map((stat) => (
+          <StatCard
+            key={stat.title}
+            title={stat.title}
+            value={stat.value}
+            icon={stat.icon}
+            change={stat.change}
+            type={stat.type}
+          />
         ))}
       </div>
 
@@ -106,28 +112,28 @@ const Dashboard = () => {
         {/* Main Chart Placeholder */}
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 min-h-[400px]">
           <h3 className="font-bold text-gray-800 mb-6">Revenue Growth</h3>
-          <div className="h-64 flex items-end justify-between gap-2">{ /* simple visual using monthlyRevenue if available */ }
+          <div className="h-64 flex items-end justify-between gap-2">{ /* simple visual using monthlyRevenue if available */}
             {(overview && overview.monthlyRevenue) ?
               (() => {
                 const base = overview.monthlyRevenue / 12 || 10;
                 const arr = Array.from({ length: 12 }).map((_, i) => Math.min(100, Math.round((base * (i + 1)) / Math.max(1, base) * 10)));
                 return arr.map((h, i) => (
                   <div key={i} className="w-full bg-[#6C3EF4]/10 rounded-t-lg relative group">
-                    <div 
-                      style={{ height: `${h}%` }} 
+                    <div
+                      style={{ height: `${h}%` }}
                       className="bg-[#6C3EF4] w-full rounded-t-lg transition-all duration-500 group-hover:bg-[#5a32cc]"
                     />
                   </div>
                 ));
               })()
-            : [40, 60, 45, 70, 85, 55, 90, 100, 80, 95, 110, 120].map((h, i) => (
-              <div key={i} className="w-full bg-[#6C3EF4]/10 rounded-t-lg relative group">
-                <div 
-                  style={{ height: `${h}%` }} 
-                  className="bg-[#6C3EF4] w-full rounded-t-lg transition-all duration-500 group-hover:bg-[#5a32cc]"
-                />
-              </div>
-            ))}
+              : [40, 60, 45, 70, 85, 55, 90, 100, 80, 95, 110, 120].map((h, i) => (
+                <div key={i} className="w-full bg-[#6C3EF4]/10 rounded-t-lg relative group">
+                  <div
+                    style={{ height: `${h}%` }}
+                    className="bg-[#6C3EF4] w-full rounded-t-lg transition-all duration-500 group-hover:bg-[#5a32cc]"
+                  />
+                </div>
+              ))}
           </div>
         </div>
 
@@ -187,7 +193,7 @@ const Dashboard = () => {
                 <td className="px-6 py-4"><span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Active</span></td>
                 <td className="px-6 py-4 text-sm text-gray-500">{new Date(c.createdAt).toLocaleDateString()}</td>
               </tr>
-            )) : [1,2,3].map((i) => (
+            )) : [1, 2, 3].map((i) => (
               <tr key={i} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 font-medium">TechNova Solutions</td>
                 <td className="px-6 py-4 text-sm text-gray-600">Enterprise</td>
