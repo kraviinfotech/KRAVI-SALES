@@ -246,7 +246,11 @@ const Reports = () => {
   const stats = useMemo(() => {
     const totalSales = (records || []).reduce((sum, r) => sum + Number(r.totalAmount || 0), 0);
     const totalItems = (records || []).reduce((sum, r) => sum + (r.items?.reduce((is, i) => is + Number(i.quantity || 0), 0) || 0), 0);
-    const uniqueShops = new Set((records || []).map(r => r?.shopName).filter(Boolean)).size;
+    const uniqueShops = new Set(
+      (records || []).flatMap((record) =>
+        record?.shopName ? [record.shopName] : []
+      )
+    ).size;
     return { totalSales, totalItems, uniqueShops, totalRecords: (records || []).length };
   }, [records]);
 

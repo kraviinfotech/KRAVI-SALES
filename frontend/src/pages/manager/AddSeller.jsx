@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useReducer, useEffect } from 'react';
 import API from '../../api/axios';
 import {
   UserPlus, Loader2, AlertCircle, CheckCircle2,
@@ -12,41 +12,136 @@ const STEPS = ['details', 'otp', 'done'];
 let cachedSellers = null;
 let hasFetchedSellers = false;
 
+
+const createInitialState = () => ({
+  name: '',
+  mobile: '',
+  email: '',
+  password: '',
+  passwordStrength: 'Weak',
+  showPassword: false,
+  step: 'details',
+  otp: '',
+  sellers: cachedSellers || [],
+  loadingList: !hasFetchedSellers,
+  visiblePasswordSellerId: null,
+  locationDialog: {
+    open: false,
+    loading: false,
+    error: '',
+    location: null,
+  },
+  loadingSubmit: false,
+  error: '',
+  success: '',
+});
+
+const addSellerReducer = (state, action) => {
+  switch (action.type) {
+    case 'SET_FIELD':
+      return {
+        ...state,
+        [action.field]: action.value,
+      };
+
+    case 'PATCH':
+      return {
+        ...state,
+        ...action.payload,
+      };
+
+    case 'PASSWORD_CHANGED':
+      return {
+        ...state,
+        password: action.value,
+        passwordStrength: getPasswordStrength(action.value),
+      };
+
+    case 'RESET_FORM':
+      return {
+        ...state,
+        name: '',
+        mobile: '',
+        email: '',
+        password: '',
+        passwordStrength: 'Weak',
+        showPassword: false,
+        step: 'details',
+        otp: '',
+        error: '',
+        success: '',
+        locationDialog: {
+          open: false,
+          loading: false,
+          error: '',
+          location: null,
+        },
+      };
+
+    default:
+      return state;
+  }
+};
+
+const StepBadge = ({ num, label, active, done }) => (
+  <div className="flex items-center gap-2">
+    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-colors ${
+      done ? 'bg-emerald-500 text-white' : active ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-400'
+    }`}>
+      {done ? <CheckCircle2 size={14} /> : num}
+    </div>
+    <span className={`text-xs font-bold hidden sm:block ${
+      active ? 'text-blue-700' : done ? 'text-emerald-600' : 'text-gray-400'
+    }`}>
+      {label}
+    </span>
+  </div>
+);
+
 const AddSeller = () => {
-  // Form fields
-  const [name, setName] = useState('');
-  const [mobile, setMobile] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordStrength, setPasswordStrength] = useState('Weak');
-  const [showPassword, setShowPassword] = useState(false);
+  const [state, dispatch] = useReducer(
+    addSellerReducer,
+    undefined,
+    createInitialState
+  );
 
-  // OTP step
-  const [step, setStep] = useState('details'); // 'details' | 'otp' | 'done'
-  const [otp, setOtp] = useState('');
+  const {
+    name,
+    mobile,
+    email,
+    password,
+    passwordStrength,
+    showPassword,
+    step,
+    otp,
+    sellers,
+    loadingList,
+    visiblePasswordSellerId,
+    locationDialog,
+    loadingSubmit,
+    error,
+    success,
+  } = state;
 
-  // Sellers list
-  const [sellers, setSellers] = useState(cachedSellers || []);
-  const [loadingList, setLoadingList] = useState(!hasFetchedSellers);
-  const [visiblePasswordSellerId, setVisiblePasswordSellerId] = useState(null);
-  const [locationDialog, setLocationDialog] = useState({ open: false, loading: false, error: '', location: null });
-
-  // UI states
-  const [loadingSubmit, setLoadingSubmit] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const setField = (field, value) => {
+    dispatch({
+      type: 'SET_FIELD',
+      field,
+      value,
+    });
+  };
 
   const fetchSellers = async (quiet = false) => {
-    if (!quiet) setLoadingList(true);
+    if (!quiet) setField('loadingList', true);
     try {
       const response = await API.get('/sellers');
-      setSellers(response.data);
+      setField('sellers', response.data);
       cachedSellers = response.data;
       hasFetchedSellers = true;
     } catch (err) {
       console.error(err);
     } finally {
-      setLoadingList(false);
+      setField('loadingList', false);
     }
   };
 
@@ -57,24 +152,16 @@ const AddSeller = () => {
   }, []);
 
   const resetForm = () => {
-    setName('');
-    setMobile('');
-    setEmail('');
-    setPassword('');
-    setOtp('');
-    setStep('details');
-    setError('');
-    setSuccess('');
-    setLocationDialog({ open: false, loading: false, error: '', location: null });
+    dispatch({ type: 'RESET_FORM' });
   };
 
   const handleShowLocation = async (sellerId) => {
-    setLocationDialog({ open: true, loading: true, error: '', location: null });
+    setField('locationDialog', { open: true, loading: true, error: '', location: null });
     try {
       const res = await API.get(`/sellers/${sellerId}/location`);
-      setLocationDialog({ open: true, loading: false, error: '', location: res.data });
+      setField('locationDialog', { open: true, loading: false, error: '', location: res.data });
     } catch (err) {
-      setLocationDialog({
+      setField('locationDialog', {
         open: true,
         loading: false,
         error: err.response?.data?.message || 'Unable to load location data',
@@ -86,73 +173,61 @@ const AddSeller = () => {
   // Step 1 – Send OTP
   const handleSendOtp = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setField('error', '');
+    setField('success', '');
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Please enter a valid email address.');
+      setField('error', 'Please enter a valid email address.');
       return;
     }
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
-      setError(passwordValidation.errors.join(' '));
+      setField('error', passwordValidation.errors.join(' '));
       return;
     }
 
-    setLoadingSubmit(true);
+    setField('loadingSubmit', true);
     try {
       const res = await API.post('/sellers/send-otp', { name, mobile, email, password });
-      setSuccess(res.data.message || 'OTP sent!');
-      setStep('otp');
+      setField('success', res.data.message || 'OTP sent!');
+      setField('step', 'otp');
     } catch (err) {
       if (!err.response) {
-        setError('Network Error: Cannot connect to the server.');
+        setField('error', 'Network Error: Cannot connect to the server.');
       } else {
-        setError(err.response.data?.message || 'Failed to send OTP.');
+        setField('error', err.response.data?.message || 'Failed to send OTP.');
       }
     } finally {
-      setLoadingSubmit(false);
+      setField('loadingSubmit', false);
     }
   };
 
   // Step 2 – Verify OTP and create account
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    setError('');
+    setField('error', '');
     if (otp.trim().length !== 6) {
-      setError('Please enter the 6-digit OTP.');
+      setField('error', 'Please enter the 6-digit OTP.');
       return;
     }
-    setLoadingSubmit(true);
+    setField('loadingSubmit', true);
     try {
       await API.post('/sellers/verify-otp', { email, otp: otp.trim() });
-      setStep('done');
-      setSuccess('Seller account created successfully!');
+      setField('step', 'done');
+      setField('success', 'Seller account created successfully!');
       fetchSellers();
     } catch (err) {
       if (!err.response) {
-        setError('Network Error: Cannot connect to the server.');
+        setField('error', 'Network Error: Cannot connect to the server.');
       } else {
-        setError(err.response.data?.message || 'OTP verification failed.');
+        setField('error', err.response.data?.message || 'OTP verification failed.');
       }
     } finally {
-      setLoadingSubmit(false);
+      setField('loadingSubmit', false);
     }
   };
 
-// Step indicator badge (module scope to avoid re-definition on each render)
-const StepBadge = ({ num, label, active, done }) => (
-  <div className={`flex items-center gap-2`}>
-    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-colors ${
-      done ? 'bg-emerald-500 text-white' : active ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-400'
-    }`}>
-      {done ? <CheckCircle2 size={14} /> : num}
-    </div>
-    <span className={`text-xs font-bold hidden sm:block ${active ? 'text-blue-700' : done ? 'text-emerald-600' : 'text-gray-400'}`}>
-      {label}
-    </span>
-  </div>
-);
+
 
   return (
     <>
@@ -197,7 +272,7 @@ const StepBadge = ({ num, label, active, done }) => (
                 <input
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => setField('name', e.target.value)}
                   autoComplete="off"
                   className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
@@ -208,7 +283,7 @@ const StepBadge = ({ num, label, active, done }) => (
                 <input
                   type="tel"
                   value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
+                  onChange={(e) => setField('mobile', e.target.value)}
                   autoComplete="off"
                   className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
@@ -219,7 +294,7 @@ const StepBadge = ({ num, label, active, done }) => (
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => setField('email', e.target.value)}
                   autoComplete="off"
                   className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="seller@example.com"
@@ -232,10 +307,12 @@ const StepBadge = ({ num, label, active, done }) => (
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setPasswordStrength(getPasswordStrength(e.target.value));
-                    }}
+                    onChange={(e) =>
+                      dispatch({
+                        type: 'PASSWORD_CHANGED',
+                        value: e.target.value,
+                      })
+                    }
                     autoComplete="new-password"
                     className="w-full rounded border border-gray-300 bg-white px-3 py-2 pr-10 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     placeholder="Min. 8 chars, uppercase, number, symbol"
@@ -243,7 +320,7 @@ const StepBadge = ({ num, label, active, done }) => (
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(p => !p)}
+                    onClick={() => setField('showPassword', !showPassword)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -292,7 +369,7 @@ const StepBadge = ({ num, label, active, done }) => (
                   inputMode="numeric"
                   maxLength={6}
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                  onChange={(e) => setField('otp', e.target.value.replace(/\D/g, ''))}
                   className="w-full rounded border border-gray-300 bg-white px-3 py-3 text-center text-2xl font-black tracking-[0.4em] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="_ _ _ _ _ _"
                   required
@@ -314,7 +391,12 @@ const StepBadge = ({ num, label, active, done }) => (
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setStep('details'); setOtp(''); setError(''); setSuccess(''); }}
+                  onClick={() => {
+                    setField('step', 'details');
+                    setField('otp', '');
+                    setField('error', '');
+                    setField('success', '');
+                  }}
                   className="w-full rounded border border-gray-200 text-gray-600 py-2 text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-1"
                 >
                   <ArrowLeft size={14} /> Back / Resend OTP
@@ -385,7 +467,12 @@ const StepBadge = ({ num, label, active, done }) => (
                           {seller.password ? (
                             <button
                               type="button"
-                              onClick={() => setVisiblePasswordSellerId(prev => prev === seller._id ? null : seller._id)}
+                              onClick={() =>
+                                setField(
+                                  'visiblePasswordSellerId',
+                                  visiblePasswordSellerId === seller._id ? null : seller._id
+                                )
+                              }
                               className="text-gray-500 hover:text-gray-800"
                             >
                               {visiblePasswordSellerId === seller._id ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -427,7 +514,7 @@ const StepBadge = ({ num, label, active, done }) => (
                   </div>
                   <button
                     type="button"
-                    onClick={() => setLocationDialog({ open: false, loading: false, error: '', location: null })}
+                    onClick={() => setField('locationDialog', { open: false, loading: false, error: '', location: null })}
                     className="rounded-full bg-slate-100 p-2 text-slate-600 hover:bg-slate-200"
                   >
                     ✕
