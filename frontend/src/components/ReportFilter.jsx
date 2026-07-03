@@ -1,6 +1,10 @@
 import React, { useEffect, useReducer } from 'react';
 import { RotateCcw, Download } from 'lucide-react';
 
+// Static immutable references to prevent re-renders in children comparing props
+const EMPTY_SELLERS = [];
+const EMPTY_FILTERS = {};
+
 const createFilterState = (filters = {}) => ({
   sellerId: filters.sellerId || '',
   sellerName: filters.sellerName || '',
@@ -35,8 +39,8 @@ const filterReducer = (state, action) => {
 const ReportFilter = ({
   onFilter,
   onDownloadCSV,
-  sellers = [],
-  filters = {},
+  sellers = EMPTY_SELLERS, // Safely handles default fallback array identity
+  filters = EMPTY_FILTERS, // Safely handles default fallback object identity
 }) => {
   const [filterState, dispatch] = useReducer(
     filterReducer,
@@ -297,4 +301,3 @@ const ReportFilter = ({
 };
 
 export default ReportFilter;
-

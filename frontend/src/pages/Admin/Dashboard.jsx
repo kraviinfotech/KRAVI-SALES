@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { ArrowUpRight, ArrowDownRight, Users, Building, Activity, IndianRupee, Filter, Calendar } from 'lucide-react';
 import API from '../../api/axios';
 
@@ -20,29 +20,31 @@ const StatCard = ({ title, value, change, icon: Icon, type }) => (
   </div>
 );
 
+const formatCurrency = (num) => {
+  if (typeof num !== 'number') return num;
+  if (num >= 10000000) return `₹${(num / 10000000).toFixed(2)}Cr`;
+  if (num >= 100000) return `₹${(num / 100000).toFixed(2)}L`;
+  return `₹${num.toLocaleString()}`;
+};
+
 const Dashboard = () => {
   const [activeFilter, setActiveFilter] = useState('All Time');
   const [dateRange, setDateRange] = useState('');
-  const [loading, setLoading] = useState(false);
   const [overview, setOverview] = useState(null);
-
-  const formatCurrency = (num) => {
-    if (typeof num !== 'number') return num;
-    if (num >= 10000000) return `₹${(num / 10000000).toFixed(2)}Cr`;
-    if (num >= 100000) return `₹${(num / 100000).toFixed(2)}L`;
-    return `₹${num.toLocaleString()}`;
-  };
+  
+  // FIXED: Converted from useState to useRef because 'loading' is never rendered in the UI
+  const loadingRef = useRef(false);
 
   useEffect(() => {
     const loadOverview = async () => {
-      setLoading(true);
+      loadingRef.current = true;
       try {
         const res = await API.get('/admin/overview');
         setOverview(res.data);
       } catch (err) {
         console.error('Failed to load overview', err);
       } finally {
-        setLoading(false);
+        loadingRef.current = false;
       }
     };
     loadOverview();
@@ -106,8 +108,8 @@ const Dashboard = () => {
         {/* Main Chart Placeholder */}
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 min-h-[400px]">
           <h3 className="font-bold text-gray-800 mb-6">Revenue Growth</h3>
-          <div className="h-64 flex items-end justify-between gap-2">{ /* simple visual using monthlyRevenue if available */ }
-                {(overview && overview.monthlyRevenue) ?
+          <div className="h-64 flex items-end justify-between gap-2">
+            {(overview && overview.monthlyRevenue) ?
               (() => {
                 const base = overview.monthlyRevenue / 12 || 10;
                 const arr = Array.from({ length: 12 }).map((_, i) => Math.min(100, Math.round((base * (i + 1)) / Math.max(1, base) * 10)));
@@ -188,7 +190,7 @@ const Dashboard = () => {
                 <td className="px-6 py-4 text-sm text-gray-500">{new Date(c.createdAt).toLocaleDateString()}</td>
               </tr>
             )) : [1,2,3].map((i) => (
-                  <tr key={`sample-company-${i}`} className="hover:bg-gray-50 transition-colors">
+              <tr key={`sample-company-${i}`} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 font-medium">TechNova Solutions</td>
                 <td className="px-6 py-4 text-sm text-gray-600">Enterprise</td>
                 <td className="px-6 py-4"><span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Active</span></td>

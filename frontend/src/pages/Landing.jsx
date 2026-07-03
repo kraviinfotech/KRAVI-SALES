@@ -22,7 +22,7 @@ const Landing = () => {
             One platform for managers, sellers, and admins to monitor field performance, manage subscriptions, and keep compliance aligned with easy onboarding.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link to="/login" className="inline-flex rounded-full bg-cyan-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/30 transition hover:bg-cyan-400">
+            <Link to="/login" className="inline-flex rounded-full bg-cyan-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:bg-cyan-400">
               Login
             </Link>
             <Link to="/register?role=manager" className="inline-flex rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20">

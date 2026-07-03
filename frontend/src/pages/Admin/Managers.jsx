@@ -1,6 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Edit2, Eye, Filter, RotateCcw, Search, Trash2, User, Users, X, XCircle } from 'lucide-react';
 import API from '../../api/axios';
+
+const MANAGERS_QUERY_KEY = ['admin', 'managers'];
+
+const fetchManagers = async () => {
+  const res = await API.get('/admin/managers');
+  return Array.isArray(res.data) ? res.data : [];
+};
 
 const SummaryCard = ({ title, value, icon: Icon, className }) => (
   <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -89,15 +97,19 @@ const ManagerDrawer = ({ manager, onClose }) => manager ? (
   </div>
 ) : null;
 
+const reset = (m) => API.post('/admin/reset-manager-password', { email: m.email }).then(() => alert(`Password reset link sent to ${m.email}`)).catch(() => alert('Failed to reset password'));
+
 const Managers = () => {
-  const [managers,setManagers]=useState([]); const [loading,setLoading]=useState(false);
+  const queryClient = useQueryClient();
   const [searchTerm,setSearchTerm]=useState(''); const [selectedManager,setSelectedManager]=useState(null);
-  useEffect(()=>{ setLoading(true); API.get('/admin/managers').then(r=>setManagers(r.data)).catch(e=>console.error(e)).finally(()=>setLoading(false)); },[]);
+  const { data: managers = [], isPending: loading } = useQuery({
+    queryKey: MANAGERS_QUERY_KEY,
+    queryFn: fetchManagers,
+  });
   const filtered=useMemo(()=>managers.filter(m=>`${m.name||''} ${m.email||''} ${m.mobile||''}`.toLowerCase().includes(searchTerm.toLowerCase())),[managers,searchTerm]);
-  const edit=(m)=>{ const payload={name:window.prompt('Name',m.name)||m.name,designation:window.prompt('Designation',m.designation||'Manager')||m.designation,email:window.prompt('Email',m.email)||m.email,mobile:window.prompt('Phone',m.mobile)||m.mobile}; API.patch(`/admin/managers/${m._id}`,payload).then(()=>setManagers(p=>p.map(x=>x._id===m._id?{...x,...payload}:x))).catch(()=>alert('Failed to update manager')); };
-  const reset=(m)=>API.post('/admin/reset-manager-password',{email:m.email}).then(()=>alert(`Password reset link sent to ${m.email}`)).catch(()=>alert('Failed to reset password'));
-  const toggle=(m)=>{const isActive=!m.isActive;if(!confirm(`${isActive?'Activate':'Deactivate'} ${m.name}?`))return;API.patch(`/admin/managers/${m._id}`,{isActive}).then(()=>setManagers(p=>p.map(x=>x._id===m._id?{...x,isActive}:x)));};
-  const remove=(m)=>{if(!confirm(`Delete ${m.name}? This cannot be undone.`))return;API.delete(`/admin/managers/${m._id}`).then(()=>{setManagers(p=>p.filter(x=>x._id!==m._id));setSelectedManager(null);});};
+  const edit=(m)=>{ const payload={name:window.prompt('Name',m.name)||m.name,designation:window.prompt('Designation',m.designation||'Manager')||m.designation,email:window.prompt('Email',m.email)||m.email,mobile:window.prompt('Phone',m.mobile)||m.mobile}; API.patch(`/admin/managers/${m._id}`,payload).then((res)=>{const updated=res.data||{...m,...payload};queryClient.setQueryData(MANAGERS_QUERY_KEY,(prev=[])=>prev.map(x=>x._id===m._id?updated:x));setSelectedManager(current=>current?._id===m._id?updated:current);}).catch(()=>alert('Failed to update manager')); };
+  const toggle=(m)=>{const isActive=!m.isActive;if(!confirm(`${isActive?'Activate':'Deactivate'} ${m.name}?`))return;API.patch(`/admin/managers/${m._id}`,{isActive}).then(()=>{queryClient.setQueryData(MANAGERS_QUERY_KEY,(prev=[])=>prev.map(x=>x._id===m._id?{...x,isActive}:x));setSelectedManager(current=>current?._id===m._id?{...current,isActive}:current);});};
+  const remove=(m)=>{if(!confirm(`Delete ${m.name}? This cannot be undone.`))return;API.delete(`/admin/managers/${m._id}`).then(()=>{queryClient.setQueryData(MANAGERS_QUERY_KEY,(prev=[])=>prev.filter(x=>x._id!==m._id));setSelectedManager(null);});};
   const actions={onView:setSelectedManager,onEdit:edit,onReset:reset,onToggle:toggle,onDelete:remove};
   return <div className="space-y-6"><div className="flex justify-between"><h1 className="text-2xl font-bold">Manager Management</h1><button type="button" onClick={()=>window.location.href='/admin/add-manager'} className="rounded-xl bg-[#6C3EF4] px-4 py-2 font-semibold text-white">+ Add Manager</button></div><ManagersSummary managers={managers}/><ManagerSearch value={searchTerm} onChange={setSearchTerm}/><ManagersTable managers={filtered} loading={loading} actions={actions}/><ManagerDrawer manager={selectedManager} onClose={()=>setSelectedManager(null)}/></div>;
 };

@@ -1,23 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ChevronDown, ChevronUp, MapPin, X, Image } from 'lucide-react';
 import { format } from 'date-fns';
+
+const currencyFormatter = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  maximumFractionDigits: 0
+});
 
 const SalesTable = ({ records }) => {
   const [expandedId, setExpandedId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const dialogRef = useRef(null);
 
-  const currencyFormatter = new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0
-  });
+  // FIXED: Handle modal open/close imperatively inside the user actions directly
+  const handleOpenImage = (imgUrl) => {
+    setSelectedImage(imgUrl);
+    if (dialogRef.current) {
+      dialogRef.current.showModal();
+    }
+  };
+
+  const handleCloseImage = () => {
+    setSelectedImage(null);
+    if (dialogRef.current) {
+      dialogRef.current.close();
+    }
+  };
 
   const toggleExpand = (id) => {
-    if (expandedId === id) {
-      setExpandedId(null);
-    } else {
-      setExpandedId(id);
-    }
+    setExpandedId(prev => (prev === id ? null : id));
   };
 
   if (!records || records.length === 0) {
@@ -56,7 +68,11 @@ const SalesTable = ({ records }) => {
                 <React.Fragment key={record._id}>
                   <tr
                     onClick={() => toggleExpand(record._id)}
-                    className={`hover:bg-blue-50/40 transition-colors cursor-pointer text-sm ${isExpanded ? 'bg-blue-50/30' : ''}`}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleExpand(record._id)}
+                    tabIndex={0}
+                    role="button"
+                    aria-expanded={isExpanded}
+                    className={`hover:bg-blue-50/40 transition-colors cursor-pointer text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 ${isExpanded ? 'bg-blue-50/30' : ''}`}
                   >
                     <td className="p-4 font-bold text-slate-900">{sellerName}</td>
                     <td className="p-4 text-slate-700 font-semibold">{record.shopName}</td>
@@ -81,12 +97,10 @@ const SalesTable = ({ records }) => {
                     </td>
                   </tr>
 
-                  {/* Expanded detail row */}
                   {isExpanded && (
                     <tr className="bg-slate-50/80">
                       <td colSpan="8" className="p-6 border-t border-slate-200">
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                          {/* Column 1: Visit Info */}
                           <div>
                             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Visit Details</h4>
                             <div className="space-y-1.5 text-xs text-gray-700">
@@ -107,18 +121,17 @@ const SalesTable = ({ records }) => {
                               <p className="flex items-center space-x-1 mt-1 text-primary">
                                 <MapPin size={12} />
                                 <a
-                                  href={`https://www.google.com/maps/search/?api=1&query=${record.latitude},${record.longitude}`}
+                                  href={`https://maps.google.com/?q=${record.latitude},${record.longitude}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="underline hover:text-primary-dark"
                                 >
-                                  View Location ({record.latitude.toFixed(5)}, {record.longitude.toFixed(5)})
+                                  View Location ({record.latitude?.toFixed(5) || 0}, {record.longitude?.toFixed(5) || 0})
                                 </a>
                               </p>
                             </div>
                           </div>
 
-                          {/* Column 2: Products list */}
                           <div>
                             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Items Ordered</h4>
                             <div className="bg-white rounded border border-gray-200 overflow-hidden">
@@ -158,21 +171,22 @@ const SalesTable = ({ records }) => {
                             </div>
                           </div>
 
-                          {/* Column 3: Captured Media */}
                           <div>
                             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Media Files</h4>
                             <div className="grid grid-cols-2 gap-3">
-                              {/* Shop Image */}
                               <div className="flex flex-col items-center">
                                 <span className="text-[10px] font-bold text-gray-500 mb-1">Shop Photo</span>
                                 {record.shopImage ? (
-                                  <div 
-                                    onClick={() => setSelectedImage(record.shopImage)}
-                                    className="w-full h-24 rounded border border-gray-200 overflow-hidden cursor-pointer hover:opacity-90 hover:border-blue-500 transition-all bg-gray-100 flex items-center justify-center relative group"
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenImage(record.shopImage)}
+                                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleOpenImage(record.shopImage)}
+                                    aria-label="View shop photo"
+                                    className="w-full h-24 rounded border border-gray-200 overflow-hidden cursor-pointer hover:opacity-90 hover:border-blue-500 transition-all bg-gray-100 flex items-center justify-center relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                   >
-                                    <img src={record.shopImage} alt="Shop" className="w-full h-full object-cover" />
+                                    <img src={record.shopImage} alt="Shop Thumbnail" className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-opacity">View</div>
-                                  </div>
+                                  </button>
                                 ) : (
                                   <div className="w-full h-24 rounded border border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-400">
                                     <Image size={18} />
@@ -181,17 +195,19 @@ const SalesTable = ({ records }) => {
                                 )}
                               </div>
 
-                              {/* Payment Proof */}
                               <div className="flex flex-col items-center">
                                 <span className="text-[10px] font-bold text-gray-500 mb-1">Payment Proof</span>
                                 {record.scannerPhoto ? (
-                                  <div 
-                                    onClick={() => setSelectedImage(record.scannerPhoto)}
-                                    className="w-full h-24 rounded border border-gray-200 overflow-hidden cursor-pointer hover:opacity-90 hover:border-blue-500 transition-all bg-gray-100 flex items-center justify-center relative group"
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenImage(record.scannerPhoto)}
+                                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleOpenImage(record.scannerPhoto)}
+                                    aria-label="View payment proof"
+                                    className="w-full h-24 rounded border border-gray-200 overflow-hidden cursor-pointer hover:opacity-90 hover:border-blue-500 transition-all bg-gray-100 flex items-center justify-center relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                   >
-                                    <img src={record.scannerPhoto} alt="Payment Proof" className="w-full h-full object-cover" />
+                                    <img src={record.scannerPhoto} alt="Payment Proof Thumbnail" className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-opacity">View</div>
-                                  </div>
+                                  </button>
                                 ) : record.paymentMethod === 'Online' ? (
                                   <div className="w-full h-24 rounded border border-dashed border-red-200 bg-red-50/50 flex flex-col items-center justify-center text-red-400">
                                     <Image size={18} />
@@ -217,28 +233,37 @@ const SalesTable = ({ records }) => {
         </table>
       </div>
 
-      {/* Lightbox Modal for Image Preview */}
-      {selectedImage && (
+      <dialog
+        ref={dialogRef}
+        aria-label="Image Preview"
+        className="backdrop:bg-black/80 backdrop:backdrop-blur-xs rounded-lg p-0 shadow-2xl overflow-hidden"
+        onCancel={handleCloseImage}
+      >
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xs p-4"
-          onClick={() => setSelectedImage(null)}
+          role="button"
+          tabIndex={0}
+          aria-label="Close image preview"
+          onClick={(e) => e.target === e.currentTarget && handleCloseImage()}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget && handleCloseImage()}
+          className="p-2 outline-none focus:outline-none max-w-3xl max-h-[85vh] flex flex-col items-center justify-center relative focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
         >
-          <div className="relative max-w-3xl max-h-[85vh] bg-white rounded-lg p-2 shadow-2xl animate-fade-in" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              onClick={() => setSelectedImage(null)}
-              className="absolute -top-10 right-0 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors focus:outline-none"
-            >
-              <X size={20} />
-            </button>
-            <img 
-              src={selectedImage} 
-              alt="High Resolution Preview" 
-              className="max-w-full max-h-[80vh] rounded object-contain"
+          <button
+            type="button"
+            onClick={handleCloseImage}
+            className="absolute -top-10 right-0 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            aria-label="Close modal"
+          >
+            <X size={20} />
+          </button>
+          {selectedImage && (
+            <img
+              src={selectedImage}
+              alt="High Resolution Preview"
+              className="max-w-full max-h-[80vh] rounded object-contain pointer-events-auto"
             />
-          </div>
+          )}
         </div>
-      )}
+      </dialog>
     </div>
   );
 };

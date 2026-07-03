@@ -1,39 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import API from '../../api/axios';
 import { Loader2, ArrowUpDown, Award, AlertCircle } from 'lucide-react';
 
-// Module-level cache for instant re-navigation
-let cachedPerformance = null;
-let hasFetchedPerformance = false;
+const SELLER_PERFORMANCE_QUERY_KEY = ['manager', 'seller-performance'];
+
+const fetchSellerPerformance = async () => {
+  const response = await API.get('/reports/sellers-performance');
+  return Array.isArray(response.data) ? response.data : [];
+};
 
 const SellerPerformance = () => {
-  const [data, setData] = useState(cachedPerformance || []);
-  const [loading, setLoading] = useState(!hasFetchedPerformance);
-  const [error, setError] = useState('');
-  
   const [sortField, setSortField] = useState('totalSales');
   const [sortAsc, setSortAsc] = useState(false);
 
-  useEffect(() => {
-    const fetchPerformance = async () => {
-      try {
-        const response = await API.get('/reports/sellers-performance');
-        setData(response.data);
-        cachedPerformance = response.data;
-        hasFetchedPerformance = true;
-      } catch (err) {
-        console.error(err);
-        setError('Failed to fetch seller performance stats.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (!hasFetchedPerformance) {
-      fetchPerformance();
-    } else {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    data = [],
+    isPending: loading,
+    isError,
+  } = useQuery({
+    queryKey: SELLER_PERFORMANCE_QUERY_KEY,
+    queryFn: fetchSellerPerformance,
+  });
+
+  const error = isError ? 'Failed to fetch seller performance stats.' : '';
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -44,7 +34,7 @@ const SellerPerformance = () => {
     }
   };
 
-  const sortedData = [...data].sort((a, b) => {
+  const sortedData = data.toSorted((a, b) => {
     let valA = a[sortField];
     let valB = b[sortField];
 

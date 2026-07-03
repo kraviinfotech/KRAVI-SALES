@@ -1,7 +1,6 @@
 import React, {
   createContext,
   useState,
-  useEffect,
   useContext,
 } from 'react';
 
@@ -11,36 +10,98 @@ const AuthContext = createContext(null);
 
 const USER_STORAGE_KEY = 'user:v1';
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+const getStoredUser = () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem(
-      USER_STORAGE_KEY
+  const savedUser = localStorage.getItem(
+    USER_STORAGE_KEY
+  );
+
+  try {
+    if (
+      savedUser &&
+      savedUser !== 'undefined'
+    ) {
+      return JSON.parse(savedUser);
+    }
+  } catch (err) {
+    console.error(
+      'Auth initialization error:',
+      err
     );
 
-    try {
-      if (
-        savedUser &&
-        savedUser !== 'undefined'
-      ) {
-        setUser(JSON.parse(savedUser));
-      }
-    } catch (err) {
-      console.error(
-        'Auth initialization error:',
-        err
-      );
+    // Remove only corrupted auth data.
+    localStorage.removeItem(
+      USER_STORAGE_KEY
+    );
+  }
 
-      // Remove only corrupted auth data.
-      localStorage.removeItem(
-        USER_STORAGE_KEY
-      );
-    } finally {
-      setLoading(false);
+  return null;
+};
+
+const register = async (data) => {
+  try {
+    const {
+      name,
+      email,
+      mobile,
+      password,
+      role = 'seller',
+      acceptedTerms,
+    } = data;
+
+    await API.post(
+      '/auth/register',
+      {
+        name,
+        email,
+        mobile,
+        password,
+        role,
+        acceptedTerms,
+      }
+    );
+
+    return true;
+  } catch (error) {
+    console.log(
+      'Register error response:',
+      error.response?.data
+    );
+
+    const backendData =
+      error.response?.data;
+
+    let errMsg = '';
+
+    if (backendData) {
+      if (backendData.message) {
+        errMsg =
+          backendData.message;
+      } else if (
+        Array.isArray(
+          backendData.errors
+        ) &&
+        backendData.errors.length
+      ) {
+        errMsg =
+          backendData.errors[0]?.msg ||
+          'Invalid input';
+      }
     }
-  }, []);
+
+    throw (
+      errMsg ||
+      'Registration failed. Please check your details.'
+    );
+  }
+};
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(getStoredUser);
+  const loading = false;
 
   const login = async (creds) => {
     try {
@@ -114,64 +175,6 @@ export const AuthProvider = ({ children }) => {
       throw (
         errMsg ||
         'Login failed. Please check your credentials.'
-      );
-    }
-  };
-
-  const register = async (data) => {
-    try {
-      const {
-        name,
-        email,
-        mobile,
-        password,
-        role = 'seller',
-        acceptedTerms,
-      } = data;
-
-      await API.post(
-        '/auth/register',
-        {
-          name,
-          email,
-          mobile,
-          password,
-          role,
-          acceptedTerms,
-        }
-      );
-
-      return true;
-    } catch (error) {
-      console.log(
-        'Register error response:',
-        error.response?.data
-      );
-
-      const backendData =
-        error.response?.data;
-
-      let errMsg = '';
-
-      if (backendData) {
-        if (backendData.message) {
-          errMsg =
-            backendData.message;
-        } else if (
-          Array.isArray(
-            backendData.errors
-          ) &&
-          backendData.errors.length
-        ) {
-          errMsg =
-            backendData.errors[0]?.msg ||
-            'Invalid input';
-        }
-      }
-
-      throw (
-        errMsg ||
-        'Registration failed. Please check your details.'
       );
     }
   };

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import API from '../api/axios';
 
-export const SUBSCRIPTION_PLANS_KEY = ['subscription', 'plans'];
+const SUBSCRIPTION_PLANS_KEY = ['subscription', 'plans'];
 
 export function usePlans(enabled = true) {
   return useQuery({

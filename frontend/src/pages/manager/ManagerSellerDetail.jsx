@@ -12,8 +12,12 @@ const ManagerSellerDetail = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // FIXED: Pre-compute the target identifier cleanly to avoid reactive effect synchronization cascades
+  const decodedSellerId = decodeURIComponent(sellerId);
+
   const [filters, setFilters] = useState({
-    sellerId: decodeURIComponent(sellerId), // Pre-fill sellerId from URL param
+    sellerId: decodedSellerId,
     shopName: '',
     shopType: '',
     status: '',
@@ -21,6 +25,7 @@ const ManagerSellerDetail = () => {
     to: '',
   });
 
+  // Fetch static seller details clean on initialization or mount
   useEffect(() => {
     const fetchSellerDetails = async () => {
       try {
@@ -32,23 +37,22 @@ const ManagerSellerDetail = () => {
       }
     };
     
-    // When sellerId changes in URL, update the filter state immediately
-    setFilters(prev => ({
-      ...prev,
-      sellerId: decodeURIComponent(sellerId)
-    }));
-
     fetchSellerDetails();
   }, [sellerId]);
 
+  // FIXED: Single declarative side-effect data fetch handling filter updates seamlessly
   useEffect(() => {
-    const fetchRecords = async (currentFilters) => {
+    const fetchRecords = async () => {
       if (!sellerId) return;
       
       if (records.length === 0) setLoading(true);
       setError('');
       try {
         const queryParams = new URLSearchParams();
+        
+        // Always enforce active URL state seller token mapping explicitly
+        const currentFilters = { ...filters, sellerId: decodedSellerId };
+
         Object.keys(currentFilters).forEach(key => {
           if (currentFilters[key]) {
             queryParams.append(key, currentFilters[key]);
@@ -64,8 +68,8 @@ const ManagerSellerDetail = () => {
       }
     };
 
-    fetchRecords(filters);
-  }, [filters, sellerId]);
+    fetchRecords();
+  }, [filters, sellerId, decodedSellerId]);
 
   const handleFilterChange = (newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
@@ -80,7 +84,7 @@ const ManagerSellerDetail = () => {
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Seller Records</p>
           <h1 className="text-2xl font-black text-slate-950">
-            {sellerName || decodeURIComponent(sellerId)}
+            {sellerName || decodedSellerId}
           </h1>
         </div>
       </div>
@@ -95,9 +99,9 @@ const ManagerSellerDetail = () => {
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <ReportFilter
           onFilter={handleFilterChange}
-          sellers={[]} // No need for seller dropdown here, as seller is already selected
+          sellers={[]} 
           filters={filters}
-          hideSellerFilter={true} // Hide seller-specific filters
+          hideSellerFilter={true} 
         />
       </div>
 

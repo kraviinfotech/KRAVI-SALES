@@ -1,8 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Edit3, Filter, Layers, Trash2 } from 'lucide-react';
 import API from '../../api/axios';
 
 const FILTERS = ['All', 'trial', '1month', '3months', '1year'];
+const PLANS_QUERY_KEY = ['admin', 'plans'];
+
+const fetchPlans = async () => {
+  const res = await API.get('/plans');
+  return Array.isArray(res.data) ? res.data : [];
+};
 
 const durationLabel = (plan) => {
   const days = Number(plan.durationDays || 0);
@@ -187,17 +194,15 @@ const filterPlans = (plans, activeFilter) => {
 };
 
 const Plans = () => {
+  const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState('All');
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setLoading(true);
-    API.get('/plans')
-      .then((res) => setPlans(res.data))
-      .catch((err) => console.error('Failed to load plans', err))
-      .finally(() => setLoading(false));
-  }, []);
+  const {
+    data: plans = [],
+    isPending: loading,
+  } = useQuery({
+    queryKey: PLANS_QUERY_KEY,
+    queryFn: fetchPlans,
+  });
 
   const filteredPlans = filterPlans(plans, activeFilter);
 
@@ -206,7 +211,12 @@ const Plans = () => {
     if (!payload) return;
 
     API.post('/plans', payload)
-      .then((res) => setPlans((prev) => [res.data, ...prev]))
+      .then((res) =>
+        queryClient.setQueryData(PLANS_QUERY_KEY, (prev = []) => [
+          res.data,
+          ...prev,
+        ])
+      )
       .catch((err) => {
         console.error(err);
         window.alert(err.response?.data?.message || 'Failed to create plan');
@@ -219,7 +229,7 @@ const Plans = () => {
 
     API.patch(`/plans/${plan._id}`, payload)
       .then((res) =>
-        setPlans((prev) =>
+        queryClient.setQueryData(PLANS_QUERY_KEY, (prev = []) =>
           prev.map((item) => (item._id === res.data._id ? res.data : item))
         )
       )
@@ -234,7 +244,9 @@ const Plans = () => {
 
     API.delete(`/plans/${plan._id}`)
       .then(() =>
-        setPlans((prev) => prev.filter((item) => item._id !== plan._id))
+        queryClient.setQueryData(PLANS_QUERY_KEY, (prev = []) =>
+          prev.filter((item) => item._id !== plan._id)
+        )
       )
       .catch((err) => {
         console.error(err);

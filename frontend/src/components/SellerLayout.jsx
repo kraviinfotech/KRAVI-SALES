@@ -20,6 +20,11 @@ const routeTitles = [
   { match: '/dashboard', title: 'Dashboard' }
 ];
 
+const getInitials = (name) => {
+  if (!name) return '?';
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+};
+
 const SellerLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,11 +37,6 @@ const SellerLayout = () => {
   const isSellingFlow = location.pathname === '/sell' || location.pathname.startsWith('/sell/');
   const showBottomNav = !isSellingFlow;
   const showLang = location.pathname === '/dashboard';
-
-  const getInitials = (name) => {
-    if (!name) return '?';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
 
   const handleLogout = () => {
     logout();

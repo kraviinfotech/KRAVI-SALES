@@ -4,16 +4,16 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Download, LoaderCircle, CircleAlert } from 'lucide-react';
 
+const currencyFormatter = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+});
+
 const SellerReports = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const currencyFormatter = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  });
 
   useEffect(() => {
     const fetchRecords = async () => {

@@ -1,4 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useSyncExternalStore,
+} from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Camera, CheckCircle2, MapPin, X } from 'lucide-react';
 
@@ -23,6 +30,99 @@ const translations = {
 const inputCls = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 transition';
 const labelCls = 'mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500';
 
+const emptyLocationSnapshot = {
+  coords: { lat: '', lng: '' },
+  locationUrl: '',
+  error: '',
+  loading: false,
+  capturedAt: 0,
+};
+
+let locationSnapshot = emptyLocationSnapshot;
+const locationListeners = new Set();
+
+const getLocationSnapshot = () => locationSnapshot;
+const getServerLocationSnapshot = () => emptyLocationSnapshot;
+
+const emitLocationChange = () => {
+  locationListeners.forEach((listener) => listener());
+};
+
+const setLocationSnapshot = (nextSnapshot) => {
+  locationSnapshot = {
+    ...locationSnapshot,
+    ...nextSnapshot,
+    coords: nextSnapshot.coords || locationSnapshot.coords,
+  };
+  emitLocationChange();
+};
+
+const subscribeToLocation = (listener) => {
+  locationListeners.add(listener);
+  return () => locationListeners.delete(listener);
+};
+
+const captureCurrentLocation = () => {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    setLocationSnapshot({
+      error: 'Geolocation not supported.',
+      loading: false,
+      capturedAt: Date.now(),
+    });
+    return;
+  }
+
+  setLocationSnapshot({
+    error: '',
+    loading: true,
+  });
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      setLocationSnapshot({
+        coords: { lat, lng },
+        locationUrl: `https://www.google.com/maps?q=${lat},${lng}`,
+        error: '',
+        loading: false,
+        capturedAt: Date.now(),
+      });
+    },
+    (err) => {
+      setLocationSnapshot({
+        error: err.code === 1 ? 'Location permission blocked.' : 'Unable to get location.',
+        loading: false,
+        capturedAt: Date.now(),
+      });
+    },
+    { enableHighAccuracy: true, timeout: 100000, maximumAge: 0 }
+  );
+};
+
+const useCurrentLocation = (autoCapture, minCapturedAt) => {
+  const subscribe = useCallback((listener) => {
+    const unsubscribe = subscribeToLocation(listener);
+
+    if (
+      autoCapture &&
+      !locationSnapshot.loading &&
+      locationSnapshot.capturedAt <= minCapturedAt
+    ) {
+      captureCurrentLocation();
+    }
+
+    return unsubscribe;
+  }, [autoCapture, minCapturedAt]);
+
+  return useSyncExternalStore(
+    subscribe,
+    getLocationSnapshot,
+    getServerLocationSnapshot
+  );
+};
+
 const AddShop = () => {
   const { formData, setFormData, lang } = useOutletContext();
   const t = translations[lang || 'en'];
@@ -33,56 +133,64 @@ const AddShop = () => {
   const [shopAddress, setShopAddress] = useState(formData.shopAddress || '');
   const [landmark, setLandmark] = useState(formData.landmark || '');
   const [shopType, setShopType] = useState(formData.shopType || 'Retail');
-  const [shopImage, setShopImage] = useState(formData.shopImage || null);
+  
+  // FIXED: Migrated shopImage from state into a useRef because imagePreview handles visual UI states
+  const shopImageRef = useRef(formData.shopImage || null);
   const [imagePreview, setImagePreview] = useState(
     typeof formData.shopImage === 'string' ? formData.shopImage : null
   );
-  const [coords, setCoords] = useState({ lat: formData.latitude || '', lng: formData.longitude || '' });
-  const [locationUrl, setLocationUrl] = useState(formData.locationUrl || '');
-  const [locError, setLocError] = useState('');
-  const [locLoading, setLocLoading] = useState(false);
+  
+  const [initialLocationCapturedAt] = useState(() => locationSnapshot.capturedAt);
+  const savedCoords = useMemo(() => ({
+    lat: formData.latitude ?? '',
+    lng: formData.longitude ?? '',
+  }), [formData.latitude, formData.longitude]);
 
-  /* ── auto-capture location on mount ── */
-  const captureLocation = () => {
-    setLocError('');
-    setLocLoading(true);
-    if (!navigator.geolocation) { setLocError('Geolocation not supported.'); setLocLoading(false); return; }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude, lng = pos.coords.longitude;
-        setCoords({ lat, lng });
-        setLocationUrl(`https://www.google.com/maps?q=${lat},${lng}`);
-        setLocLoading(false);
-      },
-      (err) => {
-        setLocError(err.code === 1 ? 'Location permission blocked.' : 'Unable to get location.');
-        setLocLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 100000, maximumAge: 0 }
-    );
-  };
+  const hasSavedLocation = savedCoords.lat !== '' && savedCoords.lng !== '';
 
-  useEffect(() => { if (!coords.lat || !coords.lng) captureLocation(); }, []);
+  const savedLocationUrl = useMemo(() => {
+    if (formData.locationUrl) return formData.locationUrl;
+    if (hasSavedLocation) {
+      return `https://www.google.com/maps?q=${savedCoords.lat},${savedCoords.lng}`;
+    }
+    return '';
+  }, [formData.locationUrl, hasSavedLocation, savedCoords.lat, savedCoords.lng]);
+
+  const currentLocation = useCurrentLocation(!hasSavedLocation, initialLocationCapturedAt);
+  const hasFreshLocation = currentLocation.capturedAt > initialLocationCapturedAt;
+  const hasCapturedCoords =
+    hasFreshLocation &&
+    currentLocation.coords.lat !== '' &&
+    currentLocation.coords.lng !== '';
+
+  const coords = hasCapturedCoords ? currentLocation.coords : savedCoords;
+  const locationUrl = hasCapturedCoords ? currentLocation.locationUrl : savedLocationUrl;
+  const locError = hasFreshLocation || currentLocation.loading ? currentLocation.error : '';
+  const locLoading = currentLocation.loading;
+  const captureLocation = captureCurrentLocation;
 
   /* ── image handling ── */
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setShopImage(file);
+    shopImageRef.current = file;
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result);
     reader.readAsDataURL(file);
   };
 
   useEffect(() => {
-    if (shopImage instanceof File) {
+    if (shopImageRef.current instanceof File) {
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(shopImage);
+      reader.readAsDataURL(shopImageRef.current);
     }
-  }, [shopImage]);
+  }, []);
 
-  const removeImage = () => { setShopImage(null); setImagePreview(null); };
+  const removeImage = () => { 
+    shopImageRef.current = null; 
+    setImagePreview(null); 
+  };
 
   /* ── submit ── */
   const handleSubmit = (e) => {
@@ -183,52 +291,28 @@ const AddShop = () => {
                 id="image-upload"
                 type="file"
                 accept="image/*"
-                capture="environment"
-                onChange={handleImageChange}
                 className="hidden"
+                onChange={handleImageChange}
               />
             </label>
-
-            {/* Right Side */}
-            {imagePreview ? (
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-                  <CheckCircle2 size={13} />
-                  Image captured
-                </div>
-
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  className="flex items-center gap-1 text-[11px] font-semibold text-red-500 hover:text-red-700"
-                >
-                  <X size={12} />
-                  Remove
-                </button>
-
-                <label
-                  htmlFor="image-upload"
-                  className="cursor-pointer text-[11px] font-semibold text-blue-600 hover:text-blue-800"
-                >
-                  Capture Again
-                </label>
-              </div>
-            ) : (
-              <div>
-                <p className="text-xs font-semibold text-slate-600">
-                  Capture Shop Photo
-                </p>
-                <p className="text-[10px] text-slate-400 mt-0.5">
-                  Tap the camera icon to capture a photo
-                </p>
-              </div>
+            
+            {imagePreview && (
+              <button
+                type="button"
+                onClick={removeImage}
+                className="rounded-lg bg-red-50 p-2 text-red-500 hover:bg-red-100 transition"
+              >
+                <X size={16} />
+              </button>
             )}
           </div>
         </div>
       </div>
-
-      <button type="submit"
-        className="w-full rounded-xl bg-blue-700 py-3 text-sm font-black text-white shadow-sm hover:bg-blue-800 transition-colors">
+      
+      <button
+        type="submit"
+        className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition"
+      >
         {t.next}
       </button>
     </form>
