@@ -9,9 +9,8 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
     try {
-      if (savedUser && token && savedUser !== 'undefined') {
+      if (savedUser && savedUser !== 'undefined') {
         setUser(JSON.parse(savedUser));
       }
     } catch (err) {
@@ -32,9 +31,8 @@ export const AuthProvider = ({ children }) => {
         password
       };
       const response = await API.post('/auth/login', payload);
-      const { token, user: userData } = response.data;
+      const { user: userData } = response.data;
 
-      localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
       sessionStorage.removeItem(`subscriptionPromptSeen_${userData._id}`);
       setUser(userData);
@@ -82,8 +80,7 @@ export const AuthProvider = ({ children }) => {
   const googleLogin = async (idToken) => {
     try {
       const response = await API.post('/auth/google', { idToken });
-      const { token, user: userData } = response.data;
-      localStorage.setItem('token', token);
+      const { user: userData } = response.data;
       localStorage.setItem('user', JSON.stringify(userData));
       sessionStorage.removeItem(`subscriptionPromptSeen_${userData._id}`);
       setUser(userData);
@@ -103,16 +100,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
+  const logout = async () => {
+    try {
+      await API.post('/auth/logout');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
     localStorage.removeItem('user');
     setUser(null);
   };
 
-  const updateSession = ({ token, user: nextUser }) => {
-    if (token) {
-      localStorage.setItem('token', token);
-    }
+  const updateSession = ({ user: nextUser }) => {
     if (nextUser) {
       localStorage.setItem('user', JSON.stringify(nextUser));
       setUser(nextUser);

@@ -379,6 +379,13 @@ router.post(
 
     const token = signUserToken(user, subscriptionStatus);
 
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+
     res.json({
       token,
       user: {
@@ -457,6 +464,13 @@ router.post(
       const managerId = await getManagerIdForUser(user);
       const subscriptionStatus = managerId ? await buildSubscriptionStatus(managerId) : null;
       const token = signUserToken(user, subscriptionStatus);
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000
+      });
 
       return res.json({
         token,
@@ -771,7 +785,6 @@ router.get("/test-email", async (req, res) => {
       message: "Test email sent!",
       info
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({
@@ -781,6 +794,10 @@ router.get("/test-email", async (req, res) => {
   }
 });
 
-
+// POST /api/auth/logout
+router.post('/logout', (req, res) => {
+  res.clearCookie('token');
+  res.json({ message: 'Logged out successfully' });
+});
 
 module.exports = router;
