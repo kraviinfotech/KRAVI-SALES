@@ -60,6 +60,7 @@ const ProductCard = ({
             onChange={(event) => onSearchInput(index, event.target.value)}
             onFocus={() => onOpenSuggestions(index)}
             placeholder="Type to search manager products..."
+            aria-label={t.pName}
             className={`flex-1 rounded-l-md border-0 bg-transparent px-3 py-2 text-sm focus:outline-none ${suggestionsOpen[index] ? 'rounded-b-none' : 'rounded-r-md'}`}
             required
           />
@@ -135,6 +136,7 @@ const ProductCard = ({
             value={item.quantity || ''}
             onChange={(event) => onItemChange(index, 'quantity', event.target.value)}
             placeholder="Enter quantity"
+            aria-label={t.qty}
             className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             required
           />
@@ -152,6 +154,7 @@ const ProductCard = ({
             value={item.weight || ''}
             onChange={(event) => onItemChange(index, 'weight', event.target.value)}
             placeholder="2.5"
+            aria-label={t.weight}
             className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             required
           />
@@ -168,6 +171,7 @@ const ProductCard = ({
           value={item.price || item.rate || ''}
           onChange={(event) => onItemChange(index, 'price', event.target.value)}
           placeholder="120"
+          aria-label={t.price}
           className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           required
         />
@@ -182,6 +186,7 @@ const ProductCard = ({
         value={amount ? amount.toFixed(0) : ''}
         readOnly
         placeholder="0"
+        aria-label={t.amt}
         className="w-full rounded border border-gray-300 bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-900 outline-none"
       />
     </div>

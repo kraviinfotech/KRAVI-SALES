@@ -1,7 +1,9 @@
 import React, {
   createContext,
-  useState,
+  useCallback,
   useContext,
+  useMemo,
+  useState,
 } from 'react';
 
 import API from '../api/axios';
@@ -103,7 +105,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(getStoredUser);
   const loading = false;
 
-  const login = async (creds) => {
+  const login = useCallback(async (creds) => {
     try {
       const {
         email,
@@ -177,9 +179,9 @@ export const AuthProvider = ({ children }) => {
         'Login failed. Please check your credentials.'
       );
     }
-  };
+  }, []);
 
-  const googleLogin = async (idToken) => {
+  const googleLogin = useCallback(async (idToken) => {
     try {
       const response = await API.post(
         '/auth/google',
@@ -237,9 +239,9 @@ export const AuthProvider = ({ children }) => {
         'Google login failed. Please try again.'
       );
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await API.post(
         '/auth/logout'
@@ -256,11 +258,9 @@ export const AuthProvider = ({ children }) => {
 
       setUser(null);
     }
-  };
+  }, []);
 
-  const updateSession = ({
-    user: nextUser,
-  }) => {
+  const updateSession = useCallback(({ user: nextUser }) => {
     if (nextUser) {
       localStorage.setItem(
         USER_STORAGE_KEY,
@@ -269,20 +269,23 @@ export const AuthProvider = ({ children }) => {
 
       setUser(nextUser);
     }
-  };
+  }, []);
+
+  const authValue = useMemo(
+    () => ({
+      user,
+      loading,
+      login,
+      register,
+      googleLogin,
+      logout,
+      updateSession,
+    }),
+    [user, loading, login, googleLogin, logout, updateSession]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        register,
-        googleLogin,
-        logout,
-        updateSession,
-      }}
-    >
+    <AuthContext.Provider value={authValue}>
       {children}
     </AuthContext.Provider>
   );

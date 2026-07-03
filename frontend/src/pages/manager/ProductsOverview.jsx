@@ -138,20 +138,26 @@ const ProductsOverview = () => {
       <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <h2 className="text-sm font-black text-slate-900 mb-4 uppercase tracking-wider">Add to Master Catalog</h2>
         <form onSubmit={handleAddProduct} className="flex flex-col sm:flex-row gap-3">
+          <label htmlFor="master-product-name" className="sr-only">Master product name</label>
           <input
+            id="master-product-name"
             type="text"
             value={newProductName}
             onChange={(e) => setNewProductName(e.target.value)}
             placeholder="e.g. New Shampoo Variant"
+            aria-label="Master product name"
             className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none"
           />
+          <label htmlFor="master-product-price" className="sr-only">Master product base price</label>
           <input
+            id="master-product-price"
             type="number"
             min={0}
             step={0.01}
             value={newProductPrice}
             onChange={(e) => setNewProductPrice(e.target.value)}
             placeholder="Base Price (₹)"
+            aria-label="Master product base price"
             className="w-full sm:w-36 rounded border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none"
             required
           />
@@ -170,7 +176,7 @@ const ProductsOverview = () => {
               {p.baseRate > 0 && (
                 <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded ml-1">₹{p.baseRate}</span>
               )}
-              <button type="button" onClick={() => handleDeleteProduct(p._id)} className="text-slate-400 hover:text-red-600 ml-1">×</button>
+              <button type="button" onClick={() => handleDeleteProduct(p._id)} aria-label={`Delete ${p.name}`} className="text-slate-400 hover:text-red-600 ml-1">×</button>
             </span>
           ))}
         </div>

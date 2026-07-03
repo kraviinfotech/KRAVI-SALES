@@ -52,7 +52,9 @@ const SalesTable = ({ records }) => {
               <th className="p-4 text-center">Items</th>
               <th className="p-4 text-right">Total Amount</th>
               <th className="p-4 text-right text-red-600">Pending</th>
-              <th className="p-4 w-12"></th>
+              <th className="p-4 w-12 text-center" aria-label="Row actions">
+                <span className="sr-only">Row actions</span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -70,7 +72,9 @@ const SalesTable = ({ records }) => {
                     onClick={() => toggleExpand(record._id)}
                     onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleExpand(record._id)}
                     tabIndex={0}
+                    role="button"
                     aria-expanded={isExpanded}
+                    aria-label={`Toggle details for ${sellerName}`}
                     className={`hover:bg-blue-50/40 transition-colors cursor-pointer text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 ${isExpanded ? 'bg-blue-50/30' : ''}`}
                   >
                     <td className="p-4 font-bold text-slate-900">{sellerName}</td>

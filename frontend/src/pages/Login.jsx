@@ -158,8 +158,17 @@ const Login = () => {
             autoPlay
             muted
             playsInline
+            role="button"
+            tabIndex={0}
+            aria-label="Skip intro video"
             onEnded={() => setShowIntroVideo(false)}
             onClick={() => setShowIntroVideo(false)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setShowIntroVideo(false);
+              }
+            }}
           />
           <div className="pointer-events-none absolute inset-0 bg-black/40" />
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white text-sm font-medium animate-pulse">
@@ -251,6 +260,8 @@ const Login = () => {
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute inset-y-0 right-2 flex items-center text-slate-500"
                     tabIndex={-1}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    title={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>

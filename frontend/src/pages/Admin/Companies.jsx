@@ -31,24 +31,28 @@ const CompanyFilters = ({ searchTerm, onSearch, activeTab, onTabChange }) => (
   <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
     <div className="flex min-w-[300px] flex-1 items-center gap-2">
       <div className="relative flex-1">
+        <label htmlFor="company-search" className="sr-only">Search companies</label>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
         <input
+          id="company-search"
           type="text"
           placeholder="Search companies."
           value={searchTerm}
           onChange={(event) => onSearch(event.target.value)}
+          aria-label="Search companies"
           className="w-full rounded-xl border border-gray-100 bg-gray-50 py-2 pl-10 pr-4 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-[#6C3EF4]"
         />
       </div>
-      <button type="button" className="rounded-xl border border-gray-100 bg-gray-50 p-2 text-gray-600 hover:bg-gray-100">
+      <button type="button" aria-label="Filter companies" className="rounded-xl border border-gray-100 bg-gray-50 p-2 text-gray-600 hover:bg-gray-100">
         <Filter size={18} />
       </button>
     </div>
 
     <div className="flex flex-wrap gap-2">
       <div className="relative">
+        <label htmlFor="company-date-filter" className="sr-only">Filter by date</label>
         <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input type="date" className="rounded-lg border border-gray-100 bg-gray-50 py-2 pl-10 pr-3 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-[#6C3EF4]" />
+        <input id="company-date-filter" type="date" aria-label="Filter by date" className="rounded-lg border border-gray-100 bg-gray-50 py-2 pl-10 pr-3 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-[#6C3EF4]" />
       </div>
       <button type="button" className="rounded-lg bg-[#6C3EF4] px-3 py-2 text-sm font-medium text-white transition-all hover:bg-[#5a32cc]">
         Apply
