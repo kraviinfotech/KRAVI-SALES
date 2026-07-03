@@ -1,40 +1,85 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+} from 'react';
+
 import API from '../api/axios';
 
 const AuthContext = createContext(null);
+
+const USER_STORAGE_KEY = 'user:v1';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem(
+      USER_STORAGE_KEY
+    );
+
     try {
-      if (savedUser && savedUser !== 'undefined') {
+      if (
+        savedUser &&
+        savedUser !== 'undefined'
+      ) {
         setUser(JSON.parse(savedUser));
       }
     } catch (err) {
-      console.error("Auth initialization error:", err);
-      localStorage.clear(); // Clear bad data
+      console.error(
+        'Auth initialization error:',
+        err
+      );
+
+      // Remove only corrupted auth data.
+      localStorage.removeItem(
+        USER_STORAGE_KEY
+      );
     } finally {
-    setLoading(false);
+      setLoading(false);
     }
   }, []);
 
   const login = async (creds) => {
     try {
-      const { email, mobile, password } = creds;
-      // Normalize email before sending to backend (backend expects lowercase)
-      const payload = {
-        email: email ? email.trim().toLowerCase() : undefined,
-        mobile: mobile ? mobile.trim() : undefined,
-        password
-      };
-      const response = await API.post('/auth/login', payload);
-      const { user: userData } = response.data;
+      const {
+        email,
+        mobile,
+        password,
+      } = creds;
 
-      localStorage.setItem('user', JSON.stringify(userData));
-      sessionStorage.removeItem(`subscriptionPromptSeen_${userData._id}`);
+      const payload = {
+        email: email
+          ? email.trim().toLowerCase()
+          : undefined,
+
+        mobile: mobile
+          ? mobile.trim()
+          : undefined,
+
+        password,
+      };
+
+      const response = await API.post(
+        '/auth/login',
+        payload
+      );
+
+      const {
+        user: userData,
+      } = response.data;
+
+      localStorage.setItem(
+        USER_STORAGE_KEY,
+        JSON.stringify(userData)
+      );
+
+      sessionStorage.removeItem(
+        `subscriptionPromptSeen_${userData._id}`
+      );
+
       setUser(userData);
 
       return userData;
@@ -42,92 +87,214 @@ export const AuthProvider = ({ children }) => {
       let errMsg = '';
 
       if (error.response) {
-        // The server responded with a status code out of 2xx
-        const backendData = error.response.data;
-        errMsg = backendData.message || (Array.isArray(backendData.errors) ? backendData.errors[0].msg : 'Invalid credentials');
+        const backendData =
+          error.response.data;
+
+        errMsg =
+          backendData.message ||
+          (
+            Array.isArray(
+              backendData.errors
+            )
+              ? backendData.errors[0]?.msg
+              : 'Invalid credentials'
+          );
       } else if (error.request) {
-        // The request was made but no response was received
-        errMsg = 'Backend server is not reachable. Please ensure the server is running on port 5000.';
+        errMsg =
+          'Backend server is not reachable. Please ensure the server is running on port 5000.';
       } else {
         errMsg = error.message;
       }
 
-      console.error('Login error:', errMsg);
-      throw errMsg || 'Login failed. Please check your credentials.';
+      console.error(
+        'Login error:',
+        errMsg
+      );
+
+      throw (
+        errMsg ||
+        'Login failed. Please check your credentials.'
+      );
     }
   };
 
   const register = async (data) => {
     try {
-      const { name, email, mobile, password, role = 'seller', acceptedTerms } = data;
-      await API.post('/auth/register', { name, email, mobile, password, role, acceptedTerms });
+      const {
+        name,
+        email,
+        mobile,
+        password,
+        role = 'seller',
+        acceptedTerms,
+      } = data;
+
+      await API.post(
+        '/auth/register',
+        {
+          name,
+          email,
+          mobile,
+          password,
+          role,
+          acceptedTerms,
+        }
+      );
+
       return true;
     } catch (error) {
-      console.log('Register error response:', error.response?.data);
-      const backendData = error.response?.data;
+      console.log(
+        'Register error response:',
+        error.response?.data
+      );
+
+      const backendData =
+        error.response?.data;
+
       let errMsg = '';
+
       if (backendData) {
         if (backendData.message) {
-          errMsg = backendData.message;
-        } else if (Array.isArray(backendData.errors) && backendData.errors.length) {
-          errMsg = backendData.errors[0].msg || 'Invalid input';
+          errMsg =
+            backendData.message;
+        } else if (
+          Array.isArray(
+            backendData.errors
+          ) &&
+          backendData.errors.length
+        ) {
+          errMsg =
+            backendData.errors[0]?.msg ||
+            'Invalid input';
         }
       }
-      throw errMsg || 'Registration failed. Please check your details.';
+
+      throw (
+        errMsg ||
+        'Registration failed. Please check your details.'
+      );
     }
   };
 
   const googleLogin = async (idToken) => {
     try {
-      const response = await API.post('/auth/google', { idToken });
-      const { user: userData } = response.data;
-      localStorage.setItem('user', JSON.stringify(userData));
-      sessionStorage.removeItem(`subscriptionPromptSeen_${userData._id}`);
+      const response = await API.post(
+        '/auth/google',
+        {
+          idToken,
+        }
+      );
+
+      const {
+        user: userData,
+      } = response.data;
+
+      localStorage.setItem(
+        USER_STORAGE_KEY,
+        JSON.stringify(userData)
+      );
+
+      sessionStorage.removeItem(
+        `subscriptionPromptSeen_${userData._id}`
+      );
+
       setUser(userData);
+
       return userData;
     } catch (error) {
       let errMsg = '';
+
       if (error.response) {
-        const backendData = error.response.data;
-        errMsg = backendData.message || (Array.isArray(backendData.errors) ? backendData.errors[0].msg : 'Google sign-in failed');
+        const backendData =
+          error.response.data;
+
+        errMsg =
+          backendData.message ||
+          (
+            Array.isArray(
+              backendData.errors
+            )
+              ? backendData.errors[0]?.msg
+              : 'Google sign-in failed'
+          );
       } else if (error.request) {
-        errMsg = 'Backend server is not reachable. Please ensure the server is running on port 5002.';
+        errMsg =
+          'Backend server is not reachable. Please ensure the server is running on port 5002.';
       } else {
         errMsg = error.message;
       }
-      console.error('Google login error:', errMsg);
-      throw errMsg || 'Google login failed. Please try again.';
+
+      console.error(
+        'Google login error:',
+        errMsg
+      );
+
+      throw (
+        errMsg ||
+        'Google login failed. Please try again.'
+      );
     }
   };
 
   const logout = async () => {
     try {
-      await API.post('/auth/logout');
+      await API.post(
+        '/auth/logout'
+      );
     } catch (err) {
-      console.error('Logout error:', err);
+      console.error(
+        'Logout error:',
+        err
+      );
+    } finally {
+      localStorage.removeItem(
+        USER_STORAGE_KEY
+      );
+
+      setUser(null);
     }
-    localStorage.removeItem('user');
-    setUser(null);
   };
 
-  const updateSession = ({ user: nextUser }) => {
+  const updateSession = ({
+    user: nextUser,
+  }) => {
     if (nextUser) {
-      localStorage.setItem('user', JSON.stringify(nextUser));
+      localStorage.setItem(
+        USER_STORAGE_KEY,
+        JSON.stringify(nextUser)
+      );
+
       setUser(nextUser);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, googleLogin, logout, updateSession }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        googleLogin,
+        logout,
+        updateSession,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
+  const context =
+    useContext(AuthContext);
+
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error(
+      'useAuth must be used within an AuthProvider'
+    );
   }
+
   return context;
 };
+

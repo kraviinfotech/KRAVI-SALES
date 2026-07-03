@@ -162,26 +162,40 @@ const AddProducts = () => {
   const handleNext = (event) => {
     event.preventDefault();
 
-    const validItems = formData.items
-      .map((item) => {
-        const unit = item.unit === 'weight' ? 'weight' : 'quantity';
-        const baseItem = {
-          productName: item.productName.trim(),
-          unit,
-          price: Number(item.price || item.rate || 0)
-        };
+    const validItems = formData.items.reduce((acc, item) => {
+      const unit = item.unit === 'weight' ? 'weight' : 'quantity';
+      const baseItem = {
+        productName: item.productName.trim(),
+        unit,
+        price: Number(item.price || item.rate || 0)
+      };
 
-        return unit === 'weight'
-          ? { ...baseItem, weight: Number(item.weight || 0) }
-          : { ...baseItem, quantity: Number(item.quantity || 0) };
-      })
-      .filter((item) => {
-        const hasValidName = item.productName;
-        const hasValidQuantity = item.unit === 'quantity' ? item.quantity > 0 : true;
-        const hasValidWeight = item.unit === 'weight' ? item.weight >= 0.1 : true;
-        const hasValidPrice = item.price > 0;
-        return hasValidName && hasValidQuantity && hasValidWeight && hasValidPrice;
-      });
+      const normalizedItem = unit === 'weight'
+        ? { ...baseItem, weight: Number(item.weight || 0) }
+        : { ...baseItem, quantity: Number(item.quantity || 0) };
+
+      const hasValidName = Boolean(normalizedItem.productName);
+      const hasValidQuantity =
+        normalizedItem.unit === 'quantity'
+          ? normalizedItem.quantity > 0
+          : true;
+      const hasValidWeight =
+        normalizedItem.unit === 'weight'
+          ? normalizedItem.weight >= 0.1
+          : true;
+      const hasValidPrice = normalizedItem.price > 0;
+
+      if (
+        hasValidName &&
+        hasValidQuantity &&
+        hasValidWeight &&
+        hasValidPrice
+      ) {
+        acc.push(normalizedItem);
+      }
+
+      return acc;
+    }, []);
 
     let hasInvalidProduct = false;
     formData.items.forEach((item, idx) => {
@@ -347,7 +361,6 @@ const AddProducts = () => {
                   placeholder="120"
                   className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   required
-                  readOnly
                 />
               </div>
             </div>
