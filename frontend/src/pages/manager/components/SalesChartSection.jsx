@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 const numberFormatter = new Intl.NumberFormat('en-IN');
 const currencyFormatter = new Intl.NumberFormat('en-IN', {
@@ -8,6 +7,49 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
   currency: 'INR',
   maximumFractionDigits: 0
 });
+
+const LazySalesBarChart = lazy(() => import('recharts').then((mod) => ({
+  default: ({ data, yAxisMax }) => (
+    <mod.ResponsiveContainer width="100%" height="100%">
+      <mod.BarChart data={data} margin={{ top: 10, right: 12, left: -18, bottom: 0 }}>
+        <mod.CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
+        <mod.XAxis
+          dataKey="name"
+          axisLine={false}
+          tickLine={false}
+          fontSize={12}
+          stroke="#64748b"
+        />
+        <mod.YAxis
+          allowDecimals={false}
+          axisLine={false}
+          domain={[0, yAxisMax]}
+          tickLine={false}
+          fontSize={12}
+          stroke="#64748b"
+          tickFormatter={(value) => (value === 0 ? '0' : `₹${numberFormatter.format(value)}`)}
+        />
+        <mod.Tooltip
+          cursor={{ fill: '#f8fafc' }}
+          formatter={(value) => [currencyFormatter.format(value), 'Sales']}
+          contentStyle={{
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)',
+            fontSize: '12px'
+          }}
+        />
+        <mod.Bar dataKey="sales" fill="#2563eb" radius={[6, 6, 0, 0]} maxBarSize={42} />
+      </mod.BarChart>
+    </mod.ResponsiveContainer>
+  ),
+})));
+
+const ChartFallback = () => (
+  <div className="flex h-full items-center justify-center">
+    <Loader2 className="animate-spin text-blue-700" size={22} />
+  </div>
+);
 
 const SalesChartSection = ({ chartData, chartLoading }) => {
   const maxChartSales = Math.max(...chartData.map((item) => item.sales), 0);
@@ -27,42 +69,11 @@ const SalesChartSection = ({ chartData, chartLoading }) => {
 
       <div className="h-80 p-6 rounded-xl bg-white/70 backdrop-blur-lg shadow-lg">
         {chartLoading ? (
-          <div className="flex h-full items-center justify-center">
-            <Loader2 className="animate-spin text-blue-700" size={22} />
-          </div>
+          <ChartFallback />
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 10, right: 12, left: -18, bottom: 0 }}>
-              <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
-              <XAxis
-                dataKey="name"
-                axisLine={false}
-                tickLine={false}
-                fontSize={12}
-                stroke="#64748b"
-              />
-              <YAxis
-                allowDecimals={false}
-                axisLine={false}
-                domain={[0, yAxisMax]}
-                tickLine={false}
-                fontSize={12}
-                stroke="#64748b"
-                tickFormatter={(value) => (value === 0 ? '0' : `₹${numberFormatter.format(value)}`)}
-              />
-              <Tooltip
-                cursor={{ fill: '#f8fafc' }}
-                formatter={(value) => [currencyFormatter.format(value), 'Sales']}
-                contentStyle={{
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)',
-                  fontSize: '12px'
-                }}
-              />
-              <Bar dataKey="sales" fill="#2563eb" radius={[6, 6, 0, 0]} maxBarSize={42} />
-            </BarChart>
-          </ResponsiveContainer>
+          <Suspense fallback={<ChartFallback />}>
+            <LazySalesBarChart data={chartData} yAxisMax={yAxisMax} />
+          </Suspense>
         )}
       </div>
     </section>

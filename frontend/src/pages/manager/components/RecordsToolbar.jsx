@@ -17,9 +17,12 @@ const RecordsToolbar = ({
       <div className="flex flex-col lg:flex-row justify-between gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <label htmlFor="records-toolbar-search" className="sr-only">Search records by shop name</label>
           <input
+            id="records-toolbar-search"
             type="text"
             placeholder="Search by Shop Name..."
+            aria-label="Search records by shop name"
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
             value={filters.shopName}
             onChange={(e) => onSearch({ ...filters, shopName: e.target.value })}

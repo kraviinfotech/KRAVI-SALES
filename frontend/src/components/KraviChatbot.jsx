@@ -343,6 +343,7 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
                 onKeyDown={handleKeyDown}
                 placeholder={PLACEHOLDER_TEXT}
                 rows={1}
+                aria-label="Type your message"
                 className="flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent max-h-24"
               />
               <button

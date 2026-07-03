@@ -109,35 +109,40 @@ const Settings = () => {
 
               <SettingSection title="SMTP Configuration" icon={Mail}>
               <div className="space-y-3">
-                <input value={form.smtpHost} onChange={(e) => handleChange('smtpHost', e.target.value)} type="text" placeholder="SMTP Host" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
+                <label htmlFor="settings-smtp-host" className="sr-only">SMTP host</label>
+                <input id="settings-smtp-host" value={form.smtpHost} onChange={(e) => handleChange('smtpHost', e.target.value)} type="text" placeholder="SMTP Host" aria-label="SMTP host" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
                 <div className="grid grid-cols-3 gap-4">
-                  <input value={form.smtpPort} onChange={(e) => handleChange('smtpPort', e.target.value)} type="text" placeholder="Port" className="bg-gray-50 border-none rounded-xl px-4 py-2" />
-                  <input value={form.smtpUser} onChange={(e) => handleChange('smtpUser', e.target.value)} type="text" placeholder="User" className="col-span-2 bg-gray-50 border-none rounded-xl px-4 py-2" />
+                  <label htmlFor="settings-smtp-port" className="sr-only">SMTP port</label>
+                  <input id="settings-smtp-port" value={form.smtpPort} onChange={(e) => handleChange('smtpPort', e.target.value)} type="text" placeholder="Port" aria-label="SMTP port" className="bg-gray-50 border-none rounded-xl px-4 py-2" />
+                  <label htmlFor="settings-smtp-user" className="sr-only">SMTP user</label>
+                  <input id="settings-smtp-user" value={form.smtpUser} onChange={(e) => handleChange('smtpUser', e.target.value)} type="text" placeholder="User" aria-label="SMTP user" className="col-span-2 bg-gray-50 border-none rounded-xl px-4 py-2" />
                 </div>
               </div>
               </SettingSection>
 
               <SettingSection title="Payment Gateway (Razorpay)" icon={CreditCard}>
                 <div className="space-y-3">
-                  <input value={form.paymentKeyId} onChange={(e) => handleChange('paymentKeyId', e.target.value)} type="password" placeholder="Key ID" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
-                  <input value={form.paymentKeySecret} onChange={(e) => handleChange('paymentKeySecret', e.target.value)} type="password" placeholder="Key Secret" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
+                  <label htmlFor="settings-payment-key-id" className="sr-only">Razorpay key ID</label>
+                  <input id="settings-payment-key-id" value={form.paymentKeyId} onChange={(e) => handleChange('paymentKeyId', e.target.value)} type="password" placeholder="Key ID" aria-label="Razorpay key ID" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
+                  <label htmlFor="settings-payment-key-secret" className="sr-only">Razorpay key secret</label>
+                  <input id="settings-payment-key-secret" value={form.paymentKeySecret} onChange={(e) => handleChange('paymentKeySecret', e.target.value)} type="password" placeholder="Key Secret" aria-label="Razorpay key secret" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
                 </div>
               </SettingSection>
 
               <SettingSection title="Notifications" icon={Bell}>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                <label className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
                   <span className="text-sm font-medium text-gray-700">Subscription Expiring Soon</span>
-                  <input type="checkbox" checked={form.notifications.subscriptionExpiring} onChange={(e) => handleChange('notifications.subscriptionExpiring', e.target.checked)} />
-                </div>
-                <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                  <input type="checkbox" aria-label="Subscription expiring soon" checked={form.notifications.subscriptionExpiring} onChange={(e) => handleChange('notifications.subscriptionExpiring', e.target.checked)} />
+                </label>
+                <label className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
                   <span className="text-sm font-medium text-gray-700">New Payment Received</span>
-                  <input type="checkbox" checked={form.notifications.newPaymentReceived} onChange={(e) => handleChange('notifications.newPaymentReceived', e.target.checked)} />
-                </div>
-                <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                  <input type="checkbox" aria-label="New payment received" checked={form.notifications.newPaymentReceived} onChange={(e) => handleChange('notifications.newPaymentReceived', e.target.checked)} />
+                </label>
+                <label className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
                   <span className="text-sm font-medium text-gray-700">Trial Period Ending</span>
-                  <input type="checkbox" checked={form.notifications.trialPeriodEnding} onChange={(e) => handleChange('notifications.trialPeriodEnding', e.target.checked)} />
-                </div>
+                  <input type="checkbox" aria-label="Trial period ending" checked={form.notifications.trialPeriodEnding} onChange={(e) => handleChange('notifications.trialPeriodEnding', e.target.checked)} />
+                </label>
               </div>
               </SettingSection>
             </div>

@@ -91,7 +91,8 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-2 ml-auto">
             <Calendar size={18} className="text-gray-500" />
-            <input type="date" value={dateRange} onChange={(e) => setDateRange(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6C3EF4]" />
+            <label htmlFor="dashboard-date-range" className="sr-only">Select date range</label>
+            <input id="dashboard-date-range" type="date" value={dateRange} onChange={(e) => setDateRange(e.target.value)} aria-label="Select date range" className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6C3EF4]" />
           </div>
         </div>
       </div>

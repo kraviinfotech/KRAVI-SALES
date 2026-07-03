@@ -33,9 +33,12 @@ const SellerPerformanceTable = ({
         
         <div className="relative flex-1 max-w-xs mx-4 hidden lg:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <label htmlFor="seller-performance-search" className="sr-only">Search seller or shop</label>
           <input
+            id="seller-performance-search"
             type="text"
             placeholder="Quick search seller/shop..."
+            aria-label="Search seller or shop"
             className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -81,6 +84,8 @@ const SellerPerformanceTable = ({
               <button
                 type="button"
                 onClick={onApplyCustomRange}
+                aria-label="Apply custom date range filter"
+                title="Apply custom date range filter"
                 className="inline-flex h-9 items-center gap-2 rounded bg-blue-700 px-3 text-xs font-black text-white transition-colors hover:bg-blue-800"
               >
                 Filter
@@ -150,6 +155,7 @@ const SellerPerformanceTable = ({
                           onClick={(e) => { e.stopPropagation(); onDeleteRecords(row.sellerId, row.seller); }}
                           className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
                           title="Delete records"
+                          aria-label={`Delete records for ${row.seller}`}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -168,7 +174,9 @@ const SellerPerformanceTable = ({
                 <td className="px-4 py-3 text-center">{numberFormatter.format(totals.totalItems)}</td>
                 <td className="px-4 py-3 text-right">{currencyFormatter.format(totals.totalSales)}</td>
                 <td className="px-4 py-3 text-right text-red-600">{currencyFormatter.format(totals.totalPending)}</td>
-                <td></td>
+                <td>
+                  <span className="sr-only">No additional actions</span>
+                </td>
               </tr>
             </tfoot>
           )}
