@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useReducer } from 'react';
 import { Send, X } from 'lucide-react';
 import API from '../api/axios';
 import kraviAssistantImage from '../images/kravi-ai-assistant.png';
@@ -6,23 +6,110 @@ import { format } from 'date-fns';
 import { PRIMARY_SUPPORT_TOPIC_LIMIT, supportFaqTopics } from '../data/supportFaqs';
 
 const WELCOME_MESSAGES = {
-hi: " Namaste! Main KRAVI AI Assistant hoon. Main aapki kaise sahayata kar sakta hoon?",
-en: " Hello! I am KRAVI AI Assistant. How can I assist you today?",
-mr: " Namaskar! Mi KRAVI AI Assistant aahe. Mi tumhala kashi madat karu shakto?"
+  hi: " Namaste! Main KRAVI AI Assistant hoon. Main aapki kaise sahayata kar sakta hoon?",
+  en: " Hello! I am KRAVI AI Assistant. How can I assist you today?",
+  mr: " Namaskar! Mi KRAVI AI Assistant aahe. Mi tumhala kashi madat karu shakto?"
 };
 
 const PLACEHOLDER_TEXT = 'Apna sawaal type karein...';
 
+// --- Reducer Setup ---
+function createInitialState(initialLanguage) {
+  return {
+    messages: [
+      {
+        role: 'assistant',
+        text: WELCOME_MESSAGES[initialLanguage] || WELCOME_MESSAGES.hi,
+        timestamp: new Date().toISOString(),
+      },
+      {
+        role: 'assistant',
+        text: 'Aap in topics me se choose kar sakte hain ya niche buttons par click karein.',
+        timestamp: new Date().toISOString(),
+      },
+    ],
+    isLoading: false,
+    error: null,
+    selectedTopicId: null,
+    showOtherTopics: false,
+    showTopicPanel: true,
+  };
+}
+
+function chatReducer(state, action) {
+  switch (action.type) {
+    case 'SEND_MESSAGE_START':
+      return {
+        ...state,
+        messages: [
+          ...state.messages,
+          { role: 'user', text: action.payload, timestamp: new Date().toISOString() },
+        ],
+        isLoading: true,
+        error: null,
+      };
+    case 'SEND_MESSAGE_SUCCESS':
+      return {
+        ...state,
+        messages: [
+          ...state.messages,
+          { role: 'assistant', text: action.payload, timestamp: new Date().toISOString() },
+        ],
+        isLoading: false,
+      };
+    case 'SEND_MESSAGE_FAILURE':
+      return {
+        ...state,
+        isLoading: false,
+        error: action.payload,
+      };
+    case 'SELECT_FAQ_START':
+      return {
+        ...state,
+        messages: [
+          ...state.messages,
+          { role: 'user', text: action.payload.question, timestamp: new Date().toISOString() },
+        ],
+        selectedTopicId: null,
+        showOtherTopics: false,
+        showTopicPanel: false,
+        isLoading: true,
+      };
+    case 'SELECT_FAQ_SUCCESS':
+      return {
+        ...state,
+        messages: [
+          ...state.messages,
+          { role: 'assistant', text: action.payload.answer, timestamp: new Date().toISOString() },
+        ],
+        isLoading: false,
+      };
+    case 'SELECT_TOPIC':
+      return {
+        ...state,
+        selectedTopicId: action.payload,
+      };
+    case 'SHOW_OTHER_TOPICS':
+      return {
+        ...state,
+        selectedTopicId: null,
+        showOtherTopics: true,
+      };
+    default:
+      return state;
+  }
+}
+
+// --- Sub-components ---
 function ChatBubble({ role, text }) {
   const isUser = role === 'user';
-
   return (
     <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       <div
         className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
           isUser
-              ? 'bg-blue-500 text-white rounded-br-sm shadow-lg shadow-blue-500/20'
-              : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm shadow-sm'
+            ? 'bg-blue-500 text-white rounded-br-sm shadow-lg shadow-blue-500/20'
+            : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm shadow-sm'
         }`}
       >
         {text}
@@ -33,7 +120,6 @@ function ChatBubble({ role, text }) {
 
 function MessageBubble({ role, text, timestamp }) {
   const formattedTime = timestamp ? format(new Date(timestamp), 'h:mm a') : null;
-
   return (
     <div className="flex w-full mb-3">
       <div
@@ -54,7 +140,6 @@ function MessageBubble({ role, text, timestamp }) {
 
 function DateDivider({ date }) {
   if (!date) return null;
-
   return (
     <div className="flex items-center gap-3 py-2 text-xs text-slate-500 uppercase tracking-[0.25em]">
       <span className="h-px flex-1 bg-slate-200" />
@@ -103,13 +188,11 @@ function TypingIndicator() {
 
 function toApiMessages(messages) {
   let hasSeenUserMessage = false;
-
   return messages
     .filter((message) => {
       if (message.role === 'user') {
         hasSeenUserMessage = true;
       }
-
       return hasSeenUserMessage && (message.role === 'user' || message.role === 'assistant');
     })
     .slice(-20)
@@ -119,29 +202,18 @@ function toApiMessages(messages) {
     }));
 }
 
+// --- Main Component ---
 export default function KraviChatbot({ initialLanguage = 'hi' }) {
-  // Keep the chat closed by default; open only when user clicks the chat button
+  const TYPING_SIM_DELAY = 700; 
+
   const [isOpen, setIsOpen] = useState(false);
-  const TYPING_SIM_DELAY = 700; // ms artificial typing delay to simulate 'searching...'
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      text: WELCOME_MESSAGES[initialLanguage] || WELCOME_MESSAGES.hi,
-      timestamp: new Date().toISOString(),
-    },
-    {
-      role: 'assistant',
-      text: 'Aap in topics me se choose kar sakte hain ya niche buttons par click karein.',
-      timestamp: new Date().toISOString(),
-    },
-  ]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [selectedTopicId, setSelectedTopicId] = useState(null);
-  const [showOtherTopics, setShowOtherTopics] = useState(false);
-  const [showTopicPanel, setShowTopicPanel] = useState(true);
   const [language, setLanguage] = useState(initialLanguage);
+
+  // Consolidated complex, dependent state slices into useReducer
+  const [state, dispatch] = useReducer(chatReducer, initialLanguage, createInitialState);
+  const { messages, isLoading, error, selectedTopicId, showOtherTopics, showTopicPanel } = state;
+
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -163,84 +235,55 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
 
   const sendMessage = async () => {
     const trimmed = input.trim();
-    if (!trimmed || isLoading) {
-      return;
-    }
+    if (!trimmed || isLoading) return;
 
-    const nextMessages = [
+    // Snapshot current conversation timeline for the API payload before updating state
+    const projectedMessages = [
       ...messages,
       { role: 'user', text: trimmed, timestamp: new Date().toISOString() },
     ];
-    setMessages(nextMessages);
+
+    dispatch({ type: 'SEND_MESSAGE_START', payload: trimmed });
     setInput('');
-    setIsLoading(true);
-    setError(null);
 
     try {
       const response = await API.post('/kravi-chat', {
-        messages: toApiMessages(nextMessages),
+        messages: toApiMessages(projectedMessages),
       });
 
       const replyText = response.data?.reply;
-      if (!replyText) {
-        throw new Error('Empty response from chat service');
-      }
+      if (!replyText) throw new Error('Empty response from chat service');
 
-      // Keep typing indicator visible briefly to simulate the assistant "thinking"
       await new Promise((res) => setTimeout(res, TYPING_SIM_DELAY));
-
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        { role: 'assistant', text: replyText, timestamp: new Date().toISOString() },
-      ]);
+      dispatch({ type: 'SEND_MESSAGE_SUCCESS', payload: replyText });
     } catch (err) {
       console.error('KRAVI Bot error:', err);
-      setError('Kuch gadbad ho gayi. Please thodi der baad try karein.');
-    } finally {
-      setIsLoading(false);
+      dispatch({ type: 'SEND_MESSAGE_FAILURE', payload: 'Kuch gadbad ho gayi. Please thodi der baad try karein.' });
     }
   };
 
-  const selectedTopic = supportFaqTopics.find((topic) => topic.id === selectedTopicId) || null;
-
-  const mainTopics = supportFaqTopics.slice(0, PRIMARY_SUPPORT_TOPIC_LIMIT);
-  const otherTopics = supportFaqTopics.slice(PRIMARY_SUPPORT_TOPIC_LIMIT);
-
   const insertFaqResponse = async (question, answer) => {
-    // Add user's question first, then simulate typing before showing assistant answer
-    setMessages((cur) => [
-      ...cur,
-      { role: 'user', text: question, timestamp: new Date().toISOString() },
-    ]);
-    setSelectedTopicId(null);
-    setShowOtherTopics(false);
-    setShowTopicPanel(false);
+    dispatch({ type: 'SELECT_FAQ_START', payload: { question } });
 
-    setIsLoading(true);
     try {
       await new Promise((res) => setTimeout(res, TYPING_SIM_DELAY));
-      setMessages((cur) => [
-        ...cur,
-        { role: 'assistant', text: answer, timestamp: new Date().toISOString() },
-      ]);
-    } finally {
-      setIsLoading(false);
+      dispatch({ type: 'SELECT_FAQ_SUCCESS', payload: { answer } });
+    } catch (err) {
+      dispatch({ type: 'SEND_MESSAGE_FAILURE', payload: 'Kuch gadbad ho gayi.' });
     }
   };
 
   const handleTopicClick = (topicId) => {
-    setSelectedTopicId(topicId);
+    dispatch({ type: 'SELECT_TOPIC', payload: topicId });
   };
 
   const handleOtherClick = () => {
-    setSelectedTopicId(null);
-    setShowOtherTopics(true);
+    dispatch({ type: 'SHOW_OTHER_TOPICS' });
   };
 
-  const handleBackToTopics = () => {
-    setSelectedTopicId(null);
-    setShowOtherTopics(false);
-  };
+  const selectedTopic = supportFaqTopics.find((topic) => topic.id === selectedTopicId) || null;
+  const mainTopics = supportFaqTopics.slice(0, PRIMARY_SUPPORT_TOPIC_LIMIT);
+  const otherTopics = supportFaqTopics.slice(PRIMARY_SUPPORT_TOPIC_LIMIT);
 
   const chatDate = messages[0]?.timestamp
     ? format(new Date(messages[0].timestamp), 'EEEE, MMM d')
@@ -268,9 +311,7 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
               </div>
               <div>
                 <p className="font-semibold text-sm leading-tight text-slate-900">KRAVI Bot</p>
-                <p className="text-[11px] text-slate-500 leading-tight">
-                  24/7 Support
-                </p>
+                <p className="text-[11px] text-slate-500 leading-tight">24/7 Support</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
