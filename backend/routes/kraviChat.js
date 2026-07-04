@@ -273,14 +273,25 @@ function sanitizeMessages(messages) {
     return [];
   }
 
-  return messages
-    .filter((message) => message && ['user', 'assistant'].includes(message.role))
-    .map((message) => ({
+  const sanitizedMessages = [];
+
+  for (const message of messages) {
+    if (!message || !['user', 'assistant'].includes(message.role)) {
+      continue;
+    }
+
+    const content = String(message.content || '').trim().slice(0, 2000);
+    if (!content) {
+      continue;
+    }
+
+    sanitizedMessages.push({
       role: message.role,
-      content: String(message.content || '').trim().slice(0, 2000),
-    }))
-    .filter((message) => message.content)
-    .slice(-20);
+      content,
+    });
+  }
+
+  return sanitizedMessages.slice(-20);
 }
 
 function normalizeText(text) {

@@ -161,7 +161,7 @@ const { name, email, mobile, password, acceptedTerms } = req.body;
         return res.status(400).json({ message: 'Email or mobile already registered' });
       }
 
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otp = crypto.randomInt(100000, 1000000).toString();
       const expiresAt = Date.now() + 10 * 60 * 1000;
       registrationOtpStore.set(normalizedEmail, {
         otp,
@@ -218,7 +218,7 @@ const { email, otp } = req.body;
       registrationOtpStore.delete(normalizedEmail);
       return res.status(400).json({ message: 'OTP has expired. Please request a new OTP.' });
     }
-    if (entry.otp !== otp.trim()) {
+    if (!crypto.timingSafeEqual(Buffer.from(entry.otp), Buffer.from(otp.trim()))) {
       return res.status(400).json({ message: 'Incorrect OTP. Please try again.' });
     }
 
@@ -534,7 +534,7 @@ router.post(
       return res.json({ message: 'If the email or mobile is registered, an OTP has been sent to the registered email.' });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 1000000).toString();
     user.resetPasswordToken = otp;
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();

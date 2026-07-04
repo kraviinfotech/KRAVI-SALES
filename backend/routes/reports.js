@@ -158,8 +158,7 @@ router.post('/manager-record', [
     });
     await record.save();
 
-    const savedItems = [];
-    for (const item of itemsToSave) {
+    const savedItems = await Promise.all(itemsToSave.map(async (item) => {
       const saleItem = new SaleItem({
         recordId: record._id,
         productName: item.productName,
@@ -171,8 +170,8 @@ router.post('/manager-record', [
         amount: item.amount
       });
       await saleItem.save();
-      savedItems.push(saleItem);
-    }
+      return saleItem;
+    }));
 
     res.status(201).json({ message: 'Record saved successfully', record, items: savedItems });
   } catch (err) {
@@ -193,21 +192,20 @@ router.get('/summary', async (req, res) => {
     const activeMatch = { managerId, sellerId: { $in: activeSellerIds } };
 
     const totalSellers = activeSellerIds.length;
-    const totalRecords = await SalesRecord.countDocuments(activeMatch);
-
-    const monthlySales = await SalesRecord.aggregate([
-      { $match: { ...activeMatch, visitDatetime: { $gte: startOfMonth } } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-    ]);
-
-    const yearlySales = await SalesRecord.aggregate([
-      { $match: { ...activeMatch, visitDatetime: { $gte: startOfYear } } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-    ]);
-
-    const pendingSales = await SalesRecord.aggregate([
-      { $match: activeMatch },
-      { $group: { _id: null, total: { $sum: '$pendingAmount' } } }
+    const [totalRecords, monthlySales, yearlySales, pendingSales] = await Promise.all([
+      SalesRecord.countDocuments(activeMatch),
+      SalesRecord.aggregate([
+        { $match: { ...activeMatch, visitDatetime: { $gte: startOfMonth } } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ]),
+      SalesRecord.aggregate([
+        { $match: { ...activeMatch, visitDatetime: { $gte: startOfYear } } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ]),
+      SalesRecord.aggregate([
+        { $match: activeMatch },
+        { $group: { _id: null, total: { $sum: '$pendingAmount' } } }
+      ])
     ]);
 
     res.json({
@@ -253,11 +251,11 @@ router.get('/weekly', async (req, res) => {
       }
     ]);
 
-    const weeklyData = last7Days.map(date => {
+    const weeklySalesByDate = new Map(weeklySales.map((item) => [item._id, item]));
+    const weeklyData = last7Days.map((date) => {
       // Find matching date ignoring timezone offset mismatch by slicing ISO format
       const dateStr = date.toISOString().split('T')[0];
-      // Search in aggregates
-      const found = weeklySales.find(item => item._id === dateStr);
+      const found = weeklySalesByDate.get(dateStr);
       return {
         date: dateStr,
         day: date.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -295,11 +293,12 @@ router.get('/monthly', async (req, res) => {
       }
     ]);
 
+    const monthlySalesByDate = new Map(monthlySales.map((item) => [item._id, item]));
     const daysInMonth = new Date(year, month, 0).getDate();
     const monthlyData = [];
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const found = monthlySales.find(item => item._id === dateStr);
+      const found = monthlySalesByDate.get(dateStr);
       monthlyData.push({
         date: dateStr,
         day: String(day),
@@ -415,8 +414,7 @@ router.get('/target-achievement', async (req, res) => {
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     const managerId = getManagerObjectId(req);
     const sellers = await Seller.find({ managerId }).lean();
-    const results = [];
-    for (const seller of sellers) {
+    const results = await Promise.all(sellers.map(async (seller) => {
       const sales = await SalesRecord.aggregate([
         { $match: { managerId, sellerId: seller._id, visitDatetime: { $gte: monthStart, $lte: monthEnd } } },
         { $group: { _id: null, total: { $sum: '$totalAmount' } } }
@@ -424,8 +422,8 @@ router.get('/target-achievement', async (req, res) => {
       const actual = Number((sales[0]?.total || 0).toFixed(2));
       const target = seller.monthlyTarget || 0;
       const achievement = target ? (actual / target) * 100 : 0;
-      results.push({ sellerId: seller._id, sellerName: seller.name, target, actual, achievementPercent: Number(achievement.toFixed(2)) });
-    }
+      return { sellerId: seller._id, sellerName: seller.name, target, actual, achievementPercent: Number(achievement.toFixed(2)) };
+    }));
     res.json(results);
   } catch (err) {
     console.error(err);
@@ -516,12 +514,10 @@ router.get('/sellers-performance', async (req, res) => {
   try {
     const managerId = getManagerObjectId(req);
     const sellers = await Seller.find({ managerId }).lean();
-    const performanceData = [];
-
-    for (const seller of sellers) {
+    const performanceData = await Promise.all(sellers.map(async (seller) => {
       const records = await SalesRecord.find({ managerId, sellerId: seller._id }).lean();
       const recordIds = records.map(r => r._id);
-      
+
       let itemsSold = 0;
       if (recordIds.length > 0) {
         const itemAggregate = await SaleItem.aggregate([
@@ -533,16 +529,16 @@ router.get('/sellers-performance', async (req, res) => {
 
       const totalSales = records.reduce((sum, r) => sum + r.totalAmount, 0);
 
-      performanceData.push({
+      return {
         id: seller._id,
         name: seller.name,
         mobile: seller.mobile,
         recordCount: records.length,
-        shopsVisited: records.length, // Each record corresponds to one shop visit
+        shopsVisited: records.length,
         itemsSold,
         totalSales: Number(totalSales.toFixed(2))
-      });
-    }
+      };
+    }));
 
     res.json(performanceData);
   } catch (err) {
