@@ -5,10 +5,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 
-require.extensions['.jsx'] = function(module, filename) {
-  const content = fs.readFileSync(filename, 'utf8');
-  module._compile(content, filename);
-};
+// Do not attempt to load frontend JSX files in the backend.
+// JSX/React components should live in the frontend and not be required by Node.
 
 const authRoutes = require('./routes/auth');
 const sellerRoutes = require('./routes/sellers');
@@ -26,7 +24,7 @@ const companiesRoutes = require('./routes/companies');
 
 require('./models/SubscriptionPlan');
 require('./services/emailService');
-require('./routes/ReviewSave.jsx');
+// Note: `ReviewSave.jsx` is a React component (frontend). Do not require it here.
 
 if (process.env.ENABLE_LEGACY_BOOTSTRAP === '1') {
   require('./promote');
