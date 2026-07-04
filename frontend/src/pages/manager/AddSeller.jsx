@@ -421,6 +421,63 @@ const LocationDialog = ({ dialog, onClose }) => {
   );
 };
 
+
+const createInitialState = () => ({
+  step: 'details',
+
+  name: '',
+  mobile: '',
+  email: '',
+  password: '',
+  otp: '',
+
+  passwordStrength: 'Weak',
+  showPassword: false,
+
+  loadingSubmit: false,
+  loadingList: cachedSellers ? false : true,
+
+  error: '',
+  success: '',
+
+  sellers: cachedSellers || [],
+  visiblePasswordSellerId: null,
+
+  locationDialog: {
+    open: false,
+    loading: false,
+    error: '',
+    location: null,
+  },
+});
+
+function addSellerReducer(state, action) {
+  switch (action.type) {
+    case 'SET_FIELD':
+      return {
+        ...state,
+        [action.field]: action.value,
+      };
+
+    case 'PASSWORD_CHANGED':
+      return {
+        ...state,
+        password: action.value,
+        passwordStrength: getPasswordStrength(action.value),
+      };
+
+    case 'RESET_FORM':
+      return {
+        ...createInitialState(),
+        sellers: state.sellers,
+        loadingList: false,
+      };
+
+    default:
+      return state;
+  }
+}
+
 const AddSeller = () => {
   const [state, dispatch] = useReducer(
     addSellerReducer,
