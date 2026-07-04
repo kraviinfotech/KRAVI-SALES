@@ -21,27 +21,25 @@ router.get('/overview', async (req, res) => {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-    const monthlySales = await SalesRecord.aggregate([
-      { $match: { visitDatetime: { $gte: startOfMonth } } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-    ]);
-
-    const yearlySales = await SalesRecord.aggregate([
-      { $match: { visitDatetime: { $gte: startOfYear } } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-    ]);
-
-    const pendingSales = await SalesRecord.aggregate([
-      { $group: { _id: null, total: { $sum: '$pendingAmount' } } }
-    ]);
-
-    // Recent companies (managers)
-    const recentManagers = await User.find({ role: 'manager' }).sort({ createdAt: -1 }).limit(5).select('name email mobile createdAt').lean();
-
-    // Plan distribution: compute from Company.plan if available
-    const Company = require('../models/Company');
-    const planAgg = await Company.aggregate([
-      { $group: { _id: '$plan', count: { $sum: 1 } } }
+    const [monthlySales, yearlySales, pendingSales, recentManagers, planAgg] = await Promise.all([
+      SalesRecord.aggregate([
+        { $match: { visitDatetime: { $gte: startOfMonth } } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ]),
+      SalesRecord.aggregate([
+        { $match: { visitDatetime: { $gte: startOfYear } } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ]),
+      SalesRecord.aggregate([
+        { $group: { _id: null, total: { $sum: '$pendingAmount' } } }
+      ]),
+      User.find({ role: 'manager' }).sort({ createdAt: -1 }).limit(5).select('name email mobile createdAt').lean(),
+      (async () => {
+        const Company = require('../models/Company');
+        return Company.aggregate([
+          { $group: { _id: '$plan', count: { $sum: 1 } } }
+        ]);
+      })()
     ]);
     const totalCompaniesCount = planAgg.reduce((s, p) => s + p.count, 0) || totalCompanies;
     const planDistribution = ['Basic', 'Professional', 'Enterprise'].map((name) => {

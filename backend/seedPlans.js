@@ -58,10 +58,8 @@ const seedPlans = async () => {
       }
     ];
 
-    for (const p of newPlans) {
-      await new Plan(p).save();
-    }
-    
+    await Promise.all(newPlans.map((p) => new Plan(p).save()));
+
     console.log('Successfully seeded 4 plans.');
     process.exit(0);
   } catch (err) {

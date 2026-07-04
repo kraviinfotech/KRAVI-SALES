@@ -6,6 +6,45 @@ const auth = require('../middleware/authMiddleware');
 const role = require('../middleware/roleMiddleware');
 const { getPlanDurationDays, getPlanSellerLimit } = require('../utils/subscriptionUtils');
 
+const allowedPlanFields = [
+  'name',
+  'description',
+  'price',
+  'currency',
+  'durationMonths',
+  'durationDays',
+  'maxSellers',
+  'storageGb',
+  'features',
+  'isTrial',
+  'displayOrder',
+  'isActive'
+];
+
+const buildPlanPayload = (body) => {
+  const payload = {};
+
+  for (const field of allowedPlanFields) {
+    if (body[field] !== undefined) {
+      payload[field] = body[field];
+    }
+  }
+
+  if (payload.durationMonths !== undefined && payload.durationDays === undefined) {
+    payload.durationDays = Number(payload.durationMonths || 0) * 30;
+  }
+
+  if (payload.maxSellers === undefined) {
+    if (body.maxSellers !== undefined) {
+      payload.maxSellers = Number(body.maxSellers);
+    } else if (body.managers !== undefined) {
+      payload.maxSellers = Number(body.managers || 0);
+    }
+  }
+
+  return payload;
+};
+
 // Admin-only plans CRUD
 router.use(auth, role('admin'));
 
@@ -44,11 +83,16 @@ router.post('/', planValidators(false), async (req, res) => {
   }
 
   try {
-    const payload = {
-      ...req.body,
-      durationDays: Number(req.body.durationDays) || (Number(req.body.durationMonths || 0) * 30),
-      maxSellers: Number(req.body.maxSellers || req.body.managers || 0)
-    };
+    const payload = buildPlanPayload(req.body);
+
+    if (payload.durationDays === undefined) {
+      payload.durationDays = Number(req.body.durationMonths || 0) * 30;
+    }
+
+    if (payload.maxSellers === undefined) {
+      payload.maxSellers = Number(req.body.maxSellers || req.body.managers || 0);
+    }
+
     const p = new Plan(payload);
     await p.save();
     res.status(201).json(p);
@@ -64,14 +108,8 @@ router.patch('/:id', planValidators(true), async (req, res) => {
   }
 
   try {
-    const payload = { ...req.body };
-    if (payload.durationMonths !== undefined && payload.durationDays === undefined) {
-      payload.durationDays = Number(payload.durationMonths || 0) * 30;
-    }
-    if (payload.managers !== undefined && payload.maxSellers === undefined) {
-      payload.maxSellers = Number(payload.managers || 0);
-    }
-    const p = await Plan.findByIdAndUpdate(req.params.id, payload, { new: true });
+    const payload = buildPlanPayload(req.body);
+    const p = await Plan.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true });
     if (!p) return res.status(404).json({ message: 'Plan not found' });
     res.json(p);
   } catch (err) {

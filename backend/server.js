@@ -1,8 +1,14 @@
 require('dotenv').config();
+const fs = require('fs');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+
+require.extensions['.jsx'] = function(module, filename) {
+  const content = fs.readFileSync(filename, 'utf8');
+  module._compile(content, filename);
+};
 
 const authRoutes = require('./routes/auth');
 const sellerRoutes = require('./routes/sellers');
@@ -16,6 +22,16 @@ const paymentsRoutes = require('./routes/payments');
 const subscriptionsRoutes = require('./routes/subscriptions');
 const shopPaymentsRoutes = require('./routes/shopPayments');
 const kraviChatRoutes = require('./routes/kraviChat');
+const companiesRoutes = require('./routes/companies');
+
+require('./models/SubscriptionPlan');
+require('./services/emailService');
+require('./routes/ReviewSave.jsx');
+
+if (process.env.ENABLE_LEGACY_BOOTSTRAP === '1') {
+  require('./promote');
+  require('./seedPlans');
+}
 
 const app = express();
 
@@ -38,6 +54,7 @@ app.use('/api/payments', paymentsRoutes);
 app.use('/api/subscriptions', subscriptionsRoutes);
 app.use('/api/shoppayments', shopPaymentsRoutes);
 app.use('/api/kravi-chat', kraviChatRoutes);
+app.use('/api/companies', companiesRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {

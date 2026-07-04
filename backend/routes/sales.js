@@ -172,8 +172,7 @@ router.post(
       await record.save();
 
       // Save SaleItems with the reference record ID
-      const savedItems = [];
-      for (const item of itemsToSave) {
+      const savedItems = await Promise.all(itemsToSave.map(async (item) => {
         const saleItem = new SaleItem({
           recordId: record._id,
           productName: item.productName,
@@ -185,8 +184,8 @@ router.post(
           amount: item.amount
         });
         await saleItem.save();
-        savedItems.push(saleItem);
-      }
+        return saleItem;
+      }));
 
       res.status(201).json({
         message: 'Sales record saved successfully',

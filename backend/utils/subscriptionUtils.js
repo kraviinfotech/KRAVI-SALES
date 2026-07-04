@@ -8,7 +8,13 @@ const Settings = require('../models/Settings');
 const Subscription = require('../models/Subscription');
 const User = require('../models/User');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_sales_tracker_key_2026';
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+  return secret;
+};
 
 const toPositiveNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -71,9 +77,11 @@ const getManagerIdForUser = async (user) => {
 };
 
 const buildSubscriptionStatus = async (managerId) => {
-  const subscription = await getActiveSubscription(managerId);
-  const currentSellers = await Seller.countDocuments({ managerId });
-  const settings = await Settings.findOne().lean();
+  const [subscription, currentSellers, settings] = await Promise.all([
+    getActiveSubscription(managerId),
+    Seller.countDocuments({ managerId }),
+    Settings.findOne().lean()
+  ]);
 
   if (!subscription) {
     return {
@@ -112,12 +120,14 @@ const assignTrialSubscription = async (managerId) => {
   const existing = await Subscription.findOne({ managerId });
   if (existing) return existing;
 
-  const settings = await Settings.findOne().lean();
+  const [settings, trialPlan] = await Promise.all([
+    Settings.findOne().lean(),
+    Plan.findOne({
+      isActive: true,
+      $or: [{ isTrial: true }, { price: 0 }]
+    }).sort({ isTrial: -1, displayOrder: 1, createdAt: 1 })
+  ]);
   const fallbackTrialDays = toPositiveNumber(settings?.trialDays, 14);
-  const trialPlan = await Plan.findOne({
-    isActive: true,
-    $or: [{ isTrial: true }, { price: 0 }]
-  }).sort({ isTrial: -1, displayOrder: 1, createdAt: 1 });
 
   if (!trialPlan) return null;
 
@@ -178,7 +188,7 @@ const getSubscriptionTokenExpirySeconds = (status) => {
 
 const signUserToken = (user, status) => jwt.sign(
   { id: user._id, role: user.role },
-  JWT_SECRET,
+  getJwtSecret(),
   { expiresIn: user.role === 'admin' ? '30d' : getSubscriptionTokenExpirySeconds(status) }
 );
 

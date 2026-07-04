@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
@@ -57,7 +58,7 @@ router.post(
       }
 
       // Generate 6-digit OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otp = crypto.randomInt(100000, 1000000).toString();
       const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
       // Store OTP with form data, keyed by email
@@ -107,7 +108,7 @@ router.post(
       otpStore.delete(email);
       return res.status(400).json({ message: 'OTP has expired. Please request a new OTP.' });
     }
-    if (entry.otp !== otp.trim()) {
+    if (!crypto.timingSafeEqual(Buffer.from(entry.otp), Buffer.from(otp.trim()))) {
       return res.status(400).json({ message: 'Incorrect OTP. Please try again.' });
     }
     if (entry.managerId !== req.user._id.toString()) {
