@@ -120,7 +120,9 @@ function toApiMessages(messages) {
 }
 
 export default function KraviChatbot({ initialLanguage = 'hi' }) {
-  const [isOpen, setIsOpen] = useState(true);
+  // Keep the chat closed by default; open only when user clicks the chat button
+  const [isOpen, setIsOpen] = useState(false);
+  const TYPING_SIM_DELAY = 700; // ms artificial typing delay to simulate 'searching...'
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -184,6 +186,9 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
         throw new Error('Empty response from chat service');
       }
 
+      // Keep typing indicator visible briefly to simulate the assistant "thinking"
+      await new Promise((res) => setTimeout(res, TYPING_SIM_DELAY));
+
       setMessages((currentMessages) => [
         ...currentMessages,
         { role: 'assistant', text: replyText, timestamp: new Date().toISOString() },
@@ -201,16 +206,26 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
   const mainTopics = supportFaqTopics.slice(0, PRIMARY_SUPPORT_TOPIC_LIMIT);
   const otherTopics = supportFaqTopics.slice(PRIMARY_SUPPORT_TOPIC_LIMIT);
 
-  const insertFaqResponse = (question, answer) => {
-    const newMessages = [
-      ...messages,
+  const insertFaqResponse = async (question, answer) => {
+    // Add user's question first, then simulate typing before showing assistant answer
+    setMessages((cur) => [
+      ...cur,
       { role: 'user', text: question, timestamp: new Date().toISOString() },
-      { role: 'assistant', text: answer, timestamp: new Date().toISOString() },
-    ];
-    setMessages(newMessages);
+    ]);
     setSelectedTopicId(null);
     setShowOtherTopics(false);
     setShowTopicPanel(false);
+
+    setIsLoading(true);
+    try {
+      await new Promise((res) => setTimeout(res, TYPING_SIM_DELAY));
+      setMessages((cur) => [
+        ...cur,
+        { role: 'assistant', text: answer, timestamp: new Date().toISOString() },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleTopicClick = (topicId) => {
