@@ -260,7 +260,8 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const updateSession = useCallback(({ user: nextUser }) => {
+  const updateSession = useCallback((nextSession) => {
+    const nextUser = nextSession?.user || nextSession;
     if (nextUser) {
       localStorage.setItem(
         USER_STORAGE_KEY,
