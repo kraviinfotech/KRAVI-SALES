@@ -37,6 +37,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import bgImage from "./images/bg.png"; 
 import KraviChatbot from './components/KraviChatbot';
+import SubscriptionBilling from './pages/manager/SubscriptionBilling';
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -110,6 +111,7 @@ const App = () => {
           }>
             <Route path="/manager" element={<ManagerDashboard />} />
             <Route path="/manager/payment" element={<SubscriptionPayment />} />
+            <Route path="/manager/subscription" element={<SubscriptionBilling />} />
             <Route path="/manager/sellers" element={<AddSeller />} />
             <Route path="/manager/records" element={<ManagerRecords />} />
             <Route path="/manager/reports" element={<Reports />} />
