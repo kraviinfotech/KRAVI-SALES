@@ -7,20 +7,6 @@ const API = axios.create({
 });
 
 
-// Request interceptor to automatically add authorization header
-API.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
 // Response interceptor to log server errors for easier debugging
 API.interceptors.response.use(
   (response) => response,

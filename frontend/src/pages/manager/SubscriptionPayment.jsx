@@ -93,7 +93,7 @@ const SubscriptionPayment = () => {
               razorpay_signature: response.razorpay_signature
             });
 
-            updateSession({ token: verifyRes.data.token, user: verifyRes.data.user });
+            updateSession({ user: verifyRes.data.user });
             clearRazorpayStorage();
             navigate('/manager', { replace: true, state: { subscriptionActivated: true } });
           } catch (err) {

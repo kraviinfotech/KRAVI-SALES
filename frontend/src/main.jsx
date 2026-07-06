@@ -24,6 +24,8 @@ import './index.css'
         originalRemoveItem.apply(localStorage, [key]);
       }
     });
+    // Remove any legacy auth token left behind in localStorage.
+    originalRemoveItem.apply(localStorage, ['token']);
 
     // 2. Patch localStorage methods
     Storage.prototype.setItem = function(key, value) {
