@@ -291,6 +291,7 @@ const AddShop = () => {
                 id="image-upload"
                 type="file"
                 accept="image/*"
+                capture="environment"
                 className="hidden"
                 onChange={handleImageChange}
               />
