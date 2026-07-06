@@ -25,7 +25,7 @@ const SuccessState = ({ onConfirm }) => (
 );
 
 const ReviewHeader = () => (
-  <div className="rounded-[28px] bg-white p-6 shadow-sm shadow-slate-200/40 ring-1 ring-slate-200">
+  <div className="rounded-[24px] bg-slate-50 p-5 shadow-sm ring-1 ring-slate-200">
     <h2 className="text-2xl font-bold tracking-tight text-indigo-700">Review Record</h2>
     <p className="mt-1 text-sm text-indigo-500">Confirm the sale details before saving your record.</p>
   </div>
@@ -67,9 +67,11 @@ const ProductSummaryRow = ({ item, index }) => {
   const amount = quantity * rate;
 
   return (
-    <div key={`${item.productName || 'product'}-${item.id || item._id || item.productId || item.name || item.sku || index}`} className="flex items-center justify-between gap-4 text-base border-b border-slate-200 last:border-0 pb-3 last:pb-0">
-      <span className="font-semibold text-indigo-700">{item.productName || '-'}</span>
-      <span className="font-semibold text-slate-700">{displayLabel} x Rs.{rate} = Rs.{amount.toFixed(2)}</span>
+    <div key={`${item.productName || 'product'}-${item.id || item._id || item.productId || item.name || item.sku || index}`} className="space-y-2 border-b border-slate-200 last:border-0 pb-3 last:pb-0">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-base">
+        <span className="font-semibold text-indigo-700 break-words">{item.productName || '-'}</span>
+        <span className="font-semibold text-slate-700 break-words">{displayLabel} × Rs.{rate} = Rs.{amount.toFixed(2)}</span>
+      </div>
     </div>
   );
 };
@@ -452,7 +454,7 @@ const ReviewSave = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto bg-gradient-to-br from-slate-100 via-slate-50 to-white p-6 rounded-[32px] shadow-2xl ring-1 ring-slate-200/70 space-y-6">
+    <div className="max-w-3xl mx-auto bg-white p-4 sm:p-6 rounded-[28px] shadow-sm ring-1 ring-slate-200 space-y-6">
       <ReviewHeader />
       <ErrorBanner error={error} />
       <ShopDetailsSection
