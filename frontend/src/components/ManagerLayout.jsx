@@ -61,7 +61,7 @@ const ManagerLayout = () => {
         </main>
       </div>
       <SubscriptionModal open={showSubscription} onClose={() => setShowSubscription(false)} />
-      <SubscriptionModal />
+      
     </div>
   );
 };

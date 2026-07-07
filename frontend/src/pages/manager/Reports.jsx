@@ -40,6 +40,9 @@ let cachedRecords = null;
 let hasFetchedReports = false;
 
 const Reports = () => {
+
+  console.log("=========== REPORTS RENDER ===========");
+
   const [activeTab, setActiveTab] = useState('weekly');
   const [summary, setSummary] = useState(cachedSummary || { totalSellers: 0, totalRecords: 0, monthlyTotal: 0, yearlyTotal: 0 });
   const [chartData, setChartData] = useState([]);
@@ -57,9 +60,16 @@ const Reports = () => {
   }, [filters]);
 
   const fetchSummary = useCallback(async () => {
+
+      console.log(">>> fetchSummary()");
+
     try {
       const res = await API.get('/reports/summary');
+
       setSummary(res.data);
+
+      console.log("Summary Updated");
+
       cachedSummary = res.data;
     } catch (err) {
       if (err.name !== 'CanceledError') console.error('Summary fetch error:', err);
@@ -83,20 +93,26 @@ const Reports = () => {
   useEffect(() => {
     fetchSummary();
   }, [fetchSummary]);
+  
+const fetchChartData = useCallback(async (signal) => {
 
-  const fetchChartData = useCallback(async (signal) => {
+    console.log(">>> fetchChartData()");
+  
     try {
       if (activeTab === 'custom') { setChartData(getBlankChartData(activeTab)); return; }
       const endpoint =
         activeTab === 'monthly' ? '/reports/monthly' :
-        activeTab === 'yearly'  ? '/reports/yearly'  :
-        activeTab === 'daily'   ? '/reports/daily'   : '/reports/weekly';
+          activeTab === 'yearly' ? '/reports/yearly' :
+            activeTab === 'daily' ? '/reports/daily' : '/reports/weekly';
       const response = await API.get(endpoint, { signal });
       const data = response.data.map(item => ({
         name: item.day || item.month || item.date || item.label || 'N/A',
         sales: Number(item.total || 0),
       }));
       setChartData(data.length > 0 ? data : getBlankChartData(activeTab));
+
+      console.log("Chart Updated");
+
     } catch (err) {
       if (err.name !== 'CanceledError') {
         console.error('Chart fetch error:', err);
@@ -108,16 +124,19 @@ const Reports = () => {
   const recordsLengthRef = useRef(0);
 
   const fetchFilteredRecords = useCallback(async (currentFilters, quiet = false, signal) => {
+
+    console.log(">>> fetchFilteredRecords()");
+
     if (!quiet && recordsLengthRef.current === 0) setLoading(true);
     try {
       const queryParams = new URLSearchParams();
-      if (currentFilters.sellerId)  queryParams.append('sellerId',  currentFilters.sellerId);
+      if (currentFilters.sellerId) queryParams.append('sellerId', currentFilters.sellerId);
       if (currentFilters.sellerName) queryParams.append('sellerName', currentFilters.sellerName);
-      if (currentFilters.shopName)  queryParams.append('shopName',  currentFilters.shopName);
-      if (currentFilters.status)    queryParams.append('status',    currentFilters.status);
-      if (currentFilters.shopType)  queryParams.append('shopType',  currentFilters.shopType);
-      if (currentFilters.from)      queryParams.append('from',      currentFilters.from);
-      if (currentFilters.to)        queryParams.append('to',        currentFilters.to);
+      if (currentFilters.shopName) queryParams.append('shopName', currentFilters.shopName);
+      if (currentFilters.status) queryParams.append('status', currentFilters.status);
+      if (currentFilters.shopType) queryParams.append('shopType', currentFilters.shopType);
+      if (currentFilters.from) queryParams.append('from', currentFilters.from);
+      if (currentFilters.to) queryParams.append('to', currentFilters.to);
 
       const todayStr = new Date().toISOString().split('T')[0];
       if (activeTab === 'daily' && !currentFilters.from && !currentFilters.to) {
@@ -139,6 +158,9 @@ const Reports = () => {
       const data = Array.isArray(response.data) ? response.data : [];
       const validRecords = data.filter(r => r && r.sellerId);
       setRecords(validRecords);
+      
+      console.log("Records Updated:", validRecords.length);
+
       recordsLengthRef.current = validRecords.length;
       setErrorMsg('');
     } catch (err) {
@@ -153,6 +175,12 @@ const Reports = () => {
   }, [activeTab]);
 
   useEffect(() => {
+
+    console.log("=========== EFFECT STARTED ===========");
+    console.log("Filters:", filters);
+    console.log("Active Tab:", activeTab);
+
+
     if (abortControllerRef.current) abortControllerRef.current.abort();
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
@@ -162,17 +190,7 @@ const Reports = () => {
     return () => { if (abortControllerRef.current) abortControllerRef.current.abort(); };
   }, [filters, activeTab, fetchChartData, fetchFilteredRecords]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (abortControllerRef.current) abortControllerRef.current.abort();
-      abortControllerRef.current = new AbortController();
-      const signal = abortControllerRef.current.signal;
-      fetchSummary();
-      fetchChartData(signal);
-      fetchFilteredRecords(filtersRef.current, true, signal);
-    }, 200000);
-    return () => clearInterval(interval);
-  }, [fetchSummary, fetchChartData, fetchFilteredRecords]);
+ 
 
   const handleFilterChange = useCallback((newFilters) => { setFilters(newFilters); }, []);
 

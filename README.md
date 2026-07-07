@@ -1,2 +1,0 @@
-# KRAVI-SALES
-Salesperson Tracker 

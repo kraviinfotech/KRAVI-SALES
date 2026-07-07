@@ -9,6 +9,8 @@ const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 const subscriptionMiddleware = require('../middleware/subscriptionMiddleware');
 const { attachItemsToRecords } = require('../utils/salesRecordUtils');
+const upload = require('../utils/multerConfig');
+const { uploadBuffer, uploadBase64ToAzure, resolveBlobUrl, getBlobNameFromUrl } = require('../utils/azureBlob');
 
 // Protect all routes in this file for sellers only
 router.use(authMiddleware, roleMiddleware('seller'), subscriptionMiddleware);
@@ -46,6 +48,10 @@ const findOrRepairSellerProfile = async (user) => {
 // POST /api/sales/record -> Create sales record and items
 router.post(
   '/record',
+  upload.fields([
+    { name: 'shopImage', maxCount: 1 },
+    { name: 'scannerPhoto', maxCount: 1 }
+  ]),
   [
     body('shopName').trim().notEmpty().withMessage('Shop name is required'),
     body('shopAddress').trim().notEmpty().withMessage('Shop address is required'),
@@ -53,9 +59,19 @@ router.post(
     body('shopType').isIn(['Retail', 'Wholesale', 'Distributor', 'Other']).withMessage('Invalid shop type'),
     body('latitude').optional().isNumeric().withMessage('Latitude must be a number'),
     body('longitude').optional().isNumeric().withMessage('Longitude must be a number'),
-    body('items').isArray({ min: 1 }).withMessage('At least one item is required'),
-    body('items').custom((items) => {
-      if (!Array.isArray(items)) return true;
+    body('items').custom((items, { req }) => {
+      if (typeof items === 'string') {
+        try {
+          items = JSON.parse(items);
+          req.body.items = items;
+        } catch (err) {
+          throw new Error('Items must be valid JSON');
+        }
+      }
+
+      if (!Array.isArray(items) || items.length === 0) {
+        throw new Error('At least one item is required');
+      }
 
       items.forEach((item) => {
         const unit = item.unit || 'quantity';
@@ -93,9 +109,7 @@ router.post(
     body('paymentMethod').optional().isIn(['Online', 'Offline']).withMessage('Invalid payment method'),
     body('paidAmount').optional().isFloat({ min: 0 }).toFloat(),
     body('pendingAmount').optional().isFloat({ min: 0 }).toFloat(),
-    body('paymentStatus').optional().isIn(['Paid', 'Partial', 'Pending']).withMessage('Invalid payment status'),
-    body('scannerPhoto').optional({ values: 'falsy' }).isString().withMessage('Scanner photo must be a string'),
-    body('shopImage').optional({ values: 'falsy' }).isString().withMessage('Shop image must be a string')
+    body('paymentStatus').optional().isIn(['Paid', 'Partial', 'Pending']).withMessage('Invalid payment status')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -103,16 +117,46 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { shopName, shopAddress, mobile, landmark, shopType, latitude, longitude, items, paymentMethod, paidAmount, pendingAmount, paymentStatus, scannerPhoto, shopImage } = req.body;
+    let {
+      shopName,
+      shopAddress,
+      mobile,
+      landmark,
+      shopType,
+      latitude,
+      longitude,
+      items,
+      paymentMethod,
+      paidAmount,
+      pendingAmount,
+      paymentStatus,
+      scannerPhoto,
+      shopImage
+    } = req.body;
 
+    if (typeof items === "string") {
+      try {
+        items = JSON.parse(items);
+      } catch (err) {
+        return res.status(400).json({
+          message: "Invalid items format"
+        });
+      }
+    }
+
+    if (!Array.isArray(items)) {
+      return res.status(400).json({
+        message: "Items must be an array"
+      });
+    }
     try {
       // Find the seller profile of the logged-in user
       const seller = await Seller.findOne({ userId: req.user._id }).select('_id managerId');
 
       // Enforce multi-tenancy: Sellers must belong to a manager
       if (!seller || !seller.managerId) {
-        return res.status(403).json({ 
-          message: 'Seller profile not found or not associated with a manager. Please contact your manager.' 
+        return res.status(403).json({
+          message: 'Seller profile not found or not associated with a manager. Please contact your manager.'
         });
       }
 
@@ -123,7 +167,7 @@ router.post(
       let totalAmount = 0;
       const itemsToSave = items.map(item => {
         let quantity, rate, amount;
-        
+
         if (item.unit === 'weight') {
           // New weight-based structure
           quantity = Number(item.weight) || 1;
@@ -133,10 +177,10 @@ router.post(
           quantity = Number(item.quantity) || 1;
           rate = Number(item.price || item.rate) || 0;
         }
-        
+
         amount = Number((quantity * rate).toFixed(2));
         totalAmount += amount;
-        
+
         return {
           productName: item.productName,
           unit: item.unit || 'quantity',
@@ -148,7 +192,24 @@ router.post(
         };
       });
 
-      // Create SalesRecord
+      // Upload images directly with Multer file buffers, or resolve an existing blob URL
+      const shopImageFile = req.files?.shopImage?.[0] || null;
+      const scannerPhotoFile = req.files?.scannerPhoto?.[0] || null;
+      const shopImageValue = req.body.shopImage;
+      const scannerPhotoValue = req.body.scannerPhoto;
+
+      const uploadedShopImage = shopImageFile
+        ? await uploadBuffer(shopImageFile.buffer, shopImageFile.originalname, shopImageFile.mimetype)
+        : typeof shopImageValue === 'string' && shopImageValue.startsWith('data:')
+          ? await uploadBase64ToAzure(shopImageValue, 'shop-image')
+          : getBlobNameFromUrl(shopImageValue) || null;
+
+      const uploadedScannerPhoto = scannerPhotoFile
+        ? await uploadBuffer(scannerPhotoFile.buffer, scannerPhotoFile.originalname, scannerPhotoFile.mimetype)
+        : typeof scannerPhotoValue === 'string' && scannerPhotoValue.startsWith('data:')
+          ? await uploadBase64ToAzure(scannerPhotoValue, 'scanner-photo')
+          : getBlobNameFromUrl(scannerPhotoValue) || null;
+
       const record = new SalesRecord({
         sellerId: seller._id,
         managerId: managerId, // Link record to the manager who owns the seller
@@ -165,8 +226,8 @@ router.post(
         paidAmount: paidAmount || 0,
         pendingAmount: pendingAmount || 0,
         paymentStatus: paymentStatus || 'Pending',
-        scannerPhoto: scannerPhoto || null,
-        shopImage: shopImage || null
+        scannerPhoto: uploadedScannerPhoto || null,
+        shopImage: uploadedShopImage || null
       });
 
       await record.save();
@@ -187,9 +248,13 @@ router.post(
         return saleItem;
       }));
 
+      const savedRecord = record.toObject();
+      savedRecord.shopImage = resolveBlobUrl(savedRecord.shopImage);
+      savedRecord.scannerPhoto = resolveBlobUrl(savedRecord.scannerPhoto);
+
       res.status(201).json({
         message: 'Sales record saved successfully',
-        record,
+        record: savedRecord,
         items: savedItems
       });
 
@@ -227,8 +292,8 @@ router.get('/today-stats', async (req, res) => {
     const recordIds = todayRecords.map((record) => record._id);
     const items = recordIds.length
       ? await SaleItem.find({ recordId: { $in: recordIds } })
-          .select('recordId unit quantity weight')
-          .lean()
+        .select('recordId unit quantity weight')
+        .lean()
       : [];
 
     const itemsSold = items.reduce((sum, item) => {
@@ -267,8 +332,13 @@ router.get('/my-records', async (req, res) => {
       .lean();
 
     const recordsWithItems = await attachItemsToRecords(records);
+    const recordsWithUrls = recordsWithItems.map((record) => ({
+      ...record,
+      shopImage: resolveBlobUrl(record.shopImage),
+      scannerPhoto: resolveBlobUrl(record.scannerPhoto)
+    }));
 
-    res.json(recordsWithItems);
+    res.json(recordsWithUrls);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error retrieving your records' });

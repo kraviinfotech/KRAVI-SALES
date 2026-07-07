@@ -8,6 +8,7 @@ const { attachItemsToRecords } = require('../utils/salesRecordUtils');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 const subscriptionMiddleware = require('../middleware/subscriptionMiddleware');
+const { resolveBlobUrl } = require('../utils/azureBlob');
 
 // Protect all routes under this router for manager role only
 router.use(authMiddleware, roleMiddleware('manager'), subscriptionMiddleware);
@@ -600,16 +601,24 @@ router.get('/records', async (req, res) => {
     }
 
     // Populate the Seller information
-    const records = await SalesRecord.find(query)
-      .populate('sellerId', 'name mobile')
-      .select('-scannerPhoto -shopImage')
-      .sort({ visitDatetime: -1 })
-      .lean();
+    // Populate the Seller information
+const records = await SalesRecord.find(query)
+  .populate('sellerId', 'name mobile')
+  .sort({ visitDatetime: -1 })
+  .lean();
 
-    const recordsWithItems = await attachItemsToRecords(records);
+// Attach items to every record
+const recordsWithItems = await attachItemsToRecords(records);
 
-    res.json(recordsWithItems);
-  } catch (err) {
+// Convert blob names to URLs
+const recordsWithImages = recordsWithItems.map(record => ({
+  ...record,
+  shopImage: resolveBlobUrl(record.shopImage),
+  scannerPhoto: resolveBlobUrl(record.scannerPhoto)
+}));
+
+return res.json(recordsWithImages);
+}catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error retrieving reports records list' });
   }

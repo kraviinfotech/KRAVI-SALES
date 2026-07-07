@@ -49,28 +49,27 @@ const ManagerProfile = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const photoData = e.target?.result;
-      if (!photoData) return;
+    setScannerLoading(true);
+    setScannerMessage('Uploading scanner image...');
 
-      setScannerLoading(true);
-      setScannerMessage('Uploading scanner image...');
+    try {
+      const formData = new FormData();
+      formData.append('managerScannerPhoto', file);
 
-      try {
-        const response = await API.patch('/auth/me/scanner', {
-          managerScannerPhoto: photoData
-        });
-        setManagerScannerPhoto(response.data.managerScannerPhoto || null);
-        setScannerMessage('Scanner image saved successfully. Sellers can now use it for online payments.');
-      } catch (err) {
-        console.error(err);
-        setScannerMessage(err.response?.data?.message || 'Upload failed. Please try again.');
-      } finally {
-        setScannerLoading(false);
-      }
-    };
-    reader.readAsDataURL(file);
+      const response = await API.patch('/auth/me/scanner', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      setManagerScannerPhoto(response.data.managerScannerPhoto || null);
+      setScannerMessage('Scanner image saved successfully. Sellers can now use it for online payments.');
+    } catch (err) {
+      console.error(err);
+      setScannerMessage(err.response?.data?.message || 'Upload failed. Please try again.');
+    } finally {
+      setScannerLoading(false);
+    }
   };
 
   const handleRemoveScanner = async () => {

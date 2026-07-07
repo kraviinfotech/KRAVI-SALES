@@ -25,7 +25,7 @@ const SuccessState = ({ onConfirm }) => (
 );
 
 const ReviewHeader = () => (
-  <div className="rounded-[24px] bg-slate-50 p-5 shadow-sm ring-1 ring-slate-200">
+  <div className="space-y-2 bg-white p-4 rounded-[22px] border border-slate-200 shadow-sm">
     <h2 className="text-2xl font-bold tracking-tight text-indigo-700">Review Record</h2>
     <p className="mt-1 text-sm text-indigo-500">Confirm the sale details before saving your record.</p>
   </div>
@@ -44,8 +44,8 @@ const ErrorBanner = ({ error }) => {
 
 const ShopDetailsSection = ({ shopName, mobile, shopAddress, landmark, shopType }) => (
   <section>
-    <h3 className="mb-3 text-base font-black uppercase tracking-[0.2em] text-indigo-600">Shop Details</h3>
     <div className="space-y-3 rounded-[22px] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-5 text-base text-slate-800 shadow-sm">
+      <h3 className="mb-3 text-base font-black uppercase tracking-[0.2em] text-indigo-600">Shop Details</h3>
       <p>
         <span className="font-semibold text-slate-700">Name:</span>{' '}
         <span className="font-semibold">{shopName || '-'}</span>
@@ -67,21 +67,21 @@ const ProductSummaryRow = ({ item, index }) => {
   const amount = quantity * rate;
 
   return (
-    <div key={`${item.productName || 'product'}-${item.id || item._id || item.productId || item.name || item.sku || index}`} className="space-y-2 border-b border-slate-200 last:border-0 pb-3 last:pb-0">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-base">
-        <span className="font-semibold text-indigo-700 break-words">{item.productName || '-'}</span>
-        <span className="font-semibold text-slate-700 break-words">{displayLabel} × Rs.{rate} = Rs.{amount.toFixed(2)}</span>
-      </div>
+    <div
+      key={`${item.productName || 'product'}-${item.id || item._id || item.productId || item.name || item.sku || index}`} className="flex items-center justify-between gap-4 text-base border-b border-slate-200 last:border-0 pb-3 last:pb-0">
+      <span className="font-semibold text-indigo-700">{item.productName || '-'}</span>
+      <span className="font-semibold text-slate-700">{displayLabel} x Rs.{rate} = Rs.{amount.toFixed(2)}</span>
     </div>
   );
 };
 
 const ProductsSection = ({ items }) => (
   <section>
-    <div className="flex items-center justify-between">
-      <h3 className="text-base font-black uppercase tracking-[0.2em] text-indigo-600">Products</h3>
-    </div>
+
     <div className="space-y-2 bg-white p-4 rounded-[22px] border border-slate-200 shadow-sm">
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-black uppercase tracking-[0.2em] text-indigo-600">Products</h3>
+      </div>
       {(items || []).map((item, index) => (
         <ProductSummaryRow key={`${item.productName || 'product'}-${item.id || item._id || item.productId || item.name || item.sku || index}`} item={item} index={index} />
       ))}
@@ -159,31 +159,16 @@ const PaymentDetailsSection = ({
           className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-200"
         />
       </div>
-
-      <div>
-        <label htmlFor="review-pending-amount" className="mb-1 block text-base font-semibold text-slate-700">Pending Amount (Rs.)</label>
-        <input
-          id="review-pending-amount"
-          type="text"
-          value={currencyFormatter.format(pendingAmount)}
-          readOnly
-          className="w-full rounded-2xl border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="paymentStatus" className="mb-1 block text-base font-semibold text-slate-700">Payment Status</label>
-        <select
-          id="paymentStatus"
-          value={paymentStatus}
-          onChange={(e) => setPaymentStatus(e.target.value)}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-200"
-        >
-          <option value="Pending">Pending</option>
-          <option value="Partial">Partial</option>
-          <option value="Paid">Paid</option>
-        </select>
-      </div>
+    </div>
+    <div>
+      <label htmlFor="review-pending-amount" className="mb-1 block text-base font-semibold text-slate-700">Pending Amount (Rs.)</label>
+      <input
+        id="review-pending-amount"
+        type="text"
+        value={currencyFormatter.format(pendingAmount)}
+        readOnly
+        className="w-full rounded-2xl border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+      />
     </div>
 
     {paymentMethod === 'Online' && scannerPhoto && (
@@ -306,7 +291,7 @@ const ScannerModal = ({
 };
 
 const ReviewSave = () => {
-  const { formData, setFormData } = useOutletContext();
+  const { formData, setFormData, shopImageFile, setShopImageFile } = useOutletContext();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -316,22 +301,23 @@ const ReviewSave = () => {
   const [payingAmount, setPayingAmount] = useState(formData.paidAmount || "");
   const [paymentStatus, setPaymentStatus] = useState(formData.paymentStatus || 'Pending');
   const [error, setError] = useState('');
-  
+
   // Scanner modal states
   const [showScanner, setShowScanner] = useState(false);
   const [scannerPhoto, setScannerPhoto] = useState(null);
+  const scannerPhotoFileRef = useRef(null);
   const [defaultScannerPhoto, setDefaultScannerPhoto] = useState(null);
   const [, setManagerScannerLoaded] = useState(false);
   const fileInputRef = useRef(null);
 
-  const { 
-    shopName, 
-    shopAddress, 
+  const {
+    shopName,
+    shopAddress,
     mobile,
-    landmark, 
-    shopType, 
-    latitude, 
-    longitude, 
+    landmark,
+    shopType,
+    latitude,
+    longitude,
     items,
     shopImage
   } = formData;
@@ -368,6 +354,7 @@ const ReviewSave = () => {
   const handlePhotoCapture = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      scannerPhotoFileRef.current = file;
       const reader = new FileReader();
       reader.onload = (event) => {
         setScannerPhoto(event.target?.result);
@@ -378,12 +365,14 @@ const ReviewSave = () => {
   };
 
   const handleRemovePhoto = () => {
-    setScannerPhoto(null);
-    setDefaultScannerPhoto(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
+  setScannerPhoto(null);
+  scannerPhotoFileRef.current = null;
+  setDefaultScannerPhoto(null);
+
+  if (fileInputRef.current) {
+    fileInputRef.current.value = '';
+  }
+};
 
   const handleSave = async () => {
     setLoading(true);
@@ -409,30 +398,41 @@ const ReviewSave = () => {
           : { ...baseItem, quantity: Number(item.quantity || 0) };
       });
 
-      const payload = {
-        shopName: shopName?.trim() || '',
-        mobile: mobile || '',
-        shopAddress: shopAddress?.trim() || '',
-        landmark: landmark || '',
-        shopType,
-        latitude,
-        longitude,
-        items: salesItems,
-        paymentMethod,
-        paidAmount: Number(payingAmount) || 0,
-        pendingAmount: Number(pendingAmount) || 0,
-        paymentStatus,
-        shopImage
-      };
+      const formDataPayload = new FormData();
+      formDataPayload.append('shopName', shopName?.trim() || '');
+      formDataPayload.append('mobile', mobile || '');
+      formDataPayload.append('shopAddress', shopAddress?.trim() || '');
+      formDataPayload.append('landmark', landmark || '');
+      formDataPayload.append('shopType', shopType);
+      formDataPayload.append('latitude', latitude ?? '');
+      formDataPayload.append('longitude', longitude ?? '');
+      formDataPayload.append('items', JSON.stringify(salesItems));
+      formDataPayload.append('paymentMethod', paymentMethod);
+      formDataPayload.append('paidAmount', Number(payingAmount) || 0);
+      formDataPayload.append('pendingAmount', Number(pendingAmount) || 0);
+      formDataPayload.append('paymentStatus', paymentStatus);
 
-      if (typeof scannerPhoto === 'string' && scannerPhoto.trim()) {
-        payload.scannerPhoto = scannerPhoto;
+      if (shopImageFile) {
+        formDataPayload.append('shopImage', shopImageFile);
+      } else if (typeof shopImage === 'string' && shopImage.startsWith('data:')) {
+        formDataPayload.append('shopImage', shopImage);
       }
 
-      await API.post('/sales/record', payload);
+      if (scannerPhotoFileRef.current) {
+        formDataPayload.append('scannerPhoto', scannerPhotoFileRef.current);
+      } else if (typeof scannerPhoto === 'string' && scannerPhoto.trim()) {
+        formDataPayload.append('scannerPhoto', scannerPhoto);
+      }
+
+      await API.post('/sales/record', formDataPayload, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 
       sessionStorage.removeItem('sellFormData');
       setFormData(prev => ({ ...prev, shopName: '', shopAddress: '', landmark: '', shopType: 'Retail', latitude: null, longitude: null, items: [{ productName: '', quantity: 1, rate: '' }], paymentMethod: 'None', paidAmount: 0, paymentStatus: 'Pending', shopImage: null }));
+      setShopImageFile(null);
       setSuccess(true);
       setShowScanner(false);
       setScannerPhoto(null);
