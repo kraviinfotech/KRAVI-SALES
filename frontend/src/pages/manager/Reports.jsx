@@ -192,7 +192,20 @@ const fetchChartData = useCallback(async (signal) => {
 
  
 
-  const handleFilterChange = useCallback((newFilters) => { setFilters(newFilters); }, []);
+const handleFilterChange = useCallback((newFilters) => {
+    console.log("handleFilterChange", filters);
+    console.log("newFilters", newFilters);
+
+    const same =
+        JSON.stringify(filters) === JSON.stringify(newFilters);
+
+    console.log("same =", same);
+
+    if (!same) {
+        setFilters(newFilters);
+    }
+}, [filters]);
+
 
   const handleDownloadCSV = () => exportRecordsCSV(records, `sales_report_${activeTab}`);
 
