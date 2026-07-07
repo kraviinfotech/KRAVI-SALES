@@ -92,7 +92,7 @@ const ManagerProfile = () => {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4">
+    <div className="mx-auto min-h-screen w-full max-w-5xl space-y-4 p-3 sm:p-5 lg:p-8">
       <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
         <div className="rounded-md bg-blue-50 p-2 text-blue-700">
           <UserCircle size={22} />
