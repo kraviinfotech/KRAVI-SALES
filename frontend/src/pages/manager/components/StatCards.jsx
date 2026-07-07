@@ -2,7 +2,7 @@ import React from 'react';
 
 const StatCards = ({ stats, loading }) => {
   return (
-    <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
       {stats.map((stat) => {
         const Icon = stat.icon;
 

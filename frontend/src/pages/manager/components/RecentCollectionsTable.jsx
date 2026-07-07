@@ -10,7 +10,7 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
 const RecentCollectionsTable = ({ recentCollections, collectionsLoading, onViewAll, recentCollectionsLimit }) => {
   return (
     <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-200 p-4 flex items-center justify-between">
+      <div className="flex flex-col gap-2 border-b border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Payments</p>
           <h2 className="text-base font-black text-slate-950">Recent Collections</h2>
@@ -18,7 +18,7 @@ const RecentCollectionsTable = ({ recentCollections, collectionsLoading, onViewA
         <button 
           type="button"
           onClick={onViewAll}
-          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition-colors"
+          className="rounded-md bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 hover:text-indigo-800"
         >
           View All
         </button>

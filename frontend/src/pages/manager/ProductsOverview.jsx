@@ -120,7 +120,7 @@ const ProductsOverview = () => {
   );
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4">
+    <div className="mx-auto min-h-screen w-full max-w-7xl space-y-4 p-3 sm:p-5 lg:p-8">
       <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
         <div className="rounded-md bg-blue-50 p-2 text-blue-700">
           <Package size={20} />
