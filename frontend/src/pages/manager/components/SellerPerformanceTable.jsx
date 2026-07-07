@@ -31,7 +31,7 @@ const SellerPerformanceTable = ({
           <h2 className="text-base font-black text-slate-950">Seller Performance</h2>
         </div>
         
-        <div className="relative flex-1 max-w-xs mx-4 hidden lg:block">
+        <div className="relative w-full max-w-xs lg:mx-4 lg:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <label htmlFor="seller-performance-search" className="sr-only">Search seller or shop</label>
           <input
@@ -39,7 +39,7 @@ const SellerPerformanceTable = ({
             type="text"
             placeholder="Quick search seller/shop..."
             aria-label="Search seller or shop"
-            className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-4 text-xs outline-none focus:ring-2 focus:ring-blue-500/20"
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
           />

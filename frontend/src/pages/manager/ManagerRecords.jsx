@@ -111,7 +111,7 @@ const ManagerRecords = () => {
   };
 
   return (
-    <div className="space-y-8 bg-slate-50/50 min-h-screen">
+    <div className="mx-auto min-h-screen w-full max-w-7xl space-y-4 bg-slate-50/50 p-3 sm:space-y-6 sm:p-5 lg:p-8">
       <RecordsHeader onAddNew={handleAddNew} />
 
       {/* Summary Cards */}

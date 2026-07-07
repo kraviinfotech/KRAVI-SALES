@@ -16,7 +16,7 @@ const CollectionStatsCards = ({ collectionStats }) => {
   ];
 
   return (
-    <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
@@ -24,7 +24,7 @@ const CollectionStatsCards = ({ collectionStats }) => {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-black uppercase tracking-wide text-slate-500">{stat.label}</p>
-                <p className={`mt-2 text-2xl font-black ${stat.color}`}>{currencyFormatter.format(stat.value)}</p>
+                <p className={`mt-2 text-xl font-black sm:text-2xl ${stat.color}`}>{currencyFormatter.format(stat.value)}</p>
               </div>
               <div className={`rounded-md p-2 ${stat.bg} ${stat.color}`}>
                 <Icon size={20} />

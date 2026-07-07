@@ -321,7 +321,7 @@ useEffect(() => {
   const currentDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
   return (
-    <div className="w-full space-y-8 min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-white p-8">
+    <div className="mx-auto min-h-screen w-full max-w-7xl space-y-5 bg-gradient-to-br from-purple-50 via-indigo-50 to-white p-3 sm:space-y-6 sm:p-5 lg:space-y-8 lg:p-8">
       <DashboardHeader 
         onAddNew={() => navigate('/manager/records')} 
         currentDate={currentDate}

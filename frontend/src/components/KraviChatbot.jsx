@@ -5,6 +5,8 @@ import kraviAssistantImage from '../images/kravi-ai-assistant.png';
 import { format } from 'date-fns';
 import { PRIMARY_SUPPORT_TOPIC_LIMIT, supportFaqTopics } from '../data/supportFaqs';
 
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
 const WELCOME_MESSAGES = {
   hi: " Namaste! Main KRAVI AI Assistant hoon. Main aapki kaise sahayata kar sakta hoon?",
   en: " Hello! I am KRAVI AI Assistant. How can I assist you today?",
@@ -101,23 +103,6 @@ function chatReducer(state, action) {
 }
 
 // --- Sub-components ---
-function ChatBubble({ role, text }) {
-  const isUser = role === 'user';
-  return (
-    <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
-      <div
-        className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
-          isUser
-            ? 'bg-blue-500 text-white rounded-br-sm shadow-lg shadow-blue-500/20'
-            : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm shadow-sm'
-        }`}
-      >
-        {text}
-      </div>
-    </div>
-  );
-}
-
 function MessageBubble({ role, text, timestamp }) {
   const formattedTime = timestamp ? format(new Date(timestamp), 'h:mm a') : null;
   return (
@@ -202,13 +187,181 @@ function toApiMessages(messages) {
     }));
 }
 
+function ChatHeader({ onPointerDown, language, onLanguageChange, onClose }) {
+  return (
+    <div
+      onPointerDown={onPointerDown}
+      className="relative bg-white text-slate-900 px-4 py-3 flex items-center justify-between shrink-0 border-b border-slate-200 cursor-grab active:cursor-grabbing select-none"
+      style={{ touchAction: 'none' }}
+    >
+      <div className="absolute left-1/2 top-2 -translate-x-1/2 h-1.5 w-14 rounded-full bg-slate-200" />
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-slate-100 p-2 overflow-hidden shadow-sm">
+          <img
+            src={kraviAssistantImage}
+            alt="KRAVI AI Assistant"
+            className="h-full w-full rounded-full object-cover object-top"
+          />
+        </div>
+        <div>
+          <p className="font-semibold text-sm leading-tight text-slate-900">KRAVI Bot</p>
+          <p className="text-[11px] text-slate-500 leading-tight">24/7 Support</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <select
+          value={language}
+          onChange={(e) => onLanguageChange(e.target.value)}
+          className="rounded-md text-sm px-2 py-1 bg-slate-100 text-slate-900"
+          aria-label="Select language"
+        >
+          <option value="hi">हिन्दी</option>
+          <option value="en">English</option>
+          <option value="mr">मराठी</option>
+        </select>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full p-1.5 transition-colors"
+          aria-label="Close chat"
+        >
+          <X size={18} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ChatBody({ scrollRef, chatDate, messages, isLoading, error }) {
+  return (
+    <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 bg-slate-50">
+      <DateDivider date={chatDate} />
+      {messages.map((message, index) => (
+        <MessageBubble key={`${message.role}-${index}`} role={message.role} text={message.text} timestamp={message.timestamp} />
+      ))}
+      {isLoading && <TypingIndicator />}
+      {error && (
+        <div className="text-center text-xs text-red-500 mt-1 mb-2">{error}</div>
+      )}
+    </div>
+  );
+}
+
+function TopicPanel({
+  selectedTopic,
+  showOtherTopics,
+  mainTopics,
+  otherTopics,
+  getTitle,
+  getQuestionText,
+  getAnswerText,
+  insertFaqResponse,
+  handleTopicClick,
+  handleOtherClick,
+  selectedTopicId,
+}) {
+  return (
+    <div className="border-t border-slate-200 bg-white px-4 py-4 shrink-0">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        {selectedTopic ? (
+          <span className="text-sm font-semibold text-slate-800">{getTitle(selectedTopic)}</span>
+        ) : (
+          <>
+            <span className="text-sm font-semibold text-slate-800">Choose a topic</span>
+            <span className="text-xs text-slate-500">Tap a category to see subquestions</span>
+          </>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {selectedTopic
+          ? selectedTopic.questions.map((item) => (
+              <TopicButton
+                key={getQuestionText(item)}
+                label={getQuestionText(item)}
+                onClick={() => insertFaqResponse(getQuestionText(item), getAnswerText(item))}
+              />
+            ))
+          : (showOtherTopics ? otherTopics : mainTopics).map((topic) => (
+              <TopicButton
+                key={topic.id}
+                label={getTitle(topic)}
+                onClick={() => handleTopicClick(topic.id)}
+                active={selectedTopicId === topic.id}
+              />
+            ))}
+        {!selectedTopic && !showOtherTopics && <TopicButton label="Other" onClick={handleOtherClick} />}
+      </div>
+    </div>
+  );
+}
+
+function ChatFooter({ inputRef, input, setInput, handleKeyDown, sendMessage, isLoading }) {
+  return (
+    <div className="border-t border-slate-200 bg-white px-3 py-3 shrink-0">
+      <div className="flex items-end gap-2">
+        <textarea
+          ref={inputRef}
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={PLACEHOLDER_TEXT}
+          rows={1}
+          aria-label="Type your message"
+          className="flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent max-h-24"
+        />
+        <button
+          type="button"
+          onClick={sendMessage}
+          disabled={!input.trim() || isLoading}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-xl p-2.5 transition-colors shrink-0"
+          aria-label="Send message"
+        >
+          <Send size={18} />
+        </button>
+      </div>
+      <p className="text-[10px] text-slate-400 mt-1.5 text-center">Hindi | English | Marathi mein poochein</p>
+    </div>
+  );
+}
+
+function ChatToggleButton({ isOpen, onPointerDown, onClick }) {
+  return (
+    <button
+      type="button"
+      onPointerDown={onPointerDown}
+      onClick={onClick}
+      className="w-16 h-16 rounded-full bg-blue-600 shadow-xl border border-blue-700 p-0.5 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-transform overflow-hidden"
+      aria-label="Toggle KRAVI chat"
+    >
+      {isOpen ? (
+        <span className="w-full h-full rounded-full bg-gradient-to-br from-[#0b1a4a] to-[#1b5cff] flex items-center justify-center">
+          <X size={24} />
+        </span>
+      ) : (
+        <img src={kraviAssistantImage} alt="Open KRAVI chat" className="h-full w-full rounded-full object-cover object-top" />
+      )}
+    </button>
+  );
+}
+
 // --- Main Component ---
 export default function KraviChatbot({ initialLanguage = 'hi' }) {
-  const TYPING_SIM_DELAY = 700; 
+  const TYPING_SIM_DELAY = 700;
 
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [language, setLanguage] = useState(initialLanguage);
+  const [chatPosition, setChatPosition] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return { x: window.innerWidth - 92, y: window.innerHeight - 92 };
+    }
+    return { x: 0, y: 0 };
+  });
+  const draggingRef = useRef(false);
+  const dragOffsetRef = useRef({ startX: 0, startY: 0, origX: 0, origY: 0 });
+  const dragStartedRef = useRef(false);
+  const clickSuppressedRef = useRef(false);
+  const chatRef = useRef(null);
 
   // Consolidated complex, dependent state slices into useReducer
   const [state, dispatch] = useReducer(chatReducer, initialLanguage, createInitialState);
@@ -232,6 +385,59 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
       inputRef.current.focus();
     }
   }, [isOpen]);
+
+  const handlePointerMove = (event) => {
+    if (!draggingRef.current) return;
+    const distance = Math.hypot(event.clientX - dragOffsetRef.current.startX, event.clientY - dragOffsetRef.current.startY);
+    if (distance <= 6) return;
+    dragStartedRef.current = true;
+    const deltaX = event.clientX - dragOffsetRef.current.startX;
+    const deltaY = event.clientY - dragOffsetRef.current.startY;
+    const newX = clamp(dragOffsetRef.current.origX + deltaX, 12, window.innerWidth - 380);
+    const newY = clamp(dragOffsetRef.current.origY + deltaY, 12, window.innerHeight - 100);
+    setChatPosition({ x: newX, y: newY });
+  };
+
+  const handlePointerUp = () => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    if (dragStartedRef.current) {
+      clickSuppressedRef.current = true;
+    }
+    dragStartedRef.current = false;
+    window.removeEventListener('pointermove', handlePointerMove);
+    window.removeEventListener('pointerup', handlePointerUp);
+  };
+
+  const handlePointerDown = (event, allowButton = false) => {
+    if (event.button !== 0) return;
+    if (!allowButton && event.target.closest('button,select,input,textarea')) return;
+
+    dragOffsetRef.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      origX: chatPosition?.x || 0,
+      origY: chatPosition?.y || 0,
+    };
+    draggingRef.current = true;
+    dragStartedRef.current = false;
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  // BUGFIX: pointermove/pointerup listeners were only removed inside
+  // handlePointerUp. If the component unmounted mid-drag (e.g. route change
+  // while dragging), the listeners never got cleaned up -> memory leak +
+  // calls into a stale/unmounted closure. Clean up on unmount too.
+  useEffect(() => {
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sendMessage = async () => {
     const trimmed = input.trim();
@@ -297,146 +503,67 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end font-sans">
+    <div
+      ref={chatRef}
+      className="fixed z-50 flex flex-col items-end font-sans"
+      style={chatPosition ? { left: chatPosition.x, top: chatPosition.y } : undefined}
+    >
       {isOpen && (
         <div className="mb-3 w-[360px] max-w-[92vw] h-[520px] max-h-[75vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
-          <div className="bg-white text-slate-900 px-4 py-3 flex items-center justify-between shrink-0 border-b border-slate-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-100 p-2 overflow-hidden shadow-sm">
-                <img
-                  src={kraviAssistantImage}
-                  alt="KRAVI AI Assistant"
-                  className="h-full w-full rounded-full object-cover object-top"
-                />
-              </div>
-              <div>
-                <p className="font-semibold text-sm leading-tight text-slate-900">KRAVI Bot</p>
-                <p className="text-[11px] text-slate-500 leading-tight">24/7 Support</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="rounded-md text-sm px-2 py-1 bg-slate-100 text-slate-900"
-                aria-label="Select language"
-              >
-                <option value="hi">हिन्दी</option>
-                <option value="en">English</option>
-                <option value="mr">मराठी</option>
-              </select>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full p-1.5 transition-colors"
-                aria-label="Close chat"
-              >
-                <X size={18} />
-              </button>
-            </div>
-          </div>
+          <ChatHeader
+            onPointerDown={handlePointerDown}
+            language={language}
+            onLanguageChange={setLanguage}
+            onClose={() => setIsOpen(false)}
+          />
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 bg-slate-50">
-            <DateDivider date={chatDate} />
-            {messages.map((message, index) => (
-              <MessageBubble
-                key={`${message.role}-${index}`}
-                role={message.role}
-                text={message.text}
-                timestamp={message.timestamp}
-              />
-            ))}
-            {isLoading && <TypingIndicator />}
-            {error && (
-              <div className="text-center text-xs text-red-500 mt-1 mb-2">
-                {error}
-              </div>
-            )}
-          </div>
+          <ChatBody
+            scrollRef={scrollRef}
+            chatDate={chatDate}
+            messages={messages}
+            isLoading={isLoading}
+            error={error}
+          />
 
           {showTopicPanel && (
-            <div className="border-t border-slate-200 bg-white px-4 py-4 shrink-0">
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                {selectedTopic ? (
-                  <span className="text-sm font-semibold text-slate-800">{getTitle(selectedTopic)}</span>
-                ) : (
-                  <>
-                    <span className="text-sm font-semibold text-slate-800">Choose a topic</span>
-                    <span className="text-xs text-slate-500">Tap a category to see subquestions</span>
-                  </>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {selectedTopic
-                  ? selectedTopic.questions.map((item) => (
-                      <TopicButton
-                        key={getQuestionText(item)}
-                        label={getQuestionText(item)}
-                        onClick={() => insertFaqResponse(getQuestionText(item), getAnswerText(item))}
-                      />
-                    ))
-                  : (showOtherTopics ? otherTopics : mainTopics).map((topic) => (
-                      <TopicButton
-                        key={topic.id}
-                        label={getTitle(topic)}
-                        onClick={() => handleTopicClick(topic.id)}
-                        active={selectedTopicId === topic.id}
-                      />
-                    ))}
-                {!selectedTopic && !showOtherTopics && (
-                  <TopicButton label="Other" onClick={handleOtherClick} />
-                )}
-              </div>
-            </div>
+            <TopicPanel
+              selectedTopic={selectedTopic}
+              showOtherTopics={showOtherTopics}
+              mainTopics={mainTopics}
+              otherTopics={otherTopics}
+              getTitle={getTitle}
+              getQuestionText={getQuestionText}
+              getAnswerText={getAnswerText}
+              insertFaqResponse={insertFaqResponse}
+              handleTopicClick={handleTopicClick}
+              handleOtherClick={handleOtherClick}
+              selectedTopicId={selectedTopicId}
+            />
           )}
 
-          <div className="border-t border-slate-200 bg-white px-3 py-3 shrink-0">
-            <div className="flex items-end gap-2">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={PLACEHOLDER_TEXT}
-                rows={1}
-                aria-label="Type your message"
-                className="flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent max-h-24"
-              />
-              <button
-                type="button"
-                onClick={sendMessage}
-                disabled={!input.trim() || isLoading}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-xl p-2.5 transition-colors shrink-0"
-                aria-label="Send message"
-              >
-                <Send size={18} />
-              </button>
-            </div>
-            <p className="text-[10px] text-slate-400 mt-1.5 text-center">
-              Hindi | English | Marathi mein poochein
-            </p>
-          </div>
+          <ChatFooter
+            inputRef={inputRef}
+            input={input}
+            setInput={setInput}
+            handleKeyDown={handleKeyDown}
+            sendMessage={sendMessage}
+            isLoading={isLoading}
+          />
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => setIsOpen((currentValue) => !currentValue)}
-        className="w-16 h-16 rounded-full bg-blue-600 shadow-xl border border-blue-700 p-0.5 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-transform overflow-hidden"
-        aria-label="Toggle KRAVI chat"
-      >
-        {isOpen ? (
-          <span className="w-full h-full rounded-full bg-gradient-to-br from-[#0b1a4a] to-[#1b5cff] flex items-center justify-center">
-            <X size={24} />
-          </span>
-        ) : (
-          <img
-            src={kraviAssistantImage}
-            alt="Open KRAVI chat"
-            className="h-full w-full rounded-full object-cover object-top"
-          />
-        )}
-      </button>
+      <ChatToggleButton
+        isOpen={isOpen}
+        onPointerDown={(event) => handlePointerDown(event, true)}
+        onClick={(event) => {
+          if (clickSuppressedRef.current) {
+            clickSuppressedRef.current = false;
+            event.preventDefault();
+            return;
+          }
+          setIsOpen((currentValue) => !currentValue);
+        }}
+      />
     </div>
   );
 }

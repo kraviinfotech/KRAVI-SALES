@@ -392,7 +392,6 @@ router.post(
     });
 
     res.json({
-      token,
       user: {
         _id: user._id,
         name: user.name,
@@ -478,7 +477,6 @@ router.post(
       });
 
       return res.json({
-        token,
         user: {
           _id: user._id,
           name: user.name,

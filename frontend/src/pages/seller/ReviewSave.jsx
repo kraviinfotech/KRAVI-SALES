@@ -454,7 +454,7 @@ const ReviewSave = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto bg-gradient-to-br from-slate-100 via-slate-50 to-white p-6 rounded-[32px] shadow-2xl ring-1 ring-slate-200/70 space-y-6">
+    <div className="max-w-3xl mx-auto bg-white p-4 sm:p-6 rounded-[28px] shadow-sm ring-1 ring-slate-200 space-y-6">
       <ReviewHeader />
       <ErrorBanner error={error} />
       <ShopDetailsSection
