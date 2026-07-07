@@ -192,20 +192,7 @@ const fetchChartData = useCallback(async (signal) => {
 
  
 
-const handleFilterChange = useCallback((newFilters) => {
-    console.log("handleFilterChange", filters);
-    console.log("newFilters", newFilters);
-
-    const same =
-        JSON.stringify(filters) === JSON.stringify(newFilters);
-
-    console.log("same =", same);
-
-    if (!same) {
-        setFilters(newFilters);
-    }
-}, [filters]);
-
+  const handleFilterChange = useCallback((newFilters) => { setFilters(newFilters); }, []);
 
   const handleDownloadCSV = () => exportRecordsCSV(records, `sales_report_${activeTab}`);
 
@@ -271,7 +258,7 @@ const handleFilterChange = useCallback((newFilters) => {
   }, [records]);
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-7xl space-y-4 bg-slate-50/30 p-3 sm:space-y-6 sm:p-5 lg:p-8">
+    <div className="space-y-8 bg-slate-50/30 p-2 sm:p-0">
       {/* 1. Header + Tab Switcher */}
       <ReportsHeader activeTab={activeTab} onTabChange={setActiveTab} />
 

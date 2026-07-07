@@ -25,8 +25,23 @@ const filterReducer = (state, action) => {
         [action.field]: action.value,
       };
 
-    case 'SYNC_FILTERS':
-      return createFilterState(action.payload);
+    case 'SYNC_FILTERS': {
+  const nextState = createFilterState(action.payload);
+
+  if (
+    state.sellerId === nextState.sellerId &&
+    state.sellerName === nextState.sellerName &&
+    state.shopName === nextState.shopName &&
+    state.shopType === nextState.shopType &&
+    state.status === nextState.status &&
+    state.from === nextState.from &&
+    state.to === nextState.to
+  ) {
+    return state; // Nothing changed
+  }
+
+  return nextState;
+}
 
     case 'RESET':
       return emptyFilterState;
