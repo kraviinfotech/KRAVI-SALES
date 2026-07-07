@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState, useReducer } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Send, X } from 'lucide-react';
 import API from '../api/axios';
 import kraviAssistantImage from '../images/kravi-ai-assistant.png';
 import { format } from 'date-fns';
 import { PRIMARY_SUPPORT_TOPIC_LIMIT, supportFaqTopics } from '../data/supportFaqs';
-
-const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+import Draggable from 'react-draggable';
 
 const WELCOME_MESSAGES = {
   hi: " Namaste! Main KRAVI AI Assistant hoon. Main aapki kaise sahayata kar sakta hoon?",
@@ -187,15 +187,13 @@ function toApiMessages(messages) {
     }));
 }
 
-function ChatHeader({ onPointerDown, language, onLanguageChange, onClose }) {
+function ChatHeader({ language, onLanguageChange, onClose }) {
   return (
     <div
-      onPointerDown={onPointerDown}
-      className="relative bg-white text-slate-900 px-4 py-3 flex items-center justify-between shrink-0 border-b border-slate-200 cursor-grab active:cursor-grabbing select-none"
-      style={{ touchAction: 'none' }}
+      className="drag-handle relative bg-white text-slate-900 px-4 py-3 flex items-center justify-between shrink-0 border-b border-slate-200 cursor-grab active:cursor-grabbing select-none"
     >
       <div className="absolute left-1/2 top-2 -translate-x-1/2 h-1.5 w-14 rounded-full bg-slate-200" />
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 pointer-events-none">
         <div className="w-10 h-10 rounded-full bg-slate-100 p-2 overflow-hidden shadow-sm">
           <img
             src={kraviAssistantImage}
@@ -208,11 +206,11 @@ function ChatHeader({ onPointerDown, language, onLanguageChange, onClose }) {
           <p className="text-[11px] text-slate-500 leading-tight">24/7 Support</p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()}>
         <select
           value={language}
           onChange={(e) => onLanguageChange(e.target.value)}
-          className="rounded-md text-sm px-2 py-1 bg-slate-100 text-slate-900"
+          className="rounded-md text-sm px-2 py-1 bg-slate-100 text-slate-900 cursor-pointer"
           aria-label="Select language"
         >
           <option value="hi">हिन्दी</option>
@@ -222,7 +220,7 @@ function ChatHeader({ onPointerDown, language, onLanguageChange, onClose }) {
         <button
           type="button"
           onClick={onClose}
-          className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full p-1.5 transition-colors"
+          className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full p-1.5 transition-colors cursor-pointer"
           aria-label="Close chat"
         >
           <X size={18} />
@@ -313,7 +311,7 @@ function ChatFooter({ inputRef, input, setInput, handleKeyDown, sendMessage, isL
           type="button"
           onClick={sendMessage}
           disabled={!input.trim() || isLoading}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-xl p-2.5 transition-colors shrink-0"
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-xl p-2.5 transition-colors shrink-0 cursor-pointer"
           aria-label="Send message"
         >
           <Send size={18} />
@@ -324,47 +322,39 @@ function ChatFooter({ inputRef, input, setInput, handleKeyDown, sendMessage, isL
   );
 }
 
-function ChatToggleButton({ isOpen, onPointerDown, onClick }) {
+function ChatToggleButton({ isOpen, onClick }) {
   return (
     <button
       type="button"
-      onPointerDown={onPointerDown}
       onClick={onClick}
-      className="w-16 h-16 rounded-full bg-blue-600 shadow-xl border border-blue-700 p-0.5 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-transform overflow-hidden"
+      className="drag-handle w-16 h-16 rounded-full bg-blue-600 shadow-xl border border-blue-700 p-0.5 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-transform overflow-hidden cursor-grab active:cursor-grabbing"
       aria-label="Toggle KRAVI chat"
     >
       {isOpen ? (
-        <span className="w-full h-full rounded-full bg-gradient-to-br from-[#0b1a4a] to-[#1b5cff] flex items-center justify-center">
+        <span className="w-full h-full rounded-full bg-gradient-to-br from-[#0b1a4a] to-[#1b5cff] flex items-center justify-center pointer-events-none">
           <X size={24} />
         </span>
       ) : (
-        <img src={kraviAssistantImage} alt="Open KRAVI chat" className="h-full w-full rounded-full object-cover object-top" />
+        <img src={kraviAssistantImage} alt="Open KRAVI chat" className="h-full w-full rounded-full object-cover object-top pointer-events-none" />
       )}
     </button>
   );
 }
 
 // --- Main Component ---
-export default function KraviChatbot({ initialLanguage = 'hi' }) {
+export default function KraviChatbot() {
+  const { i18n } = useTranslation();
   const TYPING_SIM_DELAY = 700;
 
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
-  const [language, setLanguage] = useState(initialLanguage);
-  const [chatPosition, setChatPosition] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return { x: window.innerWidth - 92, y: window.innerHeight - 92 };
-    }
-    return { x: 0, y: 0 };
-  });
-  const draggingRef = useRef(false);
-  const dragOffsetRef = useRef({ startX: 0, startY: 0, origX: 0, origY: 0 });
-  const dragStartedRef = useRef(false);
-  const clickSuppressedRef = useRef(false);
-  const chatRef = useRef(null);
+  const language = i18n.language?.split('-')[0] || 'hi';
+  const setLanguage = (lang) => i18n.changeLanguage(lang);
+  
+  // Track dragging to prevent accidental clicks
+  const [isDragging, setIsDragging] = useState(false);
 
-  // Consolidated complex, dependent state slices into useReducer
-  const [state, dispatch] = useReducer(chatReducer, initialLanguage, createInitialState);
+  const [state, dispatch] = useReducer(chatReducer, language, createInitialState);
   const { messages, isLoading, error, selectedTopicId, showOtherTopics, showTopicPanel } = state;
 
   const scrollRef = useRef(null);
@@ -386,64 +376,10 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
     }
   }, [isOpen]);
 
-  const handlePointerMove = (event) => {
-    if (!draggingRef.current) return;
-    const distance = Math.hypot(event.clientX - dragOffsetRef.current.startX, event.clientY - dragOffsetRef.current.startY);
-    if (distance <= 6) return;
-    dragStartedRef.current = true;
-    const deltaX = event.clientX - dragOffsetRef.current.startX;
-    const deltaY = event.clientY - dragOffsetRef.current.startY;
-    const newX = clamp(dragOffsetRef.current.origX + deltaX, 12, window.innerWidth - 380);
-    const newY = clamp(dragOffsetRef.current.origY + deltaY, 12, window.innerHeight - 100);
-    setChatPosition({ x: newX, y: newY });
-  };
-
-  const handlePointerUp = () => {
-    if (!draggingRef.current) return;
-    draggingRef.current = false;
-    if (dragStartedRef.current) {
-      clickSuppressedRef.current = true;
-    }
-    dragStartedRef.current = false;
-    window.removeEventListener('pointermove', handlePointerMove);
-    window.removeEventListener('pointerup', handlePointerUp);
-  };
-
-  const handlePointerDown = (event, allowButton = false) => {
-    if (event.button !== 0) return;
-    if (!allowButton && event.target.closest('button,select,input,textarea')) return;
-
-    dragOffsetRef.current = {
-      startX: event.clientX,
-      startY: event.clientY,
-      origX: chatPosition?.x || 0,
-      origY: chatPosition?.y || 0,
-    };
-    draggingRef.current = true;
-    dragStartedRef.current = false;
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-  };
-
-  // BUGFIX: pointermove/pointerup listeners were only removed inside
-  // handlePointerUp. If the component unmounted mid-drag (e.g. route change
-  // while dragging), the listeners never got cleaned up -> memory leak +
-  // calls into a stale/unmounted closure. Clean up on unmount too.
-  useEffect(() => {
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const sendMessage = async () => {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
 
-    // Snapshot current conversation timeline for the API payload before updating state
     const projectedMessages = [
       ...messages,
       { role: 'user', text: trimmed, timestamp: new Date().toISOString() },
@@ -503,67 +439,69 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
   };
 
   return (
-    <div
-      ref={chatRef}
-      className="fixed z-50 flex flex-col items-end font-sans"
-      style={chatPosition ? { left: chatPosition.x, top: chatPosition.y } : undefined}
+    <Draggable
+      handle=".drag-handle"
+      bounds="body"
+      onDrag={() => setIsDragging(true)}
+      onStop={() => {
+        setTimeout(() => setIsDragging(false), 100);
+      }}
     >
-      {isOpen && (
-        <div className="mb-3 w-[360px] max-w-[92vw] h-[520px] max-h-[75vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
-          <ChatHeader
-            onPointerDown={handlePointerDown}
-            language={language}
-            onLanguageChange={setLanguage}
-            onClose={() => setIsOpen(false)}
-          />
-
-          <ChatBody
-            scrollRef={scrollRef}
-            chatDate={chatDate}
-            messages={messages}
-            isLoading={isLoading}
-            error={error}
-          />
-
-          {showTopicPanel && (
-            <TopicPanel
-              selectedTopic={selectedTopic}
-              showOtherTopics={showOtherTopics}
-              mainTopics={mainTopics}
-              otherTopics={otherTopics}
-              getTitle={getTitle}
-              getQuestionText={getQuestionText}
-              getAnswerText={getAnswerText}
-              insertFaqResponse={insertFaqResponse}
-              handleTopicClick={handleTopicClick}
-              handleOtherClick={handleOtherClick}
-              selectedTopicId={selectedTopicId}
+      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end font-sans">
+        {isOpen && (
+          <div className="mb-3 w-[360px] max-w-[92vw] h-[520px] max-h-[75vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+            <ChatHeader
+              language={language}
+              onLanguageChange={setLanguage}
+              onClose={() => setIsOpen(false)}
             />
-          )}
 
-          <ChatFooter
-            inputRef={inputRef}
-            input={input}
-            setInput={setInput}
-            handleKeyDown={handleKeyDown}
-            sendMessage={sendMessage}
-            isLoading={isLoading}
-          />
-        </div>
-      )}
+            <ChatBody
+              scrollRef={scrollRef}
+              chatDate={chatDate}
+              messages={messages}
+              isLoading={isLoading}
+              error={error}
+            />
 
-      <ChatToggleButton
-        isOpen={isOpen}
-        onPointerDown={(event) => handlePointerDown(event, true)}
-        onClick={(event) => {
-          if (clickSuppressedRef.current) {
-            clickSuppressedRef.current = false;
-            event.preventDefault();
-            return;
-          }
-          setIsOpen((currentValue) => !currentValue);
-        }}
-      />
-    </div>
+            {showTopicPanel && (
+              <TopicPanel
+                selectedTopic={selectedTopic}
+                showOtherTopics={showOtherTopics}
+                mainTopics={mainTopics}
+                otherTopics={otherTopics}
+                getTitle={getTitle}
+                getQuestionText={getQuestionText}
+                getAnswerText={getAnswerText}
+                insertFaqResponse={insertFaqResponse}
+                handleTopicClick={handleTopicClick}
+                handleOtherClick={handleOtherClick}
+                selectedTopicId={selectedTopicId}
+              />
+            )}
+
+            <ChatFooter
+              inputRef={inputRef}
+              input={input}
+              setInput={setInput}
+              handleKeyDown={handleKeyDown}
+              sendMessage={sendMessage}
+              isLoading={isLoading}
+            />
+          </div>
+        )}
+
+        <ChatToggleButton
+          isOpen={isOpen}
+          onClick={(e) => {
+            if (isDragging) {
+              e.preventDefault();
+              return;
+            }
+            setIsOpen((prev) => !prev);
+          }}
+        />
+      </div>
+    </Draggable>
   );
 }

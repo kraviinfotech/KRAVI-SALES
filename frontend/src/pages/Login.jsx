@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Eye, EyeOff, ShieldCheck, UserRound, ArrowRight} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import GoogleLoginButton from './GoogleLoginButton';
@@ -13,23 +14,23 @@ const roleRoutes = {
   seller: '/dashboard'
 };
 
-const roleConfig = {
+const getRoleConfig = (t) => ({
   seller: {
-    title: 'Seller Login',
-    subtitle: 'For the sales team',
-    buttonLabel: 'Login as Seller',
+    title: t('auth.seller_login'),
+    subtitle: t('auth.subtitle_seller'),
+    buttonLabel: t('auth.btn_seller'),
     icon: UserRound,
     buttonClass: 'bg-primary hover:bg-primary-dark',
     registerLink: null
   },
   manager: {
-    title: 'Manager Login',
-    subtitle: 'For dashboard access',
-    buttonLabel: 'Login as Manager',
+    title: t('auth.manager_login'),
+    subtitle: t('auth.subtitle_manager'),
+    buttonLabel: t('auth.btn_manager'),
     icon: ShieldCheck,
     buttonClass: 'bg-slate-900 hover:bg-slate-800'
   }
-};
+});
 
 const Login = () => {
   const { login, logout, googleLogin } = useAuth();
@@ -41,9 +42,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [googleReady, setGoogleReady] = useState(false);
   const [showIntroVideo, setShowIntroVideo] = useState(true);
+  const { t } = useTranslation();
 
   const navigate = useNavigate();
-  const currentRole = roleConfig[selectedRole];
+  const currentRole = getRoleConfig(t)[selectedRole];
   const Icon = currentRole.icon;
 
   // Initialize Google SDK on component mount
@@ -172,7 +174,7 @@ const Login = () => {
           />
           <div className="pointer-events-none absolute inset-0 bg-black/40" />
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white text-sm font-medium animate-pulse">
-            Tap anywhere to skip
+            {t('auth.tap_skip')}
           </div>
         </div>
       )}
@@ -182,8 +184,8 @@ const Login = () => {
           <div className="rounded-lg border border-white bg-white/95 p-6 shadow-[0_22px_60px_rgba(37,99,235,0.14)] ring-1 ring-blue-100/60">
             <div className="mb-8 text-center border-b border-blue-100/70 pb-4">
               <p className="text-sm font-bold uppercase tracking-wide text-indigo-600">SalesFlow</p>
-              <h1 className="mt-1 text-3xl font-black text-gray-900">Welcome Back!</h1>
-              <p className="mt-2 text-sm font-medium text-slate-500">Login to continue to your account</p>
+              <h1 className="mt-1 text-3xl font-black text-gray-900">{t('auth.welcome')}</h1>
+              <p className="mt-2 text-sm font-medium text-slate-500">{t('auth.login_continue')}</p>
             </div>
 
             <div className="mb-5 grid grid-cols-2 rounded-md border border-slate-200 bg-white/90 p-1">
@@ -229,7 +231,7 @@ const Login = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               <div>
-                <label htmlFor="login-identifier" className="mb-1 block text-sm font-medium text-gray-700">Email or Mobile Number</label>
+                <label htmlFor="login-identifier" className="mb-1 block text-sm font-medium text-gray-700">{t('auth.email_mobile')}</label>
                 <input
                   id="login-identifier"
                   type="text"
@@ -244,7 +246,7 @@ const Login = () => {
               </div>
 
               <div>
-                <label htmlFor="login-password" className="mb-1 block text-sm font-medium text-gray-700">Password</label>
+                <label htmlFor="login-password" className="mb-1 block text-sm font-medium text-gray-700">{t('auth.password')}</label>
                 <div className="relative">
                   <input
                     id="login-password"
@@ -268,7 +270,7 @@ const Login = () => {
                 </div>
                 <div className="mt-1 text-right">
                   <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-                    Forgot Password?
+                    {t('auth.forgot_password')}
                   </Link>
                 </div>
               </div>
@@ -278,7 +280,7 @@ const Login = () => {
                 disabled={loading}
                 className={`w-full rounded py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-75 ${currentRole.buttonClass}`}
               >
-                {loading ? 'Logging In...' : currentRole.buttonLabel}
+                {loading ? t('auth.logging_in') : currentRole.buttonLabel}
               </button>
 
               {googleReady && selectedRole === 'manager' && (
@@ -289,15 +291,15 @@ const Login = () => {
             </form>
 
             <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-              <p className="text-center text-sm font-semibold text-slate-700">New to Kravi Salesflow?</p>
+              <p className="text-center text-sm font-semibold text-slate-700">{t('auth.new_to')}</p>
               <div className="mt-4">
                 <Link
                   to="/register?role=manager"
                   className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left transition hover:border-primary/80 hover:bg-primary/5"
                 >
                   <div>
-                    <p className="font-bold text-slate-950">Register as Manager</p>
-                    <p className="mt-1 text-sm text-slate-500">Create your manager account and get started.</p>
+                    <p className="font-bold text-slate-950">{t('auth.register_manager')}</p>
+                    <p className="mt-1 text-sm text-slate-500">{t('auth.create_manager')}</p>
                   </div>
                   <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-primary">
                     <ArrowRight size={18} />
