@@ -80,7 +80,7 @@ const SellerLayout = () => {
               </div>
             )}
           </div>
-
+          
           <h1 className="flex-1 text-center text-lg font-bold text-slate-900">{title}</h1>
           
           {showLang && (

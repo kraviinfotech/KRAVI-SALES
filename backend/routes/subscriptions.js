@@ -296,6 +296,13 @@ router.post(
       const status = await buildSubscriptionStatus(req.user._id);
       const token = signUserToken(freshUser, status);
 
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000
+      });
+
       if (freshUser?.email) {
         sendEmail({
           to: freshUser.email,
@@ -309,7 +316,6 @@ router.post(
         message: 'Subscription activated successfully',
         subscription,
         status,
-        token,
         user: {
           _id: freshUser._id,
           name: freshUser.name,

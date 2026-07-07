@@ -271,7 +271,7 @@ const handleFilterChange = useCallback((newFilters) => {
   }, [records]);
 
   return (
-    <div className="space-y-8 bg-slate-50/30 p-2 sm:p-0">
+    <div className="mx-auto min-h-screen w-full max-w-7xl space-y-4 bg-slate-50/30 p-3 sm:space-y-6 sm:p-5 lg:p-8">
       {/* 1. Header + Tab Switcher */}
       <ReportsHeader activeTab={activeTab} onTabChange={setActiveTab} />
 

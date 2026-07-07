@@ -540,7 +540,7 @@ const SubscriptionBilling = () => {
   const managerName = status?.name || status?.companyName || 'Manager';
 
   return (
-    <div className="w-full space-y-6">
+    <div className="mx-auto min-h-screen w-full max-w-7xl space-y-4 p-3 sm:space-y-6 sm:p-5 lg:p-8">
 
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">

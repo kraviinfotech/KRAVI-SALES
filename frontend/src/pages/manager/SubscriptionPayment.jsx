@@ -93,7 +93,7 @@ const SubscriptionPayment = () => {
               razorpay_signature: response.razorpay_signature
             });
 
-            updateSession({ token: verifyRes.data.token, user: verifyRes.data.user });
+            updateSession({ user: verifyRes.data.user });
             clearRazorpayStorage();
             navigate('/manager', { replace: true, state: { subscriptionActivated: true } });
           } catch (err) {
@@ -122,7 +122,7 @@ const SubscriptionPayment = () => {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="mx-auto min-h-screen w-full max-w-2xl space-y-4 p-3 sm:p-5 lg:p-8">
       {/*
       <button
         type="button"
