@@ -124,7 +124,7 @@ const useCurrentLocation = (autoCapture, minCapturedAt) => {
 };
 
 const AddShop = () => {
-  const { formData, setFormData, lang } = useOutletContext();
+  const { formData, setFormData, lang, shopImageFile, setShopImageFile } = useOutletContext();
   const t = translations[lang || 'en'];
   const navigate = useNavigate();
 
@@ -133,12 +133,15 @@ const AddShop = () => {
   const [shopAddress, setShopAddress] = useState(formData.shopAddress || '');
   const [landmark, setLandmark] = useState(formData.landmark || '');
   const [shopType, setShopType] = useState(formData.shopType || 'Retail');
-  
-  // FIXED: Migrated shopImage from state into a useRef because imagePreview handles visual UI states
-  const shopImageRef = useRef(formData.shopImage || null);
   const [imagePreview, setImagePreview] = useState(
     typeof formData.shopImage === 'string' ? formData.shopImage : null
   );
+
+
+
+
+
+
   
   const [initialLocationCapturedAt] = useState(() => locationSnapshot.capturedAt);
   const savedCoords = useMemo(() => ({
@@ -173,23 +176,17 @@ const AddShop = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    shopImageRef.current = file;
+    setShopImageFile(file);
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result);
     reader.readAsDataURL(file);
   };
 
-  useEffect(() => {
-    if (shopImageRef.current instanceof File) {
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(shopImageRef.current);
-    }
-  }, []);
+ 
 
-  const removeImage = () => { 
-    shopImageRef.current = null; 
-    setImagePreview(null); 
+  const removeImage = () => {
+    setShopImageFile(null);
+    setImagePreview(null);
   };
 
   /* ── submit ── */

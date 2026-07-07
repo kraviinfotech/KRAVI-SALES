@@ -1,6 +1,7 @@
 import React, {
   useState,
   useEffect,
+  useRef,
 } from 'react';
 
 import {
@@ -38,6 +39,8 @@ const createInitialFormData = () => ({
 const StartSelling = () => {
   const parentContext =
     useOutletContext();
+
+  const [shopImageFile, setShopImageFile] = useState(null);
 
   const [formData, setFormData] =
     useState(() => {
@@ -94,9 +97,9 @@ const StartSelling = () => {
       context={{
         formData,
         setFormData,
-        lang:
-          parentContext?.lang ||
-          'en',
+        shopImageFile,
+        setShopImageFile,
+        lang: parentContext?.lang || 'en'
       }}
     />
   );

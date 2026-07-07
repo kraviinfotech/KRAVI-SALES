@@ -75,8 +75,8 @@ const SellerLayout = () => {
             )}
             {!canGoBack && (
               <div className="hidden sm:block">
-                <p className="text-[9px] font-bold text-slate-400 uppercase leading-none">Welcome</p>
-                <p className="text-[11px] font-black text-slate-900 leading-tight truncate max-w-[80px]">{user?.name}</p>
+                <p className="text-[13px] font-bold text-slate-400 uppercase leading-none">Welcome</p>
+                <p className="text-[15px] font-black text-slate-900 leading-tight truncate max-w-[80px]">{user?.name}</p>
               </div>
             )}
           </div>

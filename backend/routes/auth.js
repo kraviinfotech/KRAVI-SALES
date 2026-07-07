@@ -1,6 +1,13 @@
-
 const express = require('express');
 const router = express.Router();
+const upload = require('../utils/multerConfig');
+const {
+  uploadBuffer,
+  deleteBlob,
+  resolveBlobUrl,
+  uploadBase64ToAzure,
+  getBlobNameFromUrl
+} = require('../utils/azureBlob');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -151,7 +158,7 @@ router.post(
     }
 
     try {
-const { name, email, mobile, password, acceptedTerms } = req.body;
+      const { name, email, mobile, password, acceptedTerms } = req.body;
       const normalizedEmail = email.trim().toLowerCase();
       const normalizedMobile = mobile.trim();
       const agreedToTerms = acceptedTerms === true || acceptedTerms === 'true';
@@ -166,13 +173,14 @@ const { name, email, mobile, password, acceptedTerms } = req.body;
       registrationOtpStore.set(normalizedEmail, {
         otp,
         expiresAt,
-formData: {
-  name,
-  email: normalizedEmail,
-  mobile: normalizedMobile,
-  password,
-  acceptedTerms: agreedToTerms
-}      });
+        formData: {
+          name,
+          email: normalizedEmail,
+          mobile: normalizedMobile,
+          password,
+          acceptedTerms: agreedToTerms
+        }
+      });
 
       try {
         await sendEmail({
@@ -199,7 +207,7 @@ router.post(
   [
     body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
     body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
-  
+
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -207,7 +215,7 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-const { email, otp } = req.body;
+    const { email, otp } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
     const entry = registrationOtpStore.get(normalizedEmail);
 
@@ -606,7 +614,7 @@ router.get('/me', authMiddleware, async (req, res) => {
       email,
       mobile,
       role,
-      managerScannerPhoto: managerScannerPhoto || null,
+      managerScannerPhoto: resolveBlobUrl(managerScannerPhoto) || null,
       subscriptionTier: req.user.subscriptionTier || null,
       subscriptionExpiry: req.user.subscriptionExpiry || null,
       termsAccepted: termsAccepted || false,
@@ -679,6 +687,7 @@ router.patch(
   '/me/scanner',
   authMiddleware,
   roleMiddleware('manager'),
+  upload.single('managerScannerPhoto'),
   [
     body('managerScannerPhoto').optional().custom((value) => {
       if (value !== null && typeof value !== 'string') {
@@ -699,12 +708,27 @@ router.patch(
         return res.status(404).json({ message: 'Manager not found' });
       }
 
-      manager.managerScannerPhoto = req.body.managerScannerPhoto || null;
+      const previousBlob = manager.managerScannerPhoto || null;
+      let newBlobName = null;
+
+      if (req.file) {
+        newBlobName = await uploadBuffer(req.file.buffer, req.file.originalname, req.file.mimetype);
+      } else if (req.body.managerScannerPhoto === null || req.body.managerScannerPhoto === 'null') {
+        newBlobName = null;
+      } else if (typeof req.body.managerScannerPhoto === 'string' && req.body.managerScannerPhoto.trim()) {
+        newBlobName = await uploadBase64ToAzure(req.body.managerScannerPhoto, 'manager-scanner');
+      }
+
+      if (previousBlob && previousBlob !== newBlobName) {
+        await deleteBlob(previousBlob);
+      }
+
+      manager.managerScannerPhoto = newBlobName;
       await manager.save();
 
       res.json({
         message: 'Manager scanner updated successfully',
-        managerScannerPhoto: manager.managerScannerPhoto || null
+        managerScannerPhoto: resolveBlobUrl(manager.managerScannerPhoto) || null
       });
     } catch (err) {
       console.error(err);
@@ -734,7 +758,7 @@ router.get('/manager-scanner', authMiddleware, async (req, res) => {
       return res.json({ scannerPhoto: null });
     }
 
-    res.json({ scannerPhoto: manager.managerScannerPhoto });
+    res.json({ scannerPhoto: resolveBlobUrl(manager.managerScannerPhoto) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error fetching manager scanner' });

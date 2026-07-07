@@ -261,17 +261,7 @@ const SubscriptionModal = ({ open, onClose, forceOpen = false }) => {
           
           </div>
 
-          <div className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-3 sm:grid-cols-3">
-            <StatPill
-              icon={ShieldCheck}
-              label="Status"
-              value={status?.canUseApp ? 'Active' : 'Expired'}
-              tone={status?.canUseApp ? 'text-emerald-600' : 'text-red-600'}
-            />
-            <StatPill icon={CreditCard} label="Current plan" value={status?.plan?.name || 'No active plan'} tone="text-blue-700" />
-            <StatPill icon={CalendarDays} label="Expiry" value={formatDate(status?.endDate)} tone="text-amber-600" />
-          </div>
-
+        
         
 
           {loading ? (

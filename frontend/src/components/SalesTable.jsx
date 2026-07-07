@@ -59,6 +59,7 @@ const SalesTable = ({ records }) => {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {records.map((record) => {
+              
               const isExpanded = expandedId === record._id;
               const sellerName = record.sellerId?.name || 'Unknown Seller';
               const itemsCount = record.items?.length || 0;
