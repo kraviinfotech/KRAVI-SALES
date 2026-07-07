@@ -1,0 +1,119 @@
+{
+  "sidebar": {
+    "dashboard": "डॅशबोर्ड",
+    "sales": "विक्री",
+    "inventory": "इन्व्हेंटरी",
+    "reports": "अहवाल",
+    "staff": "कर्मचारी",
+    "settings": "सेटिंग्ज",
+    "logout": "लॉग आउट",
+    "admin": "अॅडमिन डॅशबोर्ड",
+    "manager": "मॅनेजर डॅशबोर्ड",
+    "seller": "विक्रेता डॅशबोर्ड",
+    "sellers": "विक्रेते",
+    "records": "रेकॉर्ड्स",
+    "products": "उत्पादने",
+    "subscription": "सदस्यता",
+    "profile": "प्रोफाइल"
+  },
+  "navbar": {
+    "searchPlaceholder": "शोधा...",
+    "notifications": "अधिसूचना",
+    "language": "भाषा"
+  },
+  "auth": {
+    "seller_login": "विक्रेता लॉगिन",
+    "manager_login": "मॅनेजर लॉगिन",
+    "subtitle_seller": "सेल्स टीमसाठी",
+    "subtitle_manager": "डॅशबोर्ड प्रवेशासाठी",
+    "btn_seller": "विक्रेता म्हणून लॉगिन करा",
+    "btn_manager": "मॅनेजर म्हणून लॉगिन करा",
+    "welcome": "परत आल्याबद्दल स्वागत आहे!",
+    "login_continue": "तुमच्या खात्यात सुरू ठेवण्यासाठी लॉगिन करा",
+    "email_mobile": "ईमेल किंवा मोबाईल क्रमांक",
+    "password": "पासवर्ड",
+    "forgot_password": "पासवर्ड विसरलात?",
+    "new_to": "Kravi Salesflow मध्ये नवीन आहात?",
+    "register_manager": "मॅनेजर म्हणून नोंदणी करा",
+    "create_manager": "तुमचे मॅनेजर खाते तयार करा आणि सुरुवात करा.",
+    "logging_in": "लॉगिन होत आहे...",
+    "tap_skip": "सोडण्यासाठी कुठेही टॅप करा"
+  },
+  "manager": {
+    "dashboard_title": "मॅनेजर डॅशबोर्ड",
+    "add_new_record": "नवीन रेकॉर्ड जोडा",
+    "tabs": {
+      "daily": "दररोज",
+      "weekly": "साप्ताहिक",
+      "monthly": "मासिक",
+      "yearly": "वार्षिक",
+      "custom_range": "कस्टम श्रेणी"
+    },
+    "records_access_denied": "प्रवेश नाकारला. तुम्हाला हे रेकॉर्ड पाहण्याची परवानगी नाही. कृपया मॅनेजर म्हणून लॉगिन करा.",
+    "records_load_failed": "रेकॉर्ड लोड करण्यात अयशस्वी",
+    "excel_export_notice": "Excel export अद्याप उपलब्ध नाही. त्याऐवजी CSV export केला जाईल.",
+    "sales_records_title": "विक्री रेकॉर्ड",
+    "sales_records_subtitle": "सर्व दुकान भेटी आणि विक्री व्यवस्थापित आणि ट्रॅक करा",
+    "search_shop_name": "दुकान नावाने रेकॉर्ड शोधा",
+    "search_shop_name_placeholder": "दुकान नावाने शोधा...",
+    "search_seller_or_shop": "विक्रेता किंवा दुकान शोधा",
+    "search_seller_or_shop_placeholder": "विक्रेता/दुकान झटपट शोधा...",
+    "actions": {
+      "excel": "एक्सेल",
+      "pdf": "पीडीएफ",
+      "print": "प्रिंट",
+      "csv": "सीएसव्ही",
+      "view_all": "सर्व पहा"
+    },
+    "cards": {
+      "total_records": "एकूण रेकॉर्ड",
+      "fully_paid": "पूर्ण भरले",
+      "unpaid_pending": "अपूर्ण/लंबित",
+      "total_pending": "एकूण थकबाकी",
+      "new_this_month": "या महिन्यात नवीन"
+    },
+    "stats": {
+      "total_sellers": "एकूण विक्रेते",
+      "sales_this_month": "या महिन्याची विक्री",
+      "sales_this_year": "या वर्षाची विक्री"
+    },
+    "sections": {
+      "reports": "अहवाल",
+      "seller_performance": "विक्रेता कामगिरी",
+      "payments": "देयके",
+      "recent_collections": "अलीकडील वसुली"
+    },
+    "filters": {
+      "from_date": "तारखेपासून",
+      "to_date": "तारीखापर्यंत",
+      "apply_custom_range": "कस्टम तारीख श्रेणी लागू करा",
+      "filter": "फिल्टर"
+    },
+    "table": {
+      "seller": "विक्रेता",
+      "total_records": "एकूण रेकॉर्ड",
+      "total_shops": "एकूण दुकाने",
+      "total_items": "एकूण वस्तू",
+      "total_sales": "एकूण विक्री",
+      "total_pending": "एकूण थकबाकी",
+      "action": "क्रिया",
+      "loading_reports": "अहवाल लोड होत आहेत...",
+      "no_records_found": "या कालावधीसाठी कोणतेही विक्री रेकॉर्ड सापडले नाहीत.",
+      "delete_records": "रेकॉर्ड हटवा",
+      "total": "एकूण",
+      "no_additional_actions": "कोणतीही अतिरिक्त क्रिया नाही",
+      "date": "तारीख",
+      "shop": "दुकान",
+      "amount": "रक्कम",
+      "mode": "पद्धत",
+      "no_recent_collections": "कोणत्याही अलीकडील वसुली आढळल्या नाहीत.",
+      "unknown": "अज्ञात"
+    },
+    "collection": {
+      "total_collection": "एकूण वसुली",
+      "cash_collection": "नकदी वसुली",
+      "online_collection": "ऑनलाइन वसुली",
+      "pending_collection": "थकित वसुली"
+    }
+  }
+}

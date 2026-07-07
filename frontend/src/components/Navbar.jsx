@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Menu, X, BarChart3, Users, PlusCircle, History, LayoutDashboard } from 'lucide-react';
+import { LogOut, Menu, X, BarChart3, Users, PlusCircle, History, LayoutDashboard, Globe } from 'lucide-react';
 
 const links = [
-  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { label: 'My Records', path: '/my-records', icon: History },
+  { labelKey: 'sidebar.dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { labelKey: 'sidebar.reports', path: '/my-records', icon: History },
 ];
 
 const Navbar = () => {
@@ -13,6 +14,11 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { t, i18n } = useTranslation();
+
+  const changeLanguage = (e) => {
+    i18n.changeLanguage(e.target.value);
+  };
 
   if (!user) return null;
 
@@ -45,7 +51,7 @@ const Navbar = () => {
                     }`}
                   >
                     <Icon size={16} />
-                    <span>{link.label}</span>
+                    <span>{t(link.labelKey)}</span>
                   </Link>
                 );
               })}
@@ -53,6 +59,19 @@ const Navbar = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
+            <div className="flex items-center space-x-1 bg-primary-dark px-2 py-1 rounded">
+              <Globe size={16} className="text-blue-200" />
+              <select
+                value={i18n.language || 'en'}
+                onChange={changeLanguage}
+                className="bg-transparent text-sm text-white focus:outline-none cursor-pointer"
+                aria-label={t('navbar.language')}
+              >
+                <option value="en" className="text-black">English</option>
+                <option value="hi" className="text-black">हिन्दी</option>
+                <option value="mr" className="text-black">मराठी</option>
+              </select>
+            </div>
             <div className="text-right">
               <div className="text-sm font-semibold">{user.name}</div>
               <div className="text-xs text-blue-200 capitalize">{user.role}</div>
@@ -63,7 +82,7 @@ const Navbar = () => {
               className="flex items-center space-x-1 bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-sm font-medium transition-colors"
             >
               <LogOut size={16} />
-              <span>Logout</span>
+              <span>{t('sidebar.logout')}</span>
             </button>
           </div>
 
@@ -82,9 +101,23 @@ const Navbar = () => {
       {/* Mobile menu */}
       {isOpen && (
         <div className="md:hidden border-t border-primary-dark px-2 pt-2 pb-4 space-y-1 bg-primary">
-          <div className="px-3 py-2 border-b border-primary-dark mb-2">
-            <div className="text-base font-semibold">{user.name}</div>
-            <div className="text-xs text-blue-200 capitalize">{user.role}</div>
+          <div className="px-3 py-2 border-b border-primary-dark mb-2 flex justify-between items-center">
+            <div>
+              <div className="text-base font-semibold">{user.name}</div>
+              <div className="text-xs text-blue-200 capitalize">{user.role}</div>
+            </div>
+            <div className="flex items-center space-x-1 bg-primary-dark px-2 py-1 rounded">
+              <Globe size={16} className="text-blue-200" />
+              <select
+                value={i18n.language || 'en'}
+                onChange={changeLanguage}
+                className="bg-transparent text-sm text-white focus:outline-none"
+              >
+                <option value="en" className="text-black">EN</option>
+                <option value="hi" className="text-black">HI</option>
+                <option value="mr" className="text-black">MR</option>
+              </select>
+            </div>
           </div>
           {links.map((link) => {
             const Icon = link.icon;
@@ -98,7 +131,7 @@ const Navbar = () => {
                 }`}
               >
                 <Icon size={18} />
-                <span>{link.label}</span>
+                <span>{t(link.labelKey)}</span>
               </Link>
             );
           })}
@@ -111,7 +144,7 @@ const Navbar = () => {
             className="flex w-full items-center space-x-2 px-3 py-3 rounded-md text-base font-medium text-red-200 hover:bg-red-700 hover:text-white transition-colors"
           >
             <LogOut size={18} />
-            <span>Logout</span>
+            <span>{t('sidebar.logout')}</span>
           </button>
         </div>
       )}

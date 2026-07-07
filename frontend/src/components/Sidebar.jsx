@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import {
   BarChart3,
@@ -16,13 +17,13 @@ import {
 import NotificationBell from './NotificationBell';
 
 const navigation = [
-  { name: 'Dashboard', to: '/manager', icon: LayoutDashboard, end: true },
-  { name: 'Sellers', to: '/manager/sellers', icon: Users },
-  { name: 'Records', to: '/manager/records', icon: FileSpreadsheet },
-  { name: 'Reports', to: '/manager/reports', icon: BarChart3 },
-  { name: 'Products', to: '/manager/products', icon: Package },
-  { name: 'Subscription', to: '/manager/subscription', icon: CreditCard },
-  { name: 'Profile', to: '/manager/profile', icon: UserCircle },
+  { labelKey: 'sidebar.dashboard', to: '/manager', icon: LayoutDashboard, end: true },
+  { labelKey: 'sidebar.sellers', to: '/manager/sellers', icon: Users },
+  { labelKey: 'sidebar.records', to: '/manager/records', icon: FileSpreadsheet },
+  { labelKey: 'sidebar.reports', to: '/manager/reports', icon: BarChart3 },
+  { labelKey: 'sidebar.products', to: '/manager/products', icon: Package },
+  { labelKey: 'sidebar.subscription', to: '/manager/subscription', icon: CreditCard },
+  { labelKey: 'sidebar.profile', to: '/manager/profile', icon: UserCircle },
 ];
 
 const getInitials = (name) => {
@@ -33,6 +34,7 @@ const getInitials = (name) => {
 const Sidebar = ({ onLogout }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const toggleMenu = () => setMobileOpen(!mobileOpen);
 
@@ -64,7 +66,7 @@ const Sidebar = ({ onLogout }) => {
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navigation.map((item) => (
             <NavLink
-              key={item.name}
+              key={item.labelKey}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
@@ -74,7 +76,7 @@ const Sidebar = ({ onLogout }) => {
               }
             >
               <item.icon size={16} className="mr-3 shrink-0" />
-              {item.name}
+              {t(item.labelKey)}
             </NavLink>
           ))}
         </nav>
@@ -85,7 +87,7 @@ const Sidebar = ({ onLogout }) => {
             className="mt-3 w-full flex items-center justify-center px-3 py-2 bg-slate-800 hover:bg-red-600 text-white rounded-md text-xs font-semibold transition-colors"
           >
             <LogOut size={16} className="mr-2" />
-            Logout
+            {t('sidebar.logout')}
           </button>
         </div>
       </aside>
@@ -142,7 +144,7 @@ const Sidebar = ({ onLogout }) => {
               <nav className="flex-1 px-3 py-4 space-y-1">
                 {navigation.map((item) => (
                   <NavLink
-                    key={item.name}
+                    key={item.labelKey}
                     to={item.to}
                     end={item.end}
                     onClick={toggleMenu}
@@ -153,7 +155,7 @@ const Sidebar = ({ onLogout }) => {
                     }
                   >
                     <item.icon size={16} className="mr-3 shrink-0" />
-                    {item.name}
+                    {t(item.labelKey)}
                   </NavLink>
                 ))}
               </nav>
@@ -167,7 +169,7 @@ const Sidebar = ({ onLogout }) => {
                   className="w-full flex items-center justify-center px-3 py-2 bg-slate-800 hover:bg-red-600 text-white rounded-md text-xs font-semibold transition-colors"
                 >
                   <LogOut size={16} className="mr-2" />
-                  Logout
+                  {t('sidebar.logout')}
                 </button>
               </div>
             </div>

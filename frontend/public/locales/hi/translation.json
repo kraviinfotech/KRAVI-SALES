@@ -1,0 +1,119 @@
+{
+  "sidebar": {
+    "dashboard": "डैशबोर्ड",
+    "sales": "बिक्री",
+    "inventory": "इन्वेंटरी",
+    "reports": "रिपोर्ट्स",
+    "staff": "कर्मचारी",
+    "settings": "सेटिंग्स",
+    "logout": "लॉग आउट",
+    "admin": "एडमिन डैशबोर्ड",
+    "manager": "मैनेजर डैशबोर्ड",
+    "seller": "सेलर डैशबोर्ड",
+    "sellers": "सेलर्स",
+    "records": "रिकॉर्ड्स",
+    "products": "उत्पाद",
+    "subscription": "सदस्यता",
+    "profile": "प्रोफाइल"
+  },
+  "navbar": {
+    "searchPlaceholder": "खोजें...",
+    "notifications": "सूचनाएं",
+    "language": "भाषा"
+  },
+  "auth": {
+    "seller_login": "सेलर लॉगिन",
+    "manager_login": "मैनेजर लॉगिन",
+    "subtitle_seller": "सेल्स टीम के लिए",
+    "subtitle_manager": "डैशबोर्ड एक्सेस के लिए",
+    "btn_seller": "सेलर के रूप में लॉगिन करें",
+    "btn_manager": "मैनेजर के रूप में लॉगिन करें",
+    "welcome": "वापसी पर स्वागत है!",
+    "login_continue": "अपने खाते में जारी रखने के लिए लॉगिन करें",
+    "email_mobile": "ईमेल या मोबाइल नंबर",
+    "password": "पासवर्ड",
+    "forgot_password": "पासवर्ड भूल गए?",
+    "new_to": "Kravi Salesflow में नए हैं?",
+    "register_manager": "मैनेजर के रूप में रजिस्टर करें",
+    "create_manager": "अपना मैनेजर खाता बनाएं और शुरू करें।",
+    "logging_in": "लॉगिन हो रहा है...",
+    "tap_skip": "छोड़ने के लिए कहीं भी टैप करें"
+  },
+  "manager": {
+    "dashboard_title": "मैनेजर डैशबोर्ड",
+    "add_new_record": "नया रिकॉर्ड जोड़ें",
+    "tabs": {
+      "daily": "रोज़ाना",
+      "weekly": "साप्ताहिक",
+      "monthly": "मासिक",
+      "yearly": "वार्षिक",
+      "custom_range": "कस्टम रेंज"
+    },
+    "records_access_denied": "पहुँच अस्वीकृत। आपको ये रिकॉर्ड देखने की अनुमति नहीं है। कृपया मैनेजर के रूप में लॉगिन करें।",
+    "records_load_failed": "रिकॉर्ड लोड नहीं हो सके",
+    "excel_export_notice": "Excel Export अभी उपलब्ध नहीं है। इसके बजाय CSV Export किया जाएगा।",
+    "sales_records_title": "बिक्री रिकॉर्ड",
+    "sales_records_subtitle": "सभी दुकान विजिट और बिक्री को मैनेज और ट्रैक करें",
+    "search_shop_name": "दुकान नाम से रिकॉर्ड खोजें",
+    "search_shop_name_placeholder": "दुकान नाम से खोजें...",
+    "search_seller_or_shop": "विक्रेता या दुकान खोजें",
+    "search_seller_or_shop_placeholder": "विक्रेता/दुकान जल्दी खोजें...",
+    "actions": {
+      "excel": "एक्सेल",
+      "pdf": "पीडीएफ",
+      "print": "प्रिंट",
+      "csv": "सीएसवी",
+      "view_all": "सभी देखें"
+    },
+    "cards": {
+      "total_records": "कुल रिकॉर्ड",
+      "fully_paid": "पूर्ण भुगतान",
+      "unpaid_pending": "अवैतनिक/लंबित",
+      "total_pending": "कुल लंबित",
+      "new_this_month": "इस महीने नया"
+    },
+    "stats": {
+      "total_sellers": "कुल विक्रेता",
+      "sales_this_month": "इस महीने की बिक्री",
+      "sales_this_year": "इस साल की बिक्री"
+    },
+    "sections": {
+      "reports": "रिपोर्ट्स",
+      "seller_performance": "विक्रेता प्रदर्शन",
+      "payments": "भुगतान",
+      "recent_collections": "हाल की वसूलियाँ"
+    },
+    "filters": {
+      "from_date": "तारीख से",
+      "to_date": "तारीख तक",
+      "apply_custom_range": "कस्टम दिनांक रेंज लागू करें",
+      "filter": "फिल्टर"
+    },
+    "table": {
+      "seller": "विक्रेता",
+      "total_records": "कुल रिकॉर्ड",
+      "total_shops": "कुल दुकानें",
+      "total_items": "कुल आइटम",
+      "total_sales": "कुल बिक्री",
+      "total_pending": "कुल लंबित",
+      "action": "एक्शन",
+      "loading_reports": "रिपोर्ट्स लोड हो रही हैं...",
+      "no_records_found": "इस अवधि के लिए कोई बिक्री रिकॉर्ड नहीं मिला।",
+      "delete_records": "रिकॉर्ड हटाएं",
+      "total": "कुल",
+      "no_additional_actions": "कोई अतिरिक्त कार्रवाई नहीं",
+      "date": "तारीख",
+      "shop": "दुकान",
+      "amount": "राशि",
+      "mode": "मोड",
+      "no_recent_collections": "कोई हाल की वसूली नहीं मिली।",
+      "unknown": "अज्ञात"
+    },
+    "collection": {
+      "total_collection": "कुल संग्रह",
+      "cash_collection": "नकद संग्रह",
+      "online_collection": "ऑनलाइन संग्रह",
+      "pending_collection": "लंबित संग्रह"
+    }
+  }
+}

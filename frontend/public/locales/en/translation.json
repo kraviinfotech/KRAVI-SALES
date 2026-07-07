@@ -1,0 +1,119 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "sales": "Sales",
+    "inventory": "Inventory",
+    "reports": "Reports",
+    "staff": "Staff",
+    "settings": "Settings",
+    "logout": "Logout",
+    "admin": "Admin Dashboard",
+    "manager": "Manager Dashboard",
+    "seller": "Seller Dashboard",
+    "sellers": "Sellers",
+    "records": "Records",
+    "products": "Products",
+    "subscription": "Subscription",
+    "profile": "Profile"
+  },
+  "navbar": {
+    "searchPlaceholder": "Search...",
+    "notifications": "Notifications",
+    "language": "Language"
+  },
+  "auth": {
+    "seller_login": "Seller Login",
+    "manager_login": "Manager Login",
+    "subtitle_seller": "For the sales team",
+    "subtitle_manager": "For dashboard access",
+    "btn_seller": "Login as Seller",
+    "btn_manager": "Login as Manager",
+    "welcome": "Welcome Back!",
+    "login_continue": "Login to continue to your account",
+    "email_mobile": "Email or Mobile Number",
+    "password": "Password",
+    "forgot_password": "Forgot Password?",
+    "new_to": "New to Kravi Salesflow?",
+    "register_manager": "Register as Manager",
+    "create_manager": "Create your manager account and get started.",
+    "logging_in": "Logging In...",
+    "tap_skip": "Tap anywhere to skip"
+  },
+  "manager": {
+    "dashboard_title": "Manager Dashboard",
+    "add_new_record": "Add New Record",
+    "tabs": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "custom_range": "Custom Range"
+    },
+    "records_access_denied": "Access denied. You are not authorized to view these records. Please login as a Manager.",
+    "records_load_failed": "Failed to load records",
+    "excel_export_notice": "Excel export is not yet implemented. CSV will be exported instead.",
+    "sales_records_title": "Sales Records",
+    "sales_records_subtitle": "Manage and track all shop visits and sales",
+    "search_shop_name": "Search records by shop name",
+    "search_shop_name_placeholder": "Search by Shop Name...",
+    "search_seller_or_shop": "Search seller or shop",
+    "search_seller_or_shop_placeholder": "Quick search seller/shop...",
+    "actions": {
+      "excel": "Excel",
+      "pdf": "PDF",
+      "print": "Print",
+      "csv": "CSV",
+      "view_all": "View All"
+    },
+    "cards": {
+      "total_records": "Total Records",
+      "fully_paid": "Fully Paid",
+      "unpaid_pending": "Unpaid/Pending",
+      "total_pending": "Total Pending",
+      "new_this_month": "New This Month"
+    },
+    "stats": {
+      "total_sellers": "Total Sellers",
+      "sales_this_month": "Sales This Month",
+      "sales_this_year": "Sales This Year"
+    },
+    "sections": {
+      "reports": "Reports",
+      "seller_performance": "Seller Performance",
+      "payments": "Payments",
+      "recent_collections": "Recent Collections"
+    },
+    "filters": {
+      "from_date": "From date",
+      "to_date": "To date",
+      "apply_custom_range": "Apply custom date range filter",
+      "filter": "Filter"
+    },
+    "table": {
+      "seller": "Seller",
+      "total_records": "Total Records",
+      "total_shops": "Total Shops",
+      "total_items": "Total Items",
+      "total_sales": "Total Sales",
+      "total_pending": "Total Pending",
+      "action": "Action",
+      "loading_reports": "Loading reports...",
+      "no_records_found": "No sales records found for this period.",
+      "delete_records": "Delete records",
+      "total": "Total",
+      "no_additional_actions": "No additional actions",
+      "date": "Date",
+      "shop": "Shop",
+      "amount": "Amount",
+      "mode": "Mode",
+      "no_recent_collections": "No recent collections found.",
+      "unknown": "Unknown"
+    },
+    "collection": {
+      "total_collection": "Total Collection",
+      "cash_collection": "Cash Collection",
+      "online_collection": "Online Collection",
+      "pending_collection": "Pending Collection"
+    }
+  }
+}
