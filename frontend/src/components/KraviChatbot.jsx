@@ -353,6 +353,7 @@ export default function KraviChatbot() {
   
   // Track dragging to prevent accidental clicks
   const isDragging = useRef(false);
+  const nodeRef = useRef(null);
 
   const [state, dispatch] = useReducer(chatReducer, language, createInitialState);
   const { messages, isLoading, error, selectedTopicId, showOtherTopics, showTopicPanel } = state;
@@ -439,69 +440,71 @@ export default function KraviChatbot() {
   };
 
   return (
-    <Draggable
-      handle=".drag-handle"
-      bounds="body"
-      onDrag={() => { isDragging.current = true; }}
-      onStop={() => {
-        setTimeout(() => { isDragging.current = false; }, 100);
-      }}
-    >
-      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end font-sans">
-        {isOpen && (
-          <div className="mb-3 w-[360px] max-w-[92vw] h-[520px] max-h-[75vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
-            <ChatHeader
-              language={language}
-              onLanguageChange={setLanguage}
-              onClose={() => setIsOpen(false)}
-            />
-
-            <ChatBody
-              scrollRef={scrollRef}
-              chatDate={chatDate}
-              messages={messages}
-              isLoading={isLoading}
-              error={error}
-            />
-
-            {showTopicPanel && (
-              <TopicPanel
-                selectedTopic={selectedTopic}
-                showOtherTopics={showOtherTopics}
-                mainTopics={mainTopics}
-                otherTopics={otherTopics}
-                getTitle={getTitle}
-                getQuestionText={getQuestionText}
-                getAnswerText={getAnswerText}
-                insertFaqResponse={insertFaqResponse}
-                handleTopicClick={handleTopicClick}
-                handleOtherClick={handleOtherClick}
-                selectedTopicId={selectedTopicId}
+    <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none">
+      <Draggable
+        nodeRef={nodeRef}
+        handle=".drag-handle"
+        onDrag={() => { isDragging.current = true; }}
+        onStop={() => {
+          setTimeout(() => { isDragging.current = false; }, 100);
+        }}
+      >
+        <div ref={nodeRef} className="flex flex-col items-end font-sans pointer-events-auto">
+          {isOpen && (
+            <div className="mb-3 w-[360px] max-w-[92vw] h-[520px] max-h-[75vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+              <ChatHeader
+                language={language}
+                onLanguageChange={setLanguage}
+                onClose={() => setIsOpen(false)}
               />
-            )}
 
-            <ChatFooter
-              inputRef={inputRef}
-              input={input}
-              setInput={setInput}
-              handleKeyDown={handleKeyDown}
-              sendMessage={sendMessage}
-              isLoading={isLoading}
-            />
-          </div>
-        )}
+              <ChatBody
+                scrollRef={scrollRef}
+                chatDate={chatDate}
+                messages={messages}
+                isLoading={isLoading}
+                error={error}
+              />
 
-        <ChatToggleButton
-          isOpen={isOpen}
-          onClick={(e) => {
-            if (isDragging.current) {
-              e.preventDefault();
-              return;
-            }
-            setIsOpen((prev) => !prev);
-          }}
-        />
-      </div>
-    </Draggable>
+              {showTopicPanel && (
+                <TopicPanel
+                  selectedTopic={selectedTopic}
+                  showOtherTopics={showOtherTopics}
+                  mainTopics={mainTopics}
+                  otherTopics={otherTopics}
+                  getTitle={getTitle}
+                  getQuestionText={getQuestionText}
+                  getAnswerText={getAnswerText}
+                  insertFaqResponse={insertFaqResponse}
+                  handleTopicClick={handleTopicClick}
+                  handleOtherClick={handleOtherClick}
+                  selectedTopicId={selectedTopicId}
+                />
+              )}
+
+              <ChatFooter
+                inputRef={inputRef}
+                input={input}
+                setInput={setInput}
+                handleKeyDown={handleKeyDown}
+                sendMessage={sendMessage}
+                isLoading={isLoading}
+              />
+            </div>
+          )}
+
+          <ChatToggleButton
+            isOpen={isOpen}
+            onClick={(e) => {
+              if (isDragging.current) {
+                e.preventDefault();
+                return;
+              }
+              setIsOpen((prev) => !prev);
+            }}
+          />
+        </div>
+      </Draggable>
+    </div>
   );
 }
