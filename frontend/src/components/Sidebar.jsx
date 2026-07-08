@@ -36,7 +36,13 @@ const Sidebar = ({ onLogout }) => {
   const { user } = useAuth();
   const { t } = useTranslation();
 
+  const { i18n } = useTranslation();
   const toggleMenu = () => setMobileOpen(!mobileOpen);
+
+  const handleLanguageChange = (e) => {
+    i18n.changeLanguage(e.target.value);
+    localStorage.setItem('lang', e.target.value);
+  };
 
   return (
     <>
@@ -46,7 +52,19 @@ const Sidebar = ({ onLogout }) => {
           <span className="text-sm font-bold tracking-wide">
             SalesFlow Manager
           </span>
-          {user?.role === 'manager' && <NotificationBell />}
+          <div className="flex items-center gap-3">
+            <select
+              value={i18n.language?.split('-')[0] || localStorage.getItem('lang') || 'en'}
+              onChange={handleLanguageChange}
+              className="text-[11px] font-bold rounded px-1.5 py-1 bg-slate-800 border border-slate-700 text-white outline-none"
+              aria-label="Select language"
+            >
+              <option value="en">EN</option>
+              <option value="hi">HI</option>
+              <option value="mr">MR</option>
+            </select>
+            {user?.role === 'manager' && <NotificationBell />}
+          </div>
         </div>
         <div className="px-4 py-6 border-b border-slate-800 bg-slate-900/50">
           <div className="flex items-center gap-3">
@@ -116,6 +134,16 @@ const Sidebar = ({ onLogout }) => {
               <div className="flex items-center justify-between px-4 border-b border-slate-800 h-14">
                 <span className="text-sm font-bold tracking-wide text-white">SalesFlow Menu</span>
                 <div className="flex items-center gap-3">
+                  <select
+                    value={i18n.language?.split('-')[0] || localStorage.getItem('lang') || 'en'}
+                    onChange={handleLanguageChange}
+                    className="text-[11px] font-bold rounded px-1.5 py-1 bg-slate-800 border border-slate-700 text-white outline-none"
+                    aria-label="Select language"
+                  >
+                    <option value="en">EN</option>
+                    <option value="hi">HI</option>
+                    <option value="mr">MR</option>
+                  </select>
                   {user?.role === 'manager' && <NotificationBell />}
                   <button
                     type="button"

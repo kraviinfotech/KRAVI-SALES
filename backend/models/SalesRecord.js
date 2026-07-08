@@ -56,8 +56,8 @@ const SalesRecordSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['Online', 'Offline'],
-    default: 'Offline'
+    enum: ['Online', 'Offline', 'Cash'],
+    default: 'Cash'
   },
   paidAmount: {
     type: Number,

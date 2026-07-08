@@ -25,6 +25,7 @@ import ManagerRecords from './pages/manager/ManagerRecords';
 import ProductsOverview from './pages/manager/ProductsOverview';
 import ManagerSellerDetail from './pages/manager/ManagerSellerDetail';
 import ManagerProfile from './pages/manager/ManagerProfile';
+import ManagerNotifications from './pages/manager/ManagerNotifications';
 import AdminDashboard from './pages/Admin/Dashboard';
 import AdminCompanies from './pages/Admin/Companies';
 import AdminManagers from './pages/Admin/Managers';
@@ -117,6 +118,7 @@ const App = () => {
             <Route path="/manager/reports" element={<Reports />} />
             <Route path="/manager/products" element={<ProductsOverview />} />
             <Route path="/manager/profile" element={<ManagerProfile />} />
+            <Route path="/manager/notifications" element={<ManagerNotifications />} />
             <Route path="/manager/seller/:sellerId" element={<ManagerSellerDetail />} />
           </Route>
 
