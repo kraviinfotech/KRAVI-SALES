@@ -148,14 +148,14 @@ const PaymentDetailsSection = ({
           }}
           className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-200"
         >
-          <option value="Offline">{t('seller.offline_cash')}</option>
+          <option value="Cash">{t('seller.offline_cash', { defaultValue: 'Cash' })}</option>
           <option value="Online">{t('seller.online_upi')}</option>
         </select>
       </div>
 
       <div>
         <label htmlFor="payingAmount" className="mb-1 block text-base font-semibold text-slate-700">
-          {paymentMethod === 'Offline' ? t('seller.cash_received_rs') : t('seller.paying_amount_rs')}
+          {paymentMethod === 'Cash' ? t('seller.cash_received_rs', { defaultValue: 'Cash Received (Rs)' }) : t('seller.paying_amount_rs')}
         </label>
         <input
           id="payingAmount"
@@ -307,7 +307,7 @@ const ReviewSave = () => {
   const [success, setSuccess] = useState(false);
 
   // Local state for payment details, initialized from formData
-  const [paymentMethod, setPaymentMethod] = useState(formData.paymentMethod || 'Offline');
+  const [paymentMethod, setPaymentMethod] = useState(formData.paymentMethod === 'Offline' ? 'Cash' : (formData.paymentMethod || 'Cash'));
   const [payingAmount, setPayingAmount] = useState(formData.paidAmount || "");
   const [paymentStatus, setPaymentStatus] = useState(formData.paymentStatus || 'Pending');
   const [error, setError] = useState('');
