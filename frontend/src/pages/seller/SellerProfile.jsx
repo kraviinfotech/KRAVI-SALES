@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Phone, UserCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const getInitials = (name) => {
   if (!name) return '?';
@@ -9,6 +10,7 @@ const getInitials = (name) => {
 };
 
 const SellerProfile = () => {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -29,14 +31,14 @@ const SellerProfile = () => {
             )}
           </div>
           <div className="min-w-0">
-            <h2 className="truncate text-base font-black text-slate-950">{user?.name || 'Seller'}</h2>
-            <p className="text-xs font-bold capitalize text-slate-500">{user?.role || 'seller'}</p>
+            <h2 className="truncate text-base font-black text-slate-950">{user?.name || t('seller.seller')}</h2>
+            <p className="text-xs font-bold capitalize text-slate-500">{user?.role || t('seller.seller').toLowerCase()}</p>
           </div>
         </div>
 
         <div className="mt-5 flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">
           <Phone size={16} className="text-blue-700" />
-          <span>{user?.mobile || 'Mobile not available'}</span>
+          <span>{user?.mobile || t('seller.mobile_not_available')}</span>
         </div>
       </section>
 
@@ -46,7 +48,7 @@ const SellerProfile = () => {
         className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-red-600 text-sm font-black text-white shadow-sm transition-colors hover:bg-red-700"
       >
         <LogOut size={16} />
-        Logout
+        {t('auth.logout')}
       </button>
     </div>
   );

@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
 import { validatePassword, getPasswordStrength, getPasswordStrengthColor } from '../utils/passwordUtils';
 
 const Register = () => {
 
+  const { t } = useTranslation();
   const initialRole = 'manager';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -51,25 +53,25 @@ const verifyOtpMutation = useMutation({
     e.preventDefault();
     setError('');
     if (!name.trim() || !email.trim() || !mobile.trim() || !password || !confirmPassword) {
-      setError('Please fill all required fields before requesting OTP.');
+      setError(t('register.fill_all_fields'));
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('register.passwords_not_match'));
       return;
     }
-    const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    const emailPattern = /^[^\@\s]+@[^\@\s]+\.[^\@\s]+$/;
     const mobilePattern = /^\d{10}$/;
     if (!emailPattern.test(email)) {
-      setError('Please enter a valid email address');
+      setError(t('register.valid_email'));
       return;
     }
     if (!mobilePattern.test(mobile)) {
-      setError('Please enter a valid 10-digit mobile number');
+      setError(t('register.valid_mobile'));
       return;
     }
     if (!acceptedTerms) {
-      setError('You must accept the Terms & Privacy Policy to register.');
+      setError(t('register.accept_terms'));
       return;
     }
     const validation = validatePassword(password);
@@ -83,7 +85,7 @@ const verifyOtpMutation = useMutation({
       await sendOtpMutation.mutateAsync();
       setOtpSent(true);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Unable to send OTP');
+      setError(err.response?.data?.message || err.message || t('register.unable_to_send_otp'));
     } finally {
       setLoading(false);
     }
@@ -93,7 +95,7 @@ const verifyOtpMutation = useMutation({
     e.preventDefault();
     setError('');
     if (!otp.trim() || otp.trim().length !== 6) {
-      setError('Please enter the 6-digit OTP.');
+      setError(t('register.enter_otp'));
       return;
     }
 
@@ -107,25 +109,19 @@ navigate('/manager', { replace: true });
 
 
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'OTP verification failed');
+      setError(err.response?.data?.message || err.message || t('register.otp_failed'));
     } finally {
       setLoading(false);
     }
   };
 
-  const pageHeading = 'Create Manager Account';
-
-  const pageDescription =
-  'Register as a manager and receive a free 14-day trial automatically. After the trial ends, you can purchase a subscription to continue using the service.';
-
-
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-8">
       <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-300 max-w-md w-full">
         <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">
-          {pageHeading}
+          {t('register.create_account')}
         </h2>
-        <p className="text-center text-sm text-slate-500 mb-6">{pageDescription}</p>
+        <p className="text-center text-sm text-slate-500 mb-6">{t('register.description')}</p>
 
         {error && (
           <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
@@ -137,7 +133,7 @@ navigate('/manager', { replace: true });
           <form onSubmit={handleSendOtp} className="space-y-4">
             {/* Name */}
             <div>
-              <label htmlFor="register-name" className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+              <label htmlFor="register-name" className="block text-sm font-medium text-gray-700 mb-1">{t('register.full_name')}</label>
               <input
                 id="register-name"
                 type="text"
@@ -150,7 +146,7 @@ navigate('/manager', { replace: true });
 
             {/* Email */}
             <div>
-              <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+              <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-1">{t('register.email_address')}</label>
               <input
                 id="register-email"
                 type="email"
@@ -163,7 +159,7 @@ navigate('/manager', { replace: true });
 
             {/* Mobile */}
             <div>
-              <label htmlFor="register-mobile" className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
+              <label htmlFor="register-mobile" className="block text-sm font-medium text-gray-700 mb-1">{t('register.mobile_number')}</label>
               <input
                 id="register-mobile"
                 type="tel"
@@ -176,7 +172,7 @@ navigate('/manager', { replace: true });
 
             {/* Password */}
             <div>
-              <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+              <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-1">{t('register.password')}</label>
               <input
                 id="register-password"
                 type="password"
@@ -189,14 +185,14 @@ navigate('/manager', { replace: true });
                 required
               />
               <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
-                <span>Password strength: <strong>{passwordStrength}</strong></span>
+                <span>{t('register.password_strength')} <strong>{passwordStrength}</strong></span>
                 <span className={`h-2.5 w-24 rounded-full ${getPasswordStrengthColor(passwordStrength)}`}></span>
               </div>
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="register-confirm-password" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+              <label htmlFor="register-confirm-password" className="block text-sm font-medium text-gray-700 mb-1">{t('register.confirm_password')}</label>
               <input
                 id="register-confirm-password"
                 type="password"
@@ -216,7 +212,7 @@ navigate('/manager', { replace: true });
                 className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
               <label htmlFor="acceptedTerms" className="leading-5">
-                I agree to the <a href="/terms-privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline">Terms &amp; Privacy Policy</a>.
+                {t('register.terms_agree')} <a href="/terms-privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline">{t('register.terms_link')}</a>.
               </label>
             </div>
 
@@ -225,17 +221,17 @@ navigate('/manager', { replace: true });
               disabled={loading || sendOtpMutation.isLoading}
               className="w-full rounded bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-75 mt-2"
             >
-              {loading || sendOtpMutation.isLoading ? 'Sending OTP...' : 'Send OTP'}
+              {loading || sendOtpMutation.isLoading ? t('register.sending_otp') : t('register.send_otp')}
             </button>
           </form>
         ) : (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div>
-              <p className="text-sm text-slate-600">An OTP has been sent to <strong>{email}</strong>. Enter the code to verify your email and complete registration.</p>
+              <p className="text-sm text-slate-600">{t('register.otp_sent_to')} <strong>{email}</strong>{t('register.otp_verify_msg')}</p>
             </div>
 
             <div>
-              <label htmlFor="otp-code" className="block text-sm font-medium text-gray-700 mb-1">OTP Code *</label>
+              <label htmlFor="otp-code" className="block text-sm font-medium text-gray-700 mb-1">{t('register.otp_code')}</label>
               <input
                 id="otp-code"
                 type="text"
@@ -252,7 +248,7 @@ navigate('/manager', { replace: true });
               disabled={loading || verifyOtpMutation.isLoading}
               className="w-full rounded bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-75 mt-2"
             >
-              {loading || verifyOtpMutation.isLoading ? 'Verifying OTP...' : 'Verify OTP'}
+              {loading || verifyOtpMutation.isLoading ? t('register.verifying_otp') : t('register.verify_otp')}
             </button>
 
             <button
@@ -264,14 +260,14 @@ navigate('/manager', { replace: true });
               }}
               className="w-full rounded border border-slate-300 bg-white py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Back to edit details
+              {t('register.back_to_edit')}
             </button>
           </form>
         )}
 
         <div className="text-center mt-4 text-sm">
           <Link to="/login?role=manager" className="text-primary hover:underline">
-            Already have an account? Login
+            {t('register.already_have_account')}
           </Link>
         </div>
       </div>
