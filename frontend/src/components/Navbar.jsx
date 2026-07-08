@@ -90,6 +90,7 @@ const Navbar = () => {
             <button
               type="button"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? 'Close menu' : 'Open menu'}
               className="inline-flex items-center justify-center p-2 rounded-md hover:bg-primary-dark focus:outline-none"
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -111,6 +112,7 @@ const Navbar = () => {
               <select
                 value={i18n.language || 'en'}
                 onChange={changeLanguage}
+                aria-label="Select language"
                 className="bg-transparent text-sm text-white focus:outline-none"
               >
                 <option value="en" className="text-black">EN</option>

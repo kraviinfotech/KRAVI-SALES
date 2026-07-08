@@ -120,6 +120,7 @@ const Sidebar = ({ onLogout }) => {
                   <button
                     type="button"
                     onClick={toggleMenu}
+                    aria-label="Close menu"
                     className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none"
                   >
                     <X size={24} />

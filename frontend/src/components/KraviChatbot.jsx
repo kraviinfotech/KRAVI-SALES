@@ -234,8 +234,8 @@ function ChatBody({ scrollRef, chatDate, messages, isLoading, error }) {
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 bg-slate-50">
       <DateDivider date={chatDate} />
-      {messages.map((message, index) => (
-        <MessageBubble key={`${message.role}-${index}`} role={message.role} text={message.text} timestamp={message.timestamp} />
+      {messages.map((message) => (
+        <MessageBubble key={message.id || `${message.role}-${message.timestamp}`} role={message.role} text={message.text} timestamp={message.timestamp} />
       ))}
       {isLoading && <TypingIndicator />}
       {error && (
@@ -352,7 +352,7 @@ export default function KraviChatbot() {
   const setLanguage = (lang) => i18n.changeLanguage(lang);
   
   // Track dragging to prevent accidental clicks
-  const [isDragging, setIsDragging] = useState(false);
+  const isDragging = useRef(false);
 
   const [state, dispatch] = useReducer(chatReducer, language, createInitialState);
   const { messages, isLoading, error, selectedTopicId, showOtherTopics, showTopicPanel } = state;
@@ -382,7 +382,7 @@ export default function KraviChatbot() {
 
     const projectedMessages = [
       ...messages,
-      { role: 'user', text: trimmed, timestamp: new Date().toISOString() },
+      { role: 'user', text: trimmed, timestamp: new Date().toISOString(), id: Date.now() + Math.random() },
     ];
 
     dispatch({ type: 'SEND_MESSAGE_START', payload: trimmed });
@@ -442,9 +442,9 @@ export default function KraviChatbot() {
     <Draggable
       handle=".drag-handle"
       bounds="body"
-      onDrag={() => setIsDragging(true)}
+      onDrag={() => { isDragging.current = true; }}
       onStop={() => {
-        setTimeout(() => setIsDragging(false), 100);
+        setTimeout(() => { isDragging.current = false; }, 100);
       }}
     >
       <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end font-sans">
@@ -494,7 +494,7 @@ export default function KraviChatbot() {
         <ChatToggleButton
           isOpen={isOpen}
           onClick={(e) => {
-            if (isDragging) {
+            if (isDragging.current) {
               e.preventDefault();
               return;
             }

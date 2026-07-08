@@ -134,6 +134,10 @@ const SellerPerformanceTable = ({
                     key={row.sellerId || row.seller}
                     className={row.sellerId ? "hover:bg-slate-50 cursor-pointer" : "opacity-50 cursor-not-allowed"}
                     onClick={() => row.sellerId && onRowClick(row.sellerId)}
+                    onKeyDown={(e) => { if (row.sellerId && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onRowClick(row.sellerId); } }}
+                    role={row.sellerId ? 'button' : undefined}
+                    tabIndex={row.sellerId ? 0 : undefined}
+                    aria-label={row.sellerId ? `View details for ${row.seller}` : undefined}
                   >
                     <td className="px-4 py-3 font-bold text-slate-950">{row.seller}</td>
                     <td className="px-4 py-3 text-center font-semibold text-slate-700">
