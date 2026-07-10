@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Wallet, Banknote, CreditCard, Clock } from 'lucide-react';
 
 const currencyFormatter = new Intl.NumberFormat('en-IN', {
@@ -8,11 +9,13 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
 });
 
 const CollectionStatsCards = ({ collectionStats }) => {
+  const { t } = useTranslation();
+
   const stats = [
-    { label: 'Total Collection', value: collectionStats.totalCollection, icon: Wallet, color: 'text-indigo-700', bg: 'bg-indigo-50' },
-    { label: 'Cash Collection', value: collectionStats.cashCollection, icon: Banknote, color: 'text-emerald-700', bg: 'bg-emerald-50' },
-    { label: 'Online Collection', value: collectionStats.onlineCollection, icon: CreditCard, color: 'text-blue-700', bg: 'bg-blue-50' },
-    { label: 'Pending Collection', value: collectionStats.pendingCollection, icon: Clock, color: 'text-red-600', bg: 'bg-red-50' }
+    { label: t('manager.collection.total_collection'), value: collectionStats.totalCollection, icon: Wallet, color: 'text-indigo-700', bg: 'bg-indigo-50' },
+    { label: t('manager.collection.cash_collection'), value: collectionStats.cashCollection, icon: Banknote, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+    { label: t('manager.collection.online_collection'), value: collectionStats.onlineCollection, icon: CreditCard, color: 'text-blue-700', bg: 'bg-blue-50' },
+    { label: t('manager.collection.pending_collection'), value: collectionStats.pendingCollection, icon: Clock, color: 'text-red-600', bg: 'bg-red-50' }
   ];
 
   return (

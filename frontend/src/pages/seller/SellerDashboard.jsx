@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import API from '../../api/axios';
 import {
   AlertCircle,
@@ -9,21 +10,6 @@ import {
   Clock,
   MapPin
 } from 'lucide-react';
-
-const translations = {
-  en: {
-    startSelling: "Start Selling", todaySummary: "Today Summary", totalVisits: "Total Visits",
-    totalSales: "Total Sales", totalItems: "Total Items", errorLoading: "Today summary could not be loaded."
-  },
-  hi: {
-    startSelling: "बेचना शुरू करें", todaySummary: "आज का सारांश", totalVisits: "कुल विज़िट",
-    totalSales: "कुल बिक्री", totalItems: "कुल आइटम", errorLoading: "आज का सारांश लोड नहीं हो पाया।"
-  },
-  mr: {
-    startSelling: "विक्री सुरू करा", todaySummary: "आजचा सारांश", totalVisits: "एकूण भेटी",
-    totalSales: "एकूण विक्री", totalItems: "एकूण वस्तू", errorLoading: "आजचा सारांश लोड होऊ शकला नाही."
-  }
-};
 
 const currencyFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -35,8 +21,7 @@ let cachedStats = null;
 let hasFetchedStats = false;
 
 const SellerDashboard = () => {
-  const { lang } = useOutletContext(); // Get language from SellerLayout
-  const t = translations[lang || 'en'];
+  const { t } = useTranslation();
   const [stats, setStats] = useState(cachedStats || { visits: 0, sales: 0, items: 0 });
   const [loading, setLoading] = useState(!hasFetchedStats);
   const [error, setError] = useState('');
@@ -172,9 +157,9 @@ const SellerDashboard = () => {
 
 
   const summaryRows = [
-    { label: t.totalVisits, value: loading ? '--' : String(stats.visits).padStart(2, '0') },
-    { label: t.totalSales, value: loading ? '--' : currencyFormatter.format(stats.sales) },
-    { label: t.totalItems, value: loading ? '--' : stats.items }
+    { label: t('seller.total_visits'), value: loading ? '--' : String(stats.visits).padStart(2, '0') },
+    { label: t('seller.total_sales'), value: loading ? '--' : currencyFormatter.format(stats.sales) },
+    { label: t('seller.total_items'), value: loading ? '--' : stats.items }
   ];
 
   return (
@@ -294,7 +279,7 @@ const SellerDashboard = () => {
         className="flex h-14 mt-2 w-full items-center justify-center gap-2 rounded-md bg-blue-700 px-4 text-sm font-black text-white shadow-sm transition-colors hover:bg-blue-800"
       >
         <Plus size={17} />
-        <span>{t.startSelling}</span>
+        <span>{t('seller.start_selling')}</span>
       </Link>
 
 

@@ -221,7 +221,7 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
 
     const nextMessages = [
       ...messages,
-      { role: 'user', text: trimmed, timestamp: new Date().toISOString() },
+      { role: 'user', text: trimmed, timestamp: new Date().toISOString(), id: Date.now() + Math.random() },
     ];
     setMessages(nextMessages);
     setInput('');

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import {
   BarChart3,
@@ -35,8 +36,15 @@ const getInitials = (name) => {
 const Sidebar = ({ onLogout }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
+  const { t } = useTranslation();
 
+  const { i18n } = useTranslation();
   const toggleMenu = () => setMobileOpen(!mobileOpen);
+
+  const handleLanguageChange = (e) => {
+    i18n.changeLanguage(e.target.value);
+    localStorage.setItem('lang', e.target.value);
+  };
 
   return (
     <>
@@ -46,7 +54,19 @@ const Sidebar = ({ onLogout }) => {
           <span className="text-sm font-bold tracking-wide">
             SalesFlow Manager
           </span>
-          {user?.role === 'manager' && <NotificationBell />}
+          <div className="flex items-center gap-3">
+            <select
+              value={i18n.language?.split('-')[0] || localStorage.getItem('lang') || 'en'}
+              onChange={handleLanguageChange}
+              className="text-[11px] font-bold rounded px-1.5 py-1 bg-slate-800 border border-slate-700 text-white outline-none"
+              aria-label="Select language"
+            >
+              <option value="en">EN</option>
+              <option value="hi">HI</option>
+              <option value="mr">MR</option>
+            </select>
+            {user?.role === 'manager' && <NotificationBell />}
+          </div>
         </div>
         <div className="px-4 py-6 border-b border-slate-800 bg-slate-900/50">
           <div className="flex items-center gap-3">
@@ -66,7 +86,7 @@ const Sidebar = ({ onLogout }) => {
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navigation.map((item) => (
             <NavLink
-              key={item.name}
+              key={item.labelKey}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
@@ -76,7 +96,7 @@ const Sidebar = ({ onLogout }) => {
               }
             >
               <item.icon size={16} className="mr-3 shrink-0" />
-              {item.name}
+              {t(item.labelKey)}
             </NavLink>
           ))}
         </nav>
@@ -87,7 +107,7 @@ const Sidebar = ({ onLogout }) => {
             className="mt-3 w-full flex items-center justify-center px-3 py-2 bg-slate-800 hover:bg-red-600 text-white rounded-md text-xs font-semibold transition-colors"
           >
             <LogOut size={16} className="mr-2" />
-            Logout
+            {t('sidebar.logout')}
           </button>
         </div>
       </aside>
@@ -116,10 +136,21 @@ const Sidebar = ({ onLogout }) => {
               <div className="flex items-center justify-between px-4 border-b border-slate-800 h-14">
                 <span className="text-sm font-bold tracking-wide text-white">SalesFlow Menu</span>
                 <div className="flex items-center gap-3">
+                  <select
+                    value={i18n.language?.split('-')[0] || localStorage.getItem('lang') || 'en'}
+                    onChange={handleLanguageChange}
+                    className="text-[11px] font-bold rounded px-1.5 py-1 bg-slate-800 border border-slate-700 text-white outline-none"
+                    aria-label="Select language"
+                  >
+                    <option value="en">EN</option>
+                    <option value="hi">HI</option>
+                    <option value="mr">MR</option>
+                  </select>
                   {user?.role === 'manager' && <NotificationBell />}
                   <button
                     type="button"
                     onClick={toggleMenu}
+                    aria-label="Close menu"
                     className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none"
                   >
                     <X size={24} />
@@ -144,7 +175,7 @@ const Sidebar = ({ onLogout }) => {
               <nav className="flex-1 px-3 py-4 space-y-1">
                 {navigation.map((item) => (
                   <NavLink
-                    key={item.name}
+                    key={item.labelKey}
                     to={item.to}
                     end={item.end}
                     onClick={toggleMenu}
@@ -155,7 +186,7 @@ const Sidebar = ({ onLogout }) => {
                     }
                   >
                     <item.icon size={16} className="mr-3 shrink-0" />
-                    {item.name}
+                    {t(item.labelKey)}
                   </NavLink>
                 ))}
               </nav>
@@ -169,7 +200,7 @@ const Sidebar = ({ onLogout }) => {
                   className="w-full flex items-center justify-center px-3 py-2 bg-slate-800 hover:bg-red-600 text-white rounded-md text-xs font-semibold transition-colors"
                 >
                   <LogOut size={16} className="mr-2" />
-                  Logout
+                  {t('sidebar.logout')}
                 </button>
               </div>
             </div>

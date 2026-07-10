@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import API from '../../api/axios';
 import SalesTable from '../../components/SalesTable';
 import { Loader2, XCircle } from 'lucide-react';
@@ -21,6 +22,7 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
 
 const ManagerRecords = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [records, setRecords] = useState([]);
@@ -52,23 +54,25 @@ const ManagerRecords = () => {
     fetchSellers();
   }, []);
 
+  const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
+
   const fetchRecords = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await API.get(`/reports/records?${searchParams.toString()}`);
+      const response = await API.get(`/reports/records?${searchParamsString}`);
       setRecords(Array.isArray(response.data) ? response.data : []);
       setErrorMsg('');
     } catch (err) {
       console.error("Error fetching records:", err);
       if (err.response?.status === 403) {
-        setErrorMsg('Access Denied: You are not authorized to view these records. Please login as a Manager.');
+        setErrorMsg(t('manager.records_access_denied'));
       } else {
-        setErrorMsg(err.response?.data?.message || err.message || 'Failed to load records');
+        setErrorMsg(err.response?.data?.message || err.message || t('manager.records_load_failed'));
       }
     } finally {
       setLoading(false);
     }
-  }, [searchParams]);
+  }, [searchParamsString, t]);
 
   useEffect(() => {
     fetchRecords();
@@ -100,7 +104,7 @@ const ManagerRecords = () => {
   const handleDownloadCSV = () => exportRecordsCSV(records, 'manager_records');
 
   const handleExportExcel = () => {
-    alert('Excel export is not yet implemented. CSV will be exported instead.');
+    alert(t('manager.excel_export_notice'));
     handleDownloadCSV();
   };
 
