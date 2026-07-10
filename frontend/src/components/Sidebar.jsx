@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   BarChart3,
+  CalendarCheck,
   CreditCard,
   FileSpreadsheet,
   LayoutDashboard,
@@ -18,6 +19,7 @@ import NotificationBell from './NotificationBell';
 const navigation = [
   { name: 'Dashboard', to: '/manager', icon: LayoutDashboard, end: true },
   { name: 'Sellers', to: '/manager/sellers', icon: Users },
+    { name: 'Attendance', to: '/manager/attendance', icon: CalendarCheck },
   { name: 'Records', to: '/manager/records', icon: FileSpreadsheet },
   { name: 'Reports', to: '/manager/reports', icon: BarChart3 },
   { name: 'Products', to: '/manager/products', icon: Package },

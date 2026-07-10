@@ -26,10 +26,10 @@ const ManagerLayout = () => {
   const shouldHideAppShell = isPaymentPage || isBlocked;
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen overflow-x-hidden bg-slate-100">
       {!shouldHideAppShell && <Sidebar onLogout={handleLogout} />}
-      <div className={shouldHideAppShell ? '' : 'md:pl-80'}>
-        <main className="min-h-screen px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <div className={shouldHideAppShell ? 'w-full' : 'w-full min-w-0 md:ml-80 md:w-[calc(100%-20rem)]'}>
+          <main className="manager-page-shell min-h-screen w-full min-w-0 overflow-x-hidden px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
           {loadingStatus && !isPaymentPage ? (
             <div className="flex min-h-[70vh] items-center justify-center gap-2 text-sm font-bold text-slate-500">
               <Loader2 size={18} className="animate-spin" />

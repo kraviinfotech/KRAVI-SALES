@@ -46,50 +46,7 @@ const Login = () => {
   const currentRole = roleConfig[selectedRole];
   const Icon = currentRole.icon;
 
-  // Initialize Google SDK on component mount
-  useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      console.warn('Google Sign-In not initialized: VITE_GOOGLE_CLIENT_ID is not set');
-      setGoogleReady(false);
-      return;
-    }
 
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        // Google execution contexts leverage implicit pass-through parameters safely
-        callback: async (response) => {
-          if (!response.credential) return;
-          
-          try {
-            setLoading(true);
-            const userData = await googleLogin(response.credential);
-            
-            // Clean up role evaluation by requesting state accurately
-            setSelectedRole((activeRole) => {
-              const isAuthorized =
-                (activeRole === 'seller' && userData.role === 'seller') ||
-                (activeRole === 'manager' && (userData.role === 'manager' || userData.role === 'admin'));
-                
-              if (!isAuthorized) {
-                logout();
-                setError(`Please use a ${activeRole === 'manager' ? 'manager' : 'seller'} account for this form.`);
-              } else {
-                navigate(roleRoutes[userData.role], { replace: true });
-              }
-              return activeRole;
-            });
-          } catch (err) {
-            setError(err?.message || 'Google sign-in failed');
-          } finally {
-            setLoading(false);
-          }
-        }
-      });
-      setGoogleReady(true);
-    }
-  }, [googleLogin, logout, navigate]);
 
   const handleRoleChange = (role) => {
     setSelectedRole(role);

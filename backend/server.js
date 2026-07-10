@@ -4,6 +4,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const attendanceRoutes = require('./routes/attendance');
 
 // Do not attempt to load frontend JSX files in the backend.
 // JSX/React components should live in the frontend and not be required by Node.
@@ -53,6 +54,7 @@ app.use('/api/subscriptions', subscriptionsRoutes);
 app.use('/api/shoppayments', shopPaymentsRoutes);
 app.use('/api/kravi-chat', kraviChatRoutes);
 app.use('/api/companies', companiesRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {
