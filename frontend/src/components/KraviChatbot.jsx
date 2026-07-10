@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Send, X } from 'lucide-react';
 import API from '../api/axios';
 import kraviAssistantImage from '../images/kravi-ai-assistant.png';
@@ -12,6 +12,11 @@ const WELCOME_MESSAGES = {
 };
 
 const PLACEHOLDER_TEXT = 'Apna sawaal type karein...';
+const EDGE_PADDING = 12;
+const OPEN_WIDGET_WIDTH = 360;
+const OPEN_WIDGET_HEIGHT = 596;
+const CLOSED_BUTTON_SIZE = 64;
+const DRAG_THRESHOLD_PX = 6;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -119,7 +124,7 @@ function toApiMessages(messages) {
 }
 
 export default function KraviChatbot({ initialLanguage = 'hi' }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -141,10 +146,11 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
   const [language, setLanguage] = useState(initialLanguage);
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
+  const containerRef = useRef(null);
 
   const [position, setPosition] = useState(() => ({
-    x: typeof window !== 'undefined' ? Math.max(16, window.innerWidth - 360) : 16,
-    y: typeof window !== 'undefined' ? Math.max(16, window.innerHeight - 120) : 16,
+    x: typeof window !== 'undefined' ? Math.max(EDGE_PADDING, window.innerWidth - CLOSED_BUTTON_SIZE - EDGE_PADDING) : EDGE_PADDING,
+    y: typeof window !== 'undefined' ? Math.max(EDGE_PADDING, window.innerHeight - CLOSED_BUTTON_SIZE - EDGE_PADDING) : EDGE_PADDING,
   }));
 
   const [dragging, setDragging] = useState(false);
@@ -154,10 +160,11 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
     y: 0,
   });
   const pointerIdRef = useRef(null);
-  const headerRef = useRef(null);
   const pointerDownPosRef = useRef(null);
-  const potentialToggleRef = useRef(false);
-  const togglePointerIdRef = useRef(null);
+  const dragStartedRef = useRef(false);
+  const suppressToggleClickRef = useRef(false);
+  const suppressClickAfterDragRef = useRef(false);
+  const activeDragHandleRef = useRef(null);
 
   const getTitle = (topic) => topic[`title_${language}`] || topic.title;
   const getQuestionText = (q) => q[`question_${language}`] || q.question;
@@ -175,43 +182,54 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
     }
   }, [isOpen]);
 
+  const getDragBounds = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return { maxX: EDGE_PADDING, maxY: EDGE_PADDING };
+    }
+
+    const rect = containerRef.current?.getBoundingClientRect();
+    const width = rect?.width || OPEN_WIDGET_WIDTH;
+    const height = rect?.height || OPEN_WIDGET_HEIGHT;
+
+    return {
+      maxX: Math.max(EDGE_PADDING, window.innerWidth - width - EDGE_PADDING),
+      maxY: Math.max(EDGE_PADDING, window.innerHeight - height - EDGE_PADDING),
+    };
+  }, []);
+
+  const clampPositionToViewport = useCallback((nextPosition) => {
+    const { maxX, maxY } = getDragBounds();
+
+    return {
+      x: clamp(nextPosition.x, EDGE_PADDING, maxX),
+      y: clamp(nextPosition.y, EDGE_PADDING, maxY),
+    };
+  }, [getDragBounds]);
+
   useEffect(() => {
-    if (!dragging) return undefined;
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
 
-    const handlePointerMove = (event) => {
-      const maxX = Math.max(12, window.innerWidth - 380);
-      const maxY = Math.max(12, window.innerHeight - 140);
+    const keepWidgetInView = () => {
+      setPosition((currentPosition) => {
+        const nextPosition = clampPositionToViewport(currentPosition);
 
-      setPosition({
-        x: clamp(event.clientX - dragOffset.current.x, 12, maxX),
-        y: clamp(event.clientY - dragOffset.current.y, 12, maxY),
+        if (nextPosition.x === currentPosition.x && nextPosition.y === currentPosition.y) {
+          return currentPosition;
+        }
+
+        return nextPosition;
       });
     };
 
-    const handlePointerUp = () => {
-      // release pointer capture if we have it
-      try {
-        if (headerRef.current && pointerIdRef.current != null && headerRef.current.releasePointerCapture) {
-          headerRef.current.releasePointerCapture(pointerIdRef.current);
-        }
-      } catch (err) {
-        // ignore
-      }
-
-      pointerIdRef.current = null;
-      setDragging(false);
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-    window.addEventListener('pointercancel', handlePointerUp);
+    keepWidgetInView();
+    window.addEventListener('resize', keepWidgetInView);
 
     return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('pointercancel', handlePointerUp);
+      window.removeEventListener('resize', keepWidgetInView);
     };
-  }, [dragging]);
+  }, [clampPositionToViewport, isOpen]);
 
   const sendMessage = async () => {
     const trimmed = input.trim();
@@ -292,130 +310,122 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
     }
   };
 
-  const handlePointerDown = (event) => {
+  const handleDragPointerDown = (event, { suppressClickAfterDrag = false } = {}) => {
     if (event.button !== 0) return;
-    // don't start drag when user clicks interactive elements inside header
-    try {
-      const el = event.target && event.target.closest && event.target.closest('button, a, input, textarea, select');
-      if (el) return;
-    } catch (err) {
-      // ignore
-    }
 
-    event.preventDefault();
-    setDragging(true);
+    event.stopPropagation();
+    pointerDownPosRef.current = { x: event.clientX, y: event.clientY };
+    dragStartedRef.current = false;
+    suppressClickAfterDragRef.current = suppressClickAfterDrag;
+    activeDragHandleRef.current = event.currentTarget;
+    pointerIdRef.current = event.pointerId;
 
     dragOffset.current = {
       x: event.clientX - position.x,
       y: event.clientY - position.y,
     };
-    // capture pointer for stable dragging across iframes/fast moves
+
     try {
-      pointerIdRef.current = event.pointerId;
-      if (headerRef.current && headerRef.current.setPointerCapture) {
-        headerRef.current.setPointerCapture(event.pointerId);
+      if (event.currentTarget?.setPointerCapture) {
+        event.currentTarget.setPointerCapture(event.pointerId);
       }
-    } catch (err) {
-      // ignore if not supported
-    }
-  };
-
-  // Toggle button: support click (toggle) and drag (move) using a small movement threshold
-  const handleTogglePointerDown = (event) => {
-    if (event.button !== 0) return;
-
-    // record start position and enable potential drag
-    pointerDownPosRef.current = { x: event.clientX, y: event.clientY };
-    potentialToggleRef.current = true;
-    togglePointerIdRef.current = event.pointerId;
-
-    const target = event.currentTarget;
-    try {
-      if (target && target.setPointerCapture) target.setPointerCapture(event.pointerId);
     } catch (err) {
       // ignore
     }
 
-    const onMove = (ev) => {
-      if (!pointerDownPosRef.current) return;
-      const dx = ev.clientX - pointerDownPosRef.current.x;
-      const dy = ev.clientY - pointerDownPosRef.current.y;
-      const dist = Math.hypot(dx, dy);
-      const threshold = 8;
-
-      if (dist > threshold) {
-        // begin dragging
-        potentialToggleRef.current = false;
-        setDragging(true);
-        dragOffset.current = {
-          x: ev.clientX - position.x,
-          y: ev.clientY - position.y,
-        };
-        // update position immediately
-        const maxX = Math.max(12, window.innerWidth - 380);
-        const maxY = Math.max(12, window.innerHeight - 140);
-        setPosition({
-          x: clamp(ev.clientX - dragOffset.current.x, 12, maxX),
-          y: clamp(ev.clientY - dragOffset.current.y, 12, maxY),
-        });
-      } else if (dragging) {
-        const maxX = Math.max(12, window.innerWidth - 380);
-        const maxY = Math.max(12, window.innerHeight - 140);
-        setPosition({
-          x: clamp(ev.clientX - dragOffset.current.x, 12, maxX),
-          y: clamp(ev.clientY - dragOffset.current.y, 12, maxY),
-        });
+    const handlePointerMove = (moveEvent) => {
+      if (pointerIdRef.current != null && moveEvent.pointerId !== pointerIdRef.current) {
+        return;
       }
+
+      if (!pointerDownPosRef.current) return;
+      const dx = moveEvent.clientX - pointerDownPosRef.current.x;
+      const dy = moveEvent.clientY - pointerDownPosRef.current.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (!dragStartedRef.current && dist < DRAG_THRESHOLD_PX) {
+        return;
+      }
+
+      if (!dragStartedRef.current) {
+        dragStartedRef.current = true;
+        setDragging(true);
+      }
+
+      moveEvent.preventDefault();
+      setPosition(clampPositionToViewport({
+        x: moveEvent.clientX - dragOffset.current.x,
+        y: moveEvent.clientY - dragOffset.current.y,
+      }));
     };
 
-    const onUp = (ev) => {
+    const finishDrag = (upEvent) => {
+      if (pointerIdRef.current != null && upEvent.pointerId !== pointerIdRef.current) {
+        return;
+      }
+
       try {
-        if (target && togglePointerIdRef.current != null && target.releasePointerCapture) {
-          target.releasePointerCapture(togglePointerIdRef.current);
+        if (activeDragHandleRef.current?.releasePointerCapture && pointerIdRef.current != null) {
+          activeDragHandleRef.current.releasePointerCapture(pointerIdRef.current);
         }
       } catch (err) {
         // ignore
       }
 
-      // if we never started dragging, treat as a click (toggle)
-      if (!dragging && potentialToggleRef.current) {
-        setIsOpen((v) => !v);
+      if (dragStartedRef.current && suppressClickAfterDragRef.current) {
+        suppressToggleClickRef.current = true;
       }
 
-      potentialToggleRef.current = false;
       pointerDownPosRef.current = null;
-      togglePointerIdRef.current = null;
+      pointerIdRef.current = null;
+      activeDragHandleRef.current = null;
+      dragStartedRef.current = false;
+      suppressClickAfterDragRef.current = false;
       setDragging(false);
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', finishDrag);
+      window.removeEventListener('pointercancel', finishDrag);
     };
 
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('pointercancel', onUp);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', finishDrag);
+    window.addEventListener('pointercancel', finishDrag);
+  };
+
+  const handleToggleClick = () => {
+    if (suppressToggleClickRef.current) {
+      suppressToggleClickRef.current = false;
+      return;
+    }
+
+    setIsOpen((currentValue) => !currentValue);
   };
 
   return (
     <div
+      ref={containerRef}
       className="fixed z-50 flex flex-col items-end font-sans select-none"
       style={{
         left: position.x,
         top: position.y,
-        touchAction: 'none',
       }}
-    >      {isOpen && (
+    >
+      {isOpen && (
       <div className="mb-3 w-[360px] max-w-[92vw] h-[520px] max-h-[75vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
         <div
-          ref={headerRef}
-          onPointerDown={handlePointerDown}
-          className="bg-white text-slate-900 px-4 py-3 flex items-center justify-between shrink-0 border-b border-slate-200 cursor-move"
+          className="bg-white text-slate-900 px-4 py-3 flex items-center justify-between shrink-0 border-b border-slate-200"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-slate-100 p-2 overflow-hidden shadow-sm">
+            <div
+              onPointerDown={handleDragPointerDown}
+              className={`w-10 h-10 rounded-full bg-slate-100 p-2 overflow-hidden shadow-sm cursor-grab active:cursor-grabbing ${dragging ? 'cursor-grabbing' : ''}`}
+              style={{ touchAction: 'none' }}
+              title="Drag KRAVI AI"
+            >
               <img
                 src={kraviAssistantImage}
                 alt="KRAVI AI Assistant"
+                draggable="false"
                 className="h-full w-full rounded-full object-cover object-top"
               />
             </div>
@@ -533,9 +543,11 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
 
       <button
         type="button"
-        onClick={() => setIsOpen((currentValue) => !currentValue)}
-        className="w-16 h-16 rounded-full bg-blue-600 shadow-xl border border-blue-700 p-0.5 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-transform overflow-hidden"
-        aria-label="Toggle KRAVI chat"
+        onPointerDown={(event) => handleDragPointerDown(event, { suppressClickAfterDrag: true })}
+        onClick={handleToggleClick}
+        className={`w-16 h-16 rounded-full bg-blue-600 shadow-xl border border-blue-700 p-0.5 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-transform overflow-hidden cursor-grab active:cursor-grabbing ${dragging ? 'cursor-grabbing' : ''}`}
+        style={{ touchAction: 'none' }}
+        aria-label={isOpen ? 'Close KRAVI chat' : 'Open KRAVI chat'}
       >
         {isOpen ? (
           <span className="w-full h-full rounded-full bg-gradient-to-br from-[#0b1a4a] to-[#1b5cff] flex items-center justify-center">
@@ -545,6 +557,7 @@ export default function KraviChatbot({ initialLanguage = 'hi' }) {
           <img
             src={kraviAssistantImage}
             alt="Open KRAVI chat"
+            draggable="false"
             className="h-full w-full rounded-full object-cover object-top"
           />
         )}
