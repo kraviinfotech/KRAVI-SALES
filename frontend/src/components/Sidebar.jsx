@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import {
   BarChart3,
+  CalendarCheck,
   CreditCard,
   FileSpreadsheet,
   LayoutDashboard,
@@ -17,13 +18,14 @@ import {
 import NotificationBell from './NotificationBell';
 
 const navigation = [
-  { labelKey: 'sidebar.dashboard', to: '/manager', icon: LayoutDashboard, end: true },
-  { labelKey: 'sidebar.sellers', to: '/manager/sellers', icon: Users },
-  { labelKey: 'sidebar.records', to: '/manager/records', icon: FileSpreadsheet },
-  { labelKey: 'sidebar.reports', to: '/manager/reports', icon: BarChart3 },
-  { labelKey: 'sidebar.products', to: '/manager/products', icon: Package },
-  { labelKey: 'sidebar.subscription', to: '/manager/subscription', icon: CreditCard },
-  { labelKey: 'sidebar.profile', to: '/manager/profile', icon: UserCircle },
+  { name: 'Dashboard', to: '/manager', icon: LayoutDashboard, end: true },
+  { name: 'Sellers', to: '/manager/sellers', icon: Users },
+    { name: 'Attendance', to: '/manager/attendance', icon: CalendarCheck },
+  { name: 'Records', to: '/manager/records', icon: FileSpreadsheet },
+  { name: 'Reports', to: '/manager/reports', icon: BarChart3 },
+  { name: 'Products', to: '/manager/products', icon: Package },
+  { name: 'Subscription', to: '/manager/subscription', icon: CreditCard },
+  { name: 'Profile', to: '/manager/profile', icon: UserCircle },
 ];
 
 const getInitials = (name) => {

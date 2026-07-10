@@ -39,6 +39,7 @@ import ResetPassword from './pages/ResetPassword';
 import bgImage from "./images/bg.png"; 
 import KraviChatbot from './components/KraviChatbot';
 import SubscriptionBilling from './pages/manager/SubscriptionBilling';
+import ManagerAttendance from './pages/manager/ManagerAttendance';
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -120,6 +121,7 @@ const App = () => {
             <Route path="/manager/profile" element={<ManagerProfile />} />
             <Route path="/manager/notifications" element={<ManagerNotifications />} />
             <Route path="/manager/seller/:sellerId" element={<ManagerSellerDetail />} />
+            <Route path="/manager/attendance" element={<ManagerAttendance />} />
           </Route>
 
           {/* Admin Routes */}
