@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Plus, X, ChevronDown } from 'lucide-react';
 import API from '../../api/axios';
+
+const translations = {
+  en: { title: "Add Products", pName: "Product Name", qty: "Quantity (pcs)", weight: "Weight (kg)", price: "Price per Unit", rate: "Rate", amt: "Amount", add: "Add More Product", next: "Next", unit: "Unit Type", qtyBtn: "By Quantity", weightBtn: "By Weight" },
+  hi: { title: "उत्पाद जोड़ें", pName: "उत्पाद का नाम", qty: "मात्रा (पीसीएस)", weight: "वजन (किग्रा)", price: "प्रति यूनिट कीमत", rate: "दर", amt: "कुल राशि", add: "और उत्पाद जोड़ें", next: "अगला", unit: "यूनिट प्रकार", qtyBtn: "मात्रा के अनुसार", weightBtn: "वजन के अनुसार" },
+  mr: { title: "उत्पादने जोडा", pName: "उत्पादनाचे नाव", qty: "प्रमाण (पीसीएस)", weight: "वजन (किग्रा)", price: "प्रति युनिट किंमत", rate: "दर", amt: "एकूण रक्कम", add: "अधिक उत्पादन जोडा", next: "पुढील", unit: "युनिट प्रकार", qtyBtn: "प्रमाण अनुसार", weightBtn: "वजन अनुसार" }
+};
 
 const emptyItem = { productName: '', unit: 'quantity', quantity: '', weight: '', price: '' };
 
@@ -33,12 +38,12 @@ const ProductCard = ({
   >
     {totalItems > 1 && (
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-700">{t('seller.product')} {index + 1}</span>
+        <span className="text-sm font-semibold text-gray-700">Product {index + 1}</span>
         <button
           type="button"
           onClick={() => onRemove(index)}
           className="flex h-8 w-8 items-center justify-center rounded text-gray-500 hover:bg-red-50 hover:text-red-600"
-          aria-label={t('seller.remove_product')}
+          aria-label="Remove product"
         >
           <X size={18} />
         </button>
@@ -46,7 +51,7 @@ const ProductCard = ({
     )}
 
     <div className="relative" ref={el => wrapperRefs.current[index] = el}>
-      <label htmlFor={`product-name-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t('seller.product_name')}</label>
+      <label htmlFor={`product-name-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t.pName}</label>
       <div className="relative">
         <div className="flex rounded-md border border-gray-300 bg-white focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
           <input
@@ -54,8 +59,8 @@ const ProductCard = ({
             value={searchQuery}
             onChange={(event) => onSearchInput(index, event.target.value)}
             onFocus={() => onOpenSuggestions(index)}
-            placeholder={t('seller.type_to_search_product')}
-            aria-label={t('seller.product_name')}
+            placeholder="Type to search manager products..."
+            aria-label={t.pName}
             className={`flex-1 rounded-l-md border-0 bg-transparent px-3 py-2 text-sm focus:outline-none ${suggestionsOpen[index] ? 'rounded-b-none' : 'rounded-r-md'}`}
             required
           />
@@ -63,7 +68,7 @@ const ProductCard = ({
             type="button"
             onClick={() => onToggleSuggestions(index)}
             className="flex items-center justify-center rounded-r-md border-l border-gray-300 bg-gray-50 px-3 py-2 text-gray-600 text-sm leading-none transition hover:bg-gray-100"
-            aria-label={t('seller.toggle_product_dropdown')}
+            aria-label="Toggle product dropdown"
           >
             <ChevronDown size={18} />
           </button>
@@ -83,7 +88,7 @@ const ProductCard = ({
                 </button>
               ))
             ) : (
-              <div className="px-3 py-2 text-sm text-gray-500">{t('seller.no_available_product')}</div>
+              <div className="px-3 py-2 text-sm text-gray-500">No available product</div>
             )}
           </div>
         )}
@@ -92,7 +97,7 @@ const ProductCard = ({
 
     <div className="space-y-2">
       <fieldset>
-        <legend className="mb-1 block text-sm font-medium text-gray-700">{t('seller.unit_type')}</legend>
+        <legend className="mb-1 block text-sm font-medium text-gray-700">{t.unit}</legend>
         <div className="flex gap-2">
         <button
           type="button"
@@ -103,7 +108,7 @@ const ProductCard = ({
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
-          {t('seller.by_quantity')}
+          {t.qtyBtn}
         </button>
         <button
           type="button"
@@ -114,7 +119,7 @@ const ProductCard = ({
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
-          {t('seller.by_weight')}
+          {t.weightBtn}
         </button>
         </div>
       </fieldset>
@@ -123,15 +128,15 @@ const ProductCard = ({
     <div className="grid grid-cols-2 gap-4">
       {item.unit === 'quantity' && (
         <div>
-          <label htmlFor={`product-quantity-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t('seller.quantity_pcs')}</label>
+          <label htmlFor={`product-quantity-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t.qty}</label>
           <input
             id={`product-quantity-${index}`}
             type="number"
             min="1"
             value={item.quantity || ''}
             onChange={(event) => onItemChange(index, 'quantity', event.target.value)}
-            placeholder={t('seller.enter_quantity')}
-            aria-label={t('seller.quantity_pcs')}
+            placeholder="Enter quantity"
+            aria-label={t.qty}
             className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             required
           />
@@ -140,7 +145,7 @@ const ProductCard = ({
 
       {item.unit === 'weight' && (
         <div>
-          <label htmlFor={`product-weight-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t('seller.weight_kg')}</label>
+          <label htmlFor={`product-weight-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t.weight}</label>
           <input
             id={`product-weight-${index}`}
             type="number"
@@ -149,7 +154,7 @@ const ProductCard = ({
             value={item.weight || ''}
             onChange={(event) => onItemChange(index, 'weight', event.target.value)}
             placeholder="2.5"
-            aria-label={t('seller.weight_kg')}
+            aria-label={t.weight}
             className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             required
           />
@@ -157,7 +162,7 @@ const ProductCard = ({
       )}
 
       <div>
-        <label htmlFor={`product-price-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t('seller.price_per_unit')}</label>
+        <label htmlFor={`product-price-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t.price}</label>
         <input
           id={`product-price-${index}`}
           type="number"
@@ -166,7 +171,7 @@ const ProductCard = ({
           value={item.price || item.rate || ''}
           onChange={(event) => onItemChange(index, 'price', event.target.value)}
           placeholder="120"
-          aria-label={t('seller.price_per_unit')}
+          aria-label={t.price}
           className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           required
         />
@@ -174,14 +179,14 @@ const ProductCard = ({
     </div>
 
     <div>
-      <label htmlFor={`product-amount-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t('seller.amount')}</label>
+      <label htmlFor={`product-amount-${index}`} className="mb-1 block text-sm font-medium text-gray-700">{t.amt}</label>
       <input
         id={`product-amount-${index}`}
         type="text"
         value={amount ? amount.toFixed(0) : ''}
         readOnly
         placeholder="0"
-        aria-label={t('seller.amount')}
+        aria-label={t.amt}
         className="w-full rounded border border-gray-300 bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-900 outline-none"
       />
     </div>
@@ -189,8 +194,8 @@ const ProductCard = ({
 );
 
 const AddProducts = () => {
-  const { formData, setFormData } = useOutletContext();
-  const { t } = useTranslation();
+  const { formData, setFormData, lang } = useOutletContext();
+  const t = translations[lang || 'en'];
   const navigate = useNavigate();
   const [masterList, setMasterList] = useState([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState({});
@@ -387,7 +392,7 @@ const AddProducts = () => {
     }
 
     if (!validItems.length) {
-      alert(t('seller.please_add_valid_product'));
+      alert('Please add at least one product with all required fields.');
       return;
     }
     // Update formData with validated items
@@ -398,7 +403,7 @@ const AddProducts = () => {
 
   return (
     <form onSubmit={handleNext} className="space-y-4 max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <h2 className="text-xl font-bold mb-4">{t('seller.add_products')}</h2>
+      <h2 className="text-xl font-bold mb-4">{t.title}</h2>
       {(formData.items || []).map((item, index) => {
         const price = Number(item.price || item.rate || 0);
         const amount = item.unit === 'quantity'
@@ -437,14 +442,14 @@ const AddProducts = () => {
         className="inline-flex items-center gap-2 rounded px-2 py-1 text-sm font-medium text-primary hover:text-primary-dark"
       >
         <Plus size={18} />
-        {t('seller.add_more_product')}
+        {t.add}
       </button>
 
       <button
         type="submit"
         className="mt-4 w-full rounded bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
       >
-        {t('seller.next')}
+        {t.next}
       </button>
 
     </form>

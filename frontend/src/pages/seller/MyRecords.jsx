@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useReducer } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useEffect, useReducer } from 'react';
 import API from '../../api/axios';
 import { AlertCircle, Download, Loader2, Package, ShoppingBag, X, CheckCircle2, Camera } from 'lucide-react';
 import { exportSellerRecordsPDF } from '../../utils/recordsExport';
@@ -25,6 +24,7 @@ const statusColors = {
 
 let cachedRecords = null;
 let hasFetchedRecords = false;
+
 
 const createInitialState = () => ({
   records: cachedRecords || [],
@@ -94,18 +94,18 @@ const recordsReducer = (state, action) => {
   }
 };
 
-const RecordsLoadingState = ({ t }) => (
+const RecordsLoadingState = () => (
   <div className="flex min-h-[420px] items-center justify-center gap-2">
     <Loader2 className="animate-spin text-blue-700" size={22} />
-    <span className="text-sm font-semibold text-slate-500">{t('seller.loading_records')}</span>
+    <span className="text-sm font-semibold text-slate-500">Loading records...</span>
   </div>
 );
 
-const RecordsHeader = ({ count, onDownloadPDF, t }) => (
+const RecordsHeader = ({ count, onDownloadPDF }) => (
   <div className="flex items-center justify-between">
     <div className="flex items-center gap-2">
       <ShoppingBag size={18} className="text-blue-700" />
-      <h1 className="text-base font-black text-slate-900">{t('seller.my_records')}</h1>
+      <h1 className="text-base font-black text-slate-900">My Records</h1>
       {count > 0 && (
         <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black text-blue-700">
           {count}
@@ -119,7 +119,7 @@ const RecordsHeader = ({ count, onDownloadPDF, t }) => (
       className="flex items-center gap-1.5 rounded-lg bg-blue-700 px-3 py-2 text-[11px] font-black text-white shadow-sm hover:bg-blue-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
     >
       <Download size={13} />
-      {t('seller.download_pdf')}
+      Download PDF
     </button>
   </div>
 );
@@ -135,14 +135,14 @@ const RecordsError = ({ error }) => {
   );
 };
 
-const EmptyRecords = ({ t }) => (
+const EmptyRecords = () => (
   <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-12 text-center">
     <Package size={32} className="mx-auto text-slate-300" />
-    <p className="mt-3 text-sm font-semibold text-slate-400">{t('seller.no_records_saved')}</p>
+    <p className="mt-3 text-sm font-semibold text-slate-400">Abhi koi record saved nahi hai.</p>
   </div>
 );
 
-const RecordCard = ({ record, onReceivePayment, t }) => {
+const RecordCard = ({ record, onReceivePayment }) => {
   const itemCount = (record.items || []).reduce((sum, item) =>
     sum + (item.unit === 'weight' ? 1 : Number(item.quantity || 0)), 0);
   const status = record.paymentStatus || 'Pending';
@@ -174,20 +174,20 @@ const RecordCard = ({ record, onReceivePayment, t }) => {
             <div className="text-right shrink-0 space-y-1">
               <p className="text-sm font-black text-slate-950">{fmt.format(record.totalAmount || 0)}</p>
               <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusColors[status] || statusColors.Pending}`}>
-                {t(`seller.status_${status.toLowerCase()}`, { defaultValue: status })}
+                {status}
               </span>
             </div>
           </div>
 
           {status === 'Partial' && (
             <div className="mt-2 flex gap-3 text-[11px] font-semibold">
-              <span className="text-emerald-700">{t('seller.paid')}: {fmt.format(record.paidAmount || 0)}</span>
-              <span className="text-red-600">{t('seller.pending')}: {fmt.format(record.pendingAmount || 0)}</span>
+              <span className="text-emerald-700">Paid: {fmt.format(record.paidAmount || 0)}</span>
+              <span className="text-red-600">Pending: {fmt.format(record.pendingAmount || 0)}</span>
             </div>
           )}
 
           <div className="mt-3 bg-slate-50 rounded-md p-2.5 border border-slate-100">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 border-b border-slate-200 pb-1">{t('seller.products')} ({itemCount})</p>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 border-b border-slate-200 pb-1">Products ({itemCount})</p>
             <ul className="space-y-1">
               {(record.items || []).map((item, index) => {
                 const displayQty = item.unit === 'weight' ? `${item.weight}kg` : `${item.quantity}pcs`;
@@ -210,7 +210,7 @@ const RecordCard = ({ record, onReceivePayment, t }) => {
                 className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 transition-colors"
               >
                 <CheckCircle2 size={14} />
-                {t('seller.receive_payment')}
+                Receive Payment
               </button>
             </div>
           )}
@@ -220,7 +220,7 @@ const RecordCard = ({ record, onReceivePayment, t }) => {
   );
 };
 
-const PaymentModePicker = ({ mode, onChange, t }) => (
+const PaymentModePicker = ({ mode, onChange }) => (
   <div className="grid grid-cols-2 gap-2">
     {['Cash', 'Online'].map((option) => (
       <button
@@ -233,7 +233,7 @@ const PaymentModePicker = ({ mode, onChange, t }) => (
             : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
         }`}
       >
-        {t(`seller.${option.toLowerCase()}`, { defaultValue: option })}
+        {option}
       </button>
     ))}
   </div>
@@ -246,44 +246,42 @@ const OnlinePaymentFields = ({
   txnId,
   onTxnIdChange,
   onPhotoChange,
-  onRemovePhoto,
-  t
+  onRemovePhoto
 }) => (
   <div className="space-y-4">
     {managerScannerLoaded && defaultScannerPhoto ? (
       <div className="flex flex-col items-center justify-center p-4 bg-gray-50 border border-gray-200 rounded-lg">
         <img src={defaultScannerPhoto} alt="Manager Scanner" className="max-w-[200px] h-auto object-contain rounded" />
-        <p className="mt-2 text-xs text-gray-500 font-medium">{t('seller.scan_to_pay')}</p>
+        <p className="mt-2 text-xs text-gray-500 font-medium">Scan to Pay</p>
       </div>
     ) : managerScannerLoaded ? (
       <div className="flex flex-col items-center justify-center p-4 bg-gray-50 border border-gray-200 rounded-lg">
-        <p className="text-sm text-gray-500">{t('seller.scanner_not_available')}</p>
+        <p className="text-sm text-gray-500">Scanner Not Available</p>
       </div>
     ) : (
       <div className="flex justify-center p-4"><Loader2 className="animate-spin text-gray-400" /></div>
     )}
 
     <div>
-      <label htmlFor="payment-txn-id" className="block text-xs font-bold text-slate-700 mb-1">{t('seller.transaction_id_optional')}</label>
+      <label htmlFor="payment-txn-id" className="block text-xs font-bold text-slate-700 mb-1">Transaction ID (Optional)</label>
       <input
         id="payment-txn-id"
         type="text"
         value={txnId}
         onChange={(e) => onTxnIdChange(e.target.value)}
         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        placeholder={t('seller.enter_txn_id')}
+        placeholder="Enter TXN ID"
       />
     </div>
 
     <div>
-      <label htmlFor="payment-photo-upload" className="block text-xs font-bold text-slate-700 mb-1">{t('seller.upload_payment_photo_optional')}</label>
+      <label htmlFor="payment-photo-upload" className="block text-xs font-bold text-slate-700 mb-1">Upload Payment Photo (Optional)</label>
       {paymentPhoto ? (
         <div className="relative inline-block">
           <img src={paymentPhoto} alt="Payment" className="h-24 w-auto rounded border border-gray-300 object-cover" />
           <button
             type="button"
             onClick={onRemovePhoto}
-            aria-label={t('seller.remove_image')}
             className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-1 hover:bg-red-200"
           >
             <X size={14} />
@@ -303,7 +301,7 @@ const OnlinePaymentFields = ({
             className="flex items-center justify-center gap-2 w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
           >
             <Camera size={24} className="text-gray-400" />
-            <span className="text-sm text-gray-500 font-medium">{t('seller.tap_to_upload_photo')}</span>
+            <span className="text-sm text-gray-500 font-medium">Tap to upload photo</span>
           </label>
         </div>
       )}
@@ -323,24 +321,23 @@ const ReceivePaymentModal = ({
   onSubmit,
   onPaymentFieldChange,
   onPhotoChange,
-  onRemovePhoto,
-  t
+  onRemovePhoto
 }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
     <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
       <div className="flex items-center justify-between border-b border-slate-100 p-4 bg-slate-50">
-        <h3 className="font-bold text-slate-800">{t('seller.receive_payment')}</h3>
-        <button type="button" onClick={onClose} aria-label={t('seller.close')} className="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 border border-slate-200">
+        <h3 className="font-bold text-slate-800">Receive Payment</h3>
+        <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 border border-slate-200">
           <X size={16} />
         </button>
       </div>
 
       <div className="p-4 overflow-y-auto">
         <div className="mb-4 bg-indigo-50 border border-indigo-100 rounded-lg p-3">
-          <p className="text-xs text-indigo-800 font-semibold mb-1">{t('seller.shop')}: {record.shopName}</p>
+          <p className="text-xs text-indigo-800 font-semibold mb-1">Shop: {record.shopName}</p>
           <div className="flex justify-between text-xs">
-            <span className="text-slate-600">{t('seller.bill')}: {fmt.format(record.totalAmount || 0)}</span>
-            <span className="text-red-600 font-bold">{t('seller.pending')}: {fmt.format(record.pendingAmount || 0)}</span>
+            <span className="text-slate-600">Bill: {fmt.format(record.totalAmount || 0)}</span>
+            <span className="text-red-600 font-bold">Pending: {fmt.format(record.pendingAmount || 0)}</span>
           </div>
         </div>
 
@@ -353,7 +350,7 @@ const ReceivePaymentModal = ({
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label htmlFor="payment-amount" className="block text-xs font-bold text-slate-700 mb-1">{t('seller.amount_received_rs')}</label>
+            <label htmlFor="payment-amount" className="block text-xs font-bold text-slate-700 mb-1">Amount Received (Rs.)</label>
             <input
               id="payment-amount"
               type="number"
@@ -364,16 +361,15 @@ const ReceivePaymentModal = ({
               placeholder="E.g. 5000"
               required
             />
-            <p className="text-[10px] text-slate-500 mt-1">{t('seller.cannot_exceed_pending_amount')}</p>
+            <p className="text-[10px] text-slate-500 mt-1">Cannot exceed pending amount.</p>
           </div>
 
           <div>
             <fieldset>
-              <legend className="block text-xs font-bold text-slate-700 mb-1">{t('seller.payment_mode')}</legend>
+              <legend className="block text-xs font-bold text-slate-700 mb-1">Payment Mode</legend>
               <PaymentModePicker
                 mode={paymentForm.mode}
                 onChange={(mode) => onPaymentFieldChange('mode', mode)}
-                t={t}
               />
             </fieldset>
           </div>
@@ -387,19 +383,18 @@ const ReceivePaymentModal = ({
               onTxnIdChange={(value) => onPaymentFieldChange('txnId', value)}
               onPhotoChange={onPhotoChange}
               onRemovePhoto={onRemovePhoto}
-              t={t}
             />
           )}
 
           <div>
-            <label htmlFor="payment-remarks" className="block text-xs font-bold text-slate-700 mb-1">{t('seller.remarks_optional')}</label>
+            <label htmlFor="payment-remarks" className="block text-xs font-bold text-slate-700 mb-1">Remarks (Optional)</label>
             <textarea
               id="payment-remarks"
               rows={2}
               value={paymentForm.remarks}
               onChange={(e) => onPaymentFieldChange('remarks', e.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              placeholder={t('seller.any_notes')}
+              placeholder="Any notes..."
             />
           </div>
 
@@ -409,7 +404,7 @@ const ReceivePaymentModal = ({
             className="w-full flex items-center justify-center gap-2 rounded-lg bg-indigo-600 py-2.5 text-sm font-black text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors mt-2"
           >
             {paymentLoading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-            {t('seller.save_payment')}
+            Save Payment
           </button>
         </form>
       </div>
@@ -418,7 +413,6 @@ const ReceivePaymentModal = ({
 );
 
 const MyRecords = () => {
-  const { t } = useTranslation();
   const [state, dispatch] = useReducer(recordsReducer, undefined, createInitialState);
 
   const {
@@ -451,7 +445,7 @@ const MyRecords = () => {
     });
   };
 
-  const fetchRecords = useCallback((quiet = false) => {
+  const fetchRecords = (quiet = false) => {
     if (!quiet) setField('loading', true);
     API.get('/sales/my-records')
       .then(res => {
@@ -459,9 +453,9 @@ const MyRecords = () => {
         cachedRecords = res.data;
         hasFetchedRecords = true;
       })
-      .catch(() => setField('error', t('seller.failed_load_records')))
+      .catch(() => setField('error', 'Records load nahi ho paaye.'))
       .finally(() => setField('loading', false));
-  }, [t]);
+  };
 
   useEffect(() => {
     fetchRecords(hasFetchedRecords);
@@ -480,7 +474,7 @@ const MyRecords = () => {
       }
     };
     loadDefaultScanner();
-  }, [fetchRecords]);
+  }, []);
 
   const handleOpenPayment = (record) => {
     dispatch({
@@ -493,7 +487,7 @@ const MyRecords = () => {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        setField('paymentError', t('seller.only_image_files_allowed'));
+        setField('paymentError', 'Only image files are allowed');
         return;
       }
       const reader = new FileReader();
@@ -509,7 +503,7 @@ const MyRecords = () => {
     setField('paymentError', '');
     
     if (!paymentForm.amount || Number(paymentForm.amount) <= 0) {
-      setField('paymentError', t('seller.enter_valid_amount'));
+      setField('paymentError', 'Please enter a valid amount.');
       return;
     }
 
@@ -524,11 +518,11 @@ const MyRecords = () => {
         remarks: paymentForm.remarks,
         paymentPhoto
       });
-      alert(t('seller.payment_received_success'));
+      alert('Payment Received Successfully');
       dispatch({ type: 'CLOSE_PAYMENT' });
       fetchRecords(); // refresh records
     } catch (err) {
-      setField('paymentError', err.response?.data?.message || t('seller.error_receiving_payment'));
+      setField('paymentError', err.response?.data?.message || 'Error receiving payment');
     } finally {
       setField('paymentLoading', false);
     }
@@ -538,16 +532,16 @@ const MyRecords = () => {
   const handleDownloadPDF = () => exportSellerRecordsPDF(records);
 
   if (loading) {
-    return <RecordsLoadingState t={t} />;
+    return <RecordsLoadingState />;
   }
 
   return (
     <div className="space-y-4">
-      <RecordsHeader count={records.length} onDownloadPDF={handleDownloadPDF} t={t} />
+      <RecordsHeader count={records.length} onDownloadPDF={handleDownloadPDF} />
       <RecordsError error={error} />
 
       {records.length === 0 ? (
-        <EmptyRecords t={t} />
+        <EmptyRecords />
       ) : (
         <div className="space-y-2.5">
           {records.map((record) => (
@@ -555,7 +549,6 @@ const MyRecords = () => {
               key={record._id}
               record={record}
               onReceivePayment={handleOpenPayment}
-              t={t}
             />
           ))}
         </div>
@@ -575,7 +568,6 @@ const MyRecords = () => {
           onPaymentFieldChange={setPaymentField}
           onPhotoChange={handlePhotoChange}
           onRemovePhoto={() => setField('paymentPhoto', null)}
-          t={t}
         />
       )}
     </div>

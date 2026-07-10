@@ -3,7 +3,6 @@ const express = require('express');
 const router = express.Router();
 
 const SUPPORTED_LANGUAGES = new Set(['hi', 'en', 'mr']);
-const VALID_ROLES = new Set(['user', 'assistant']);
 
 const LANGUAGE_NAMES = {
   hi: 'Hindi/Hinglish',
@@ -277,7 +276,7 @@ function sanitizeMessages(messages) {
   const sanitizedMessages = [];
 
   for (const message of messages) {
-    if (!message || !VALID_ROLES.has(message.role)) {
+    if (!message || !['user', 'assistant'].includes(message.role)) {
       continue;
     }
 
@@ -306,7 +305,7 @@ function normalizeText(text) {
 function detectLanguage(text) {
   const normalizedText = normalizeText(text);
   const hasDevanagari = /[\u0900-\u097f]/.test(text);
-  const marathiWords = new Set([
+  const marathiWords = [
     'aahe',
     'ahe',
     'kuthe',
@@ -332,8 +331,8 @@ function detectLanguage(text) {
     'hote',
     'karaycha',
     'karaychi',
-  ]);
-  const hindiWords = new Set([
+  ];
+  const hindiWords = [
     'kaise',
     'kese',
     'kare',
@@ -364,8 +363,8 @@ function detectLanguage(text) {
     'rahi',
     'jwab',
     'jawab',
-  ]);
-  const englishWords = new Set([
+  ];
+  const englishWords = [
     'how',
     'what',
     'why',
@@ -391,14 +390,14 @@ function detectLanguage(text) {
     'upload',
     'save',
     'reset',
-  ]);
+  ];
 
   if (hasDevanagari && /\u0906\u0939\u0947|\u0928\u093e\u0939\u0940|\u0915\u0938\u0947|\u0915\u0936\u0940|\u0915\u0941\u0920\u0947|\u0933/.test(text)) {
     return 'mr';
   }
 
   const words = normalizedText.split(' ').filter(Boolean);
-  const hasWord = (set) => words.some((word) => set.has(word));
+  const hasWord = (list) => words.some((word) => list.includes(word));
 
   if (hasWord(marathiWords)) {
     return 'mr';
