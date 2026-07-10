@@ -1,15 +1,13 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { ClipboardList, CheckCircle2, XCircle, DollarSign, Calendar } from 'lucide-react';
 
 const RecordsSummaryCards = ({ summary, loading, currencyFormatter }) => {
-  const { t } = useTranslation();
   const stats = [
-    { label: t('manager.cards.total_records'), value: summary.total, icon: ClipboardList, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: t('manager.cards.fully_paid'), value: summary.active, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: t('manager.cards.unpaid_pending'), value: summary.inactive, icon: XCircle, color: 'text-slate-600', bg: 'bg-slate-100' },
-    { label: t('manager.cards.total_pending'), value: currencyFormatter.format(summary.totalPending), icon: DollarSign, color: 'text-red-600', bg: 'bg-red-50' },
-    { label: t('manager.cards.new_this_month'), value: summary.newThisMonth, icon: Calendar, color: 'text-violet-600', bg: 'bg-violet-50' },
+    { label: 'Total Records', value: summary.total, icon: ClipboardList, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Fully Paid', value: summary.active, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Unpaid/Pending', value: summary.inactive, icon: XCircle, color: 'text-slate-600', bg: 'bg-slate-100' },
+    { label: 'Total Pending', value: currencyFormatter.format(summary.totalPending), icon: DollarSign, color: 'text-red-600', bg: 'bg-red-50' },
+    { label: 'New This Month', value: summary.newThisMonth, icon: Calendar, color: 'text-violet-600', bg: 'bg-violet-50' },
   ];
 
   return (

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Save, Globe, Mail, Bell, CreditCard } from 'lucide-react';
+import { Save, Globe, Mail, Bell, ShieldCheck, CreditCard, Filter } from 'lucide-react';
 import API from '../../api/axios';
 
 const SettingSection = ({ title, icon: Icon, children }) => (
@@ -17,8 +16,11 @@ const SettingSection = ({ title, icon: Icon, children }) => (
   </div>
 );
 
+
+
+
 const Settings = () => {
-  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState('General');
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
@@ -35,6 +37,8 @@ const Settings = () => {
       trialPeriodEnding: true
     }
   });
+
+  
 
   useEffect(() => {
     const load = async () => {
@@ -69,78 +73,80 @@ const Settings = () => {
     try {
       const res = await API.put('/settings', form);
       setForm((f) => ({ ...f, ...res.data }));
-      window.alert(t('admin.settings_saved'));
+      window.alert('Settings saved');
     } catch (err) {
       console.error('Failed to save settings', err);
-      window.alert(t('admin.failed_save_settings'));
+      window.alert('Failed to save settings');
     } finally {
       setLoading(false);
     }
   };
-
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">{t('admin.system_settings')}</h1>
-        <button type="button" onClick={handleSave} disabled={loading} className="bg-[#6C3EF4] text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-[#5a32cc] transition-all shadow-lg shadow-purple-100 disabled:opacity-60">
-          <Save size={18} /> {loading ? t('admin.saving') : t('admin.save_all_changes')}
-        </button>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SettingSection title={t('admin.general_settings')} icon={Globe}>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label htmlFor="settings-app-name" className="text-xs font-bold text-gray-500">{t('admin.app_name')}</label>
-                <input id="settings-app-name" value={form.appName} onChange={(e) => handleChange('appName', e.target.value)} type="text" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="settings-trial-days" className="text-xs font-bold text-gray-500">{t('admin.trial_days')}</label>
-                <input id="settings-trial-days" value={form.trialDays} onChange={(e) => handleChange('trialDays', Number(e.target.value))} type="number" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
-              </div>
-            </div>
-          </SettingSection>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-800">System Settings</h1>
+            <button type="button" onClick={handleSave} disabled={loading} className="bg-[#6C3EF4] text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-[#5a32cc] transition-all shadow-lg shadow-purple-100 disabled:opacity-60">
+              <Save size={18} /> {loading ? 'Saving...' : 'Save All Changes'}
+            </button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          <SettingSection title={t('admin.smtp_configuration')} icon={Mail}>
-            <div className="space-y-3">
-              <label htmlFor="settings-smtp-host" className="sr-only">{t('admin.smtp_host')}</label>
-              <input id="settings-smtp-host" value={form.smtpHost} onChange={(e) => handleChange('smtpHost', e.target.value)} type="text" placeholder={t('admin.smtp_host')} aria-label={t('admin.smtp_host')} className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
-              <div className="grid grid-cols-3 gap-4">
-                <label htmlFor="settings-smtp-port" className="sr-only">{t('admin.port')}</label>
-                <input id="settings-smtp-port" value={form.smtpPort} onChange={(e) => handleChange('smtpPort', e.target.value)} type="text" placeholder={t('admin.port')} aria-label={t('admin.port')} className="bg-gray-50 border-none rounded-xl px-4 py-2" />
-                <label htmlFor="settings-smtp-user" className="sr-only">{t('admin.user')}</label>
-                <input id="settings-smtp-user" value={form.smtpUser} onChange={(e) => handleChange('smtpUser', e.target.value)} type="text" placeholder={t('admin.user')} aria-label={t('admin.user')} className="col-span-2 bg-gray-50 border-none rounded-xl px-4 py-2" />
+
+            {/* Right: Settings sections grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SettingSection title="General Settings" icon={Globe}>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label htmlFor="settings-app-name" className="text-xs font-bold text-gray-500">App Name</label>
+                    <input id="settings-app-name" value={form.appName} onChange={(e) => handleChange('appName', e.target.value)} type="text" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="settings-trial-days" className="text-xs font-bold text-gray-500">Trial Days</label>
+                    <input id="settings-trial-days" value={form.trialDays} onChange={(e) => handleChange('trialDays', Number(e.target.value))} type="number" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
+                  </div>
+                </div>
+              </SettingSection>
+
+              <SettingSection title="SMTP Configuration" icon={Mail}>
+              <div className="space-y-3">
+                <label htmlFor="settings-smtp-host" className="sr-only">SMTP host</label>
+                <input id="settings-smtp-host" value={form.smtpHost} onChange={(e) => handleChange('smtpHost', e.target.value)} type="text" placeholder="SMTP Host" aria-label="SMTP host" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
+                <div className="grid grid-cols-3 gap-4">
+                  <label htmlFor="settings-smtp-port" className="sr-only">SMTP port</label>
+                  <input id="settings-smtp-port" value={form.smtpPort} onChange={(e) => handleChange('smtpPort', e.target.value)} type="text" placeholder="Port" aria-label="SMTP port" className="bg-gray-50 border-none rounded-xl px-4 py-2" />
+                  <label htmlFor="settings-smtp-user" className="sr-only">SMTP user</label>
+                  <input id="settings-smtp-user" value={form.smtpUser} onChange={(e) => handleChange('smtpUser', e.target.value)} type="text" placeholder="User" aria-label="SMTP user" className="col-span-2 bg-gray-50 border-none rounded-xl px-4 py-2" />
+                </div>
               </div>
-            </div>
-          </SettingSection>
+              </SettingSection>
 
-          <SettingSection title={t('admin.payment_gateway')} icon={CreditCard}>
-            <div className="space-y-3">
-              <label htmlFor="settings-payment-key-id" className="sr-only">{t('admin.key_id')}</label>
-              <input id="settings-payment-key-id" value={form.paymentKeyId} onChange={(e) => handleChange('paymentKeyId', e.target.value)} type="password" placeholder={t('admin.key_id')} aria-label={t('admin.key_id')} className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
-              <label htmlFor="settings-payment-key-secret" className="sr-only">{t('admin.key_secret')}</label>
-              <input id="settings-payment-key-secret" value={form.paymentKeySecret} onChange={(e) => handleChange('paymentKeySecret', e.target.value)} type="password" placeholder={t('admin.key_secret')} aria-label={t('admin.key_secret')} className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
-            </div>
-          </SettingSection>
+              <SettingSection title="Payment Gateway (Razorpay)" icon={CreditCard}>
+                <div className="space-y-3">
+                  <label htmlFor="settings-payment-key-id" className="sr-only">Razorpay key ID</label>
+                  <input id="settings-payment-key-id" value={form.paymentKeyId} onChange={(e) => handleChange('paymentKeyId', e.target.value)} type="password" placeholder="Key ID" aria-label="Razorpay key ID" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
+                  <label htmlFor="settings-payment-key-secret" className="sr-only">Razorpay key secret</label>
+                  <input id="settings-payment-key-secret" value={form.paymentKeySecret} onChange={(e) => handleChange('paymentKeySecret', e.target.value)} type="password" placeholder="Key Secret" aria-label="Razorpay key secret" className="w-full bg-gray-50 border-none rounded-xl px-4 py-2" />
+                </div>
+              </SettingSection>
 
-          <SettingSection title={t('admin.notifications')} icon={Bell}>
-            <div className="space-y-3">
-              <label className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-700">{t('admin.sub_expiring_soon')}</span>
-                <input type="checkbox" aria-label={t('admin.sub_expiring_soon')} checked={form.notifications.subscriptionExpiring} onChange={(e) => handleChange('notifications.subscriptionExpiring', e.target.checked)} />
-              </label>
-              <label className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-700">{t('admin.new_payment_received')}</span>
-                <input type="checkbox" aria-label={t('admin.new_payment_received')} checked={form.notifications.newPaymentReceived} onChange={(e) => handleChange('notifications.newPaymentReceived', e.target.checked)} />
-              </label>
-              <label className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-700">{t('admin.trial_period_ending')}</span>
-                <input type="checkbox" aria-label={t('admin.trial_period_ending')} checked={form.notifications.trialPeriodEnding} onChange={(e) => handleChange('notifications.trialPeriodEnding', e.target.checked)} />
-              </label>
+              <SettingSection title="Notifications" icon={Bell}>
+              <div className="space-y-3">
+                <label className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-700">Subscription Expiring Soon</span>
+                  <input type="checkbox" aria-label="Subscription expiring soon" checked={form.notifications.subscriptionExpiring} onChange={(e) => handleChange('notifications.subscriptionExpiring', e.target.checked)} />
+                </label>
+                <label className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-700">New Payment Received</span>
+                  <input type="checkbox" aria-label="New payment received" checked={form.notifications.newPaymentReceived} onChange={(e) => handleChange('notifications.newPaymentReceived', e.target.checked)} />
+                </label>
+                <label className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-700">Trial Period Ending</span>
+                  <input type="checkbox" aria-label="Trial period ending" checked={form.notifications.trialPeriodEnding} onChange={(e) => handleChange('notifications.trialPeriodEnding', e.target.checked)} />
+                </label>
+              </div>
+              </SettingSection>
             </div>
-          </SettingSection>
-        </div>
-      </div>
+          </div>
     </div>
   );
 };

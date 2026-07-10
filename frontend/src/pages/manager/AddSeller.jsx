@@ -120,7 +120,6 @@ const SellerDetailsStep = ({
         <button
           type="button"
           onClick={() => onFieldChange('showPassword', !showPassword)}
-          aria-label={showPassword ? 'Hide password' : 'Show password'}
           className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
         >
           {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -275,7 +274,6 @@ const SellerPasswordCell = ({ seller, visiblePasswordSellerId, onTogglePassword 
       <button
         type="button"
         onClick={() => onTogglePassword(seller._id)}
-        aria-label={visiblePasswordSellerId === seller._id ? 'Hide password' : 'Show password'}
         className="text-gray-500 hover:text-gray-800"
       >
         {visiblePasswordSellerId === seller._id ? <EyeOff size={16} /> : <Eye size={16} />}
