@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AlertCircle, BarChart3, Download, Loader2, Package, ShoppingBag, TrendingUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import useAPIQuery from '../../hooks/useAPIQuery';
 
 const fmt = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
@@ -19,13 +20,14 @@ const safeDate = (v) => {
 const SELLER_REPORTS_QUERY_KEY = ['seller', 'reports'];
 
 const SellerReports = () => {
+  const { t } = useTranslation();
   const {
     data: records = [],
     isPending: loading,
     isError,
   } = useAPIQuery(SELLER_REPORTS_QUERY_KEY, '/sales/my-records?lite=1');
 
-  const error = isError ? 'Reports could not be loaded.' : '';
+  const error = isError ? t('seller.reports_could_not_be_loaded') : '';
 
   /* ── Aggregated stats ─────────────────────────── */
   const stats = useMemo(() => {
@@ -51,15 +53,15 @@ const SellerReports = () => {
 
   /* ── PDF ──────────────────────────────────────── */
   const handleDownloadPDF = () => {
-    if (!records.length) { alert('No data to export.'); return; }
+    if (!records.length) { alert(t('seller.no_data_to_export')); return; }
     const doc = new jsPDF();
 
     doc.setFontSize(20);
     doc.setTextColor(29, 78, 216);
-    doc.text('Sales Summary Report', 14, 18);
+    doc.text(t('seller.sales_summary_report'), 14, 18);
     doc.setFontSize(9);
     doc.setTextColor(100);
-    doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, 14, 25);
+    doc.text(`${t('seller.generated')}: ${new Date().toLocaleString('en-IN')}`, 14, 25);
 
     // Address on the right
     const rightX = 196;
@@ -84,15 +86,15 @@ const SellerReports = () => {
 
     autoTable(doc, {
       startY: 36,
-      head: [['Metric', 'Value']],
+      head: [[t('seller.metric'), t('seller.value')]],
       body: [
-        ['Total Shop Visits',   stats.visits],
-        ['Total Sales Amount',  pdfAmount(stats.sales)],
-        ['Total Items Sold',    stats.items],
-        ['Today\'s Visits',    stats.todayVisits],
-        ['Today\'s Sales',     pdfAmount(stats.todaySales)],
-        ['Total Collected',    pdfAmount(stats.paidTotal)],
-        ['Total Pending',      pdfAmount(stats.pendingTotal)],
+        [t('seller.total_shop_visits'),   stats.visits],
+        [t('seller.total_sales_amount'),  pdfAmount(stats.sales)],
+        [t('seller.total_items_sold'),    stats.items],
+        [t('seller.todays_visits'),    stats.todayVisits],
+        [t('seller.todays_sales'),     pdfAmount(stats.todaySales)],
+        [t('seller.total_collected'),    pdfAmount(stats.paidTotal)],
+        [t('seller.total_pending'),      pdfAmount(stats.pendingTotal)],
       ],
 
       
@@ -105,17 +107,17 @@ const SellerReports = () => {
     let y = doc.lastAutoTable?.finalY + 14 || 120;
     doc.setFontSize(11);
     doc.setTextColor(30, 41, 59);
-    doc.text('Recent Visits', 14, y);
+    doc.text(t('seller.recent_visits'), 14, y);
     y += 6;
 
     autoTable(doc, {
       startY: y,
-      head: [['Shop', 'Date', 'Amount', 'Status']],
+      head: [[t('seller.shop'), t('seller.date'), t('seller.amount'), t('seller.status')]],
       body: records.slice(0, 20).map(r => [
         r.shopName || '-',
         safeDate(r.visitDatetime),
         pdfAmount(r.totalAmount),
-        r.paymentStatus || '-',
+        t(`seller.status_${(r.paymentStatus || 'pending').toLowerCase()}`, { defaultValue: r.paymentStatus || '-' }),
       ]),
       theme: 'grid',
       styles: { fontSize: 8 },
@@ -129,18 +131,18 @@ const SellerReports = () => {
     return (
       <div className="flex min-h-[420px] items-center justify-center gap-2">
         <Loader2 className="animate-spin text-blue-700" size={22} />
-        <span className="text-sm font-semibold text-slate-500">Loading reports...</span>
+        <span className="text-sm font-semibold text-slate-500">{t('seller.loading_reports')}</span>
       </div>
     );
   }
 
   const statCards = [
-    { label: 'Total Visits',   value: stats.visits,                   icon: ShoppingBag, color: 'bg-blue-50 text-blue-700',    ring: 'ring-blue-100' },
-    { label: 'Total Sales',    value: fmt.format(stats.sales),         icon: TrendingUp,  color: 'bg-emerald-50 text-emerald-700', ring: 'ring-emerald-100' },
-    { label: 'Items Sold',     value: stats.items,                    icon: Package,     color: 'bg-violet-50 text-violet-700',   ring: 'ring-violet-100' },
-    { label: "Today's Visits", value: stats.todayVisits,              icon: BarChart3,   color: 'bg-amber-50 text-amber-700',    ring: 'ring-amber-100' },
-    { label: "Today's Sales",  value: fmt.format(stats.todaySales),   icon: TrendingUp,  color: 'bg-sky-50 text-sky-700',        ring: 'ring-sky-100' },
-    { label: 'Pending',        value: fmt.format(stats.pendingTotal), icon: AlertCircle, color: 'bg-red-50 text-red-700',        ring: 'ring-red-100' },
+    { label: t('seller.total_visits'),   value: stats.visits,                   icon: ShoppingBag, color: 'bg-blue-50 text-blue-700',    ring: 'ring-blue-100' },
+    { label: t('seller.total_sales'),    value: fmt.format(stats.sales),         icon: TrendingUp,  color: 'bg-emerald-50 text-emerald-700', ring: 'ring-emerald-100' },
+    { label: t('seller.items_sold'),     value: stats.items,                    icon: Package,     color: 'bg-violet-50 text-violet-700',   ring: 'ring-violet-100' },
+    { label: t('seller.todays_visits'), value: stats.todayVisits,              icon: BarChart3,   color: 'bg-amber-50 text-amber-700',    ring: 'ring-amber-100' },
+    { label: t('seller.todays_sales'),  value: fmt.format(stats.todaySales),   icon: TrendingUp,  color: 'bg-sky-50 text-sky-700',        ring: 'ring-sky-100' },
+    { label: t('seller.pending'),        value: fmt.format(stats.pendingTotal), icon: AlertCircle, color: 'bg-red-50 text-red-700',        ring: 'ring-red-100' },
   ];
 
   return (
@@ -149,7 +151,7 @@ const SellerReports = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BarChart3 size={18} className="text-blue-700" />
-          <h1 className="text-base font-black text-slate-900">My Reports</h1>
+          <h1 className="text-base font-black text-slate-900">{t('seller.my_reports')}</h1>
         </div>
         <button
           type="button"
@@ -158,7 +160,7 @@ const SellerReports = () => {
           className="flex items-center gap-1.5 rounded-lg bg-blue-700 px-3 py-2 text-[11px] font-black text-white shadow-sm hover:bg-blue-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Download size={13} />
-          Download PDF
+          {t('seller.download_pdf')}
         </button>
       </div>
 
@@ -189,8 +191,8 @@ const SellerReports = () => {
       {records.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <h2 className="text-xs font-black uppercase tracking-wide text-slate-700">Recent Visits</h2>
-            <span className="text-[10px] font-bold text-slate-400">{records.length} total</span>
+            <h2 className="text-xs font-black uppercase tracking-wide text-slate-700">{t('seller.recent_visits')}</h2>
+            <span className="text-[10px] font-bold text-slate-400">{records.length} {t('seller.total')}</span>
           </div>
           <div className="divide-y divide-slate-100">
             {records.slice(0, 10).map(r => {
@@ -206,7 +208,7 @@ const SellerReports = () => {
                   </div>
                   <div className="text-right shrink-0 ml-4">
                     <p className="font-black text-slate-950 text-sm">{fmt.format(r.totalAmount || 0)}</p>
-                    <p className={`text-[10px] font-bold ${statusCls}`}>{status}</p>
+                    <p className={`text-[10px] font-bold ${statusCls}`}>{t(`seller.status_${status.toLowerCase()}`, { defaultValue: status })}</p>
                   </div>
                 </div>
               );
@@ -219,4 +221,3 @@ const SellerReports = () => {
 };
 
 export default SellerReports;
-

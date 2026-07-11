@@ -10,30 +10,9 @@ import { CallProvider } from './context/CallProvider';
 import Login from './pages/Login';
 import AdminLogin from './pages/Admin/Login';
 import Register from './pages/Register';
-import SellerDashboard from './pages/seller/SellerDashboard';
-import MyRecords from './pages/seller/MyRecords';
-import StartSelling from './pages/seller/StartSelling';
-import AddShop from './pages/seller/AddShop';
-import AddProducts from './pages/seller/AddProducts';
-import ReviewSave from './pages/seller/ReviewSave';
-import SellerReports from './pages/seller/SellerReports';
-import SellerProfile from './pages/seller/SellerProfile';
-import ManagerDashboard from './pages/manager/ManagerDashboard';
-import SubscriptionPayment from './pages/manager/SubscriptionPayment';
-import AddSeller from './pages/manager/AddSeller';
-import Reports from './pages/manager/Reports';
-import ManagerRecords from './pages/manager/ManagerRecords';
-import ProductsOverview from './pages/manager/ProductsOverview';
-import ManagerSellerDetail from './pages/manager/ManagerSellerDetail';
-import ManagerProfile from './pages/manager/ManagerProfile';
-import ManagerNotifications from './pages/manager/ManagerNotifications';
-import AdminDashboard from './pages/Admin/Dashboard';
-import AdminCompanies from './pages/Admin/Companies';
-import AdminManagers from './pages/Admin/Managers';
-import AdminPlans from './pages/Admin/Plans';
-import AdminPayments from './pages/Admin/Payments';
-import AdminReports from './pages/Admin/Reports';
-import AdminSettings from './pages/Admin/Settings';
+import { sellerRoutes } from './routes/sellerRoutes';
+import { managerRoutes } from './routes/managerRoutes';
+import { adminRoutes } from './routes/adminRoutes';
 
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -120,17 +99,7 @@ const App = () => {
               <ManagerLayout />
             </ProtectedRoute>
           }>
-            <Route path="/manager" element={<ManagerDashboard />} />
-            <Route path="/manager/payment" element={<SubscriptionPayment />} />
-            <Route path="/manager/subscription" element={<SubscriptionBilling />} />
-            <Route path="/manager/sellers" element={<AddSeller />} />
-            <Route path="/manager/records" element={<ManagerRecords />} />
-            <Route path="/manager/reports" element={<Reports />} />
-            <Route path="/manager/products" element={<ProductsOverview />} />
-            <Route path="/manager/profile" element={<ManagerProfile />} />
-            <Route path="/manager/notifications" element={<ManagerNotifications />} />
-            <Route path="/manager/seller/:sellerId" element={<ManagerSellerDetail />} />
-            <Route path="/manager/attendance" element={<ManagerAttendance />} />
+            {renderRoutes(managerRoutes)}
           </Route>
 
           {/* Admin Routes */}

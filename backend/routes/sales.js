@@ -106,7 +106,7 @@ router.post(
     // New optional fields
     body('checkInTime').optional().isISO8601().toDate(),
     body('checkOutTime').optional().isISO8601().toDate(),
-    body('paymentMethod').optional().isIn(['Online', 'Offline']).withMessage('Invalid payment method'),
+    body('paymentMethod').optional().isIn(['Online', 'Offline', 'Cash']).withMessage('Invalid payment method'),
     body('paidAmount').optional().isFloat({ min: 0 }).toFloat(),
     body('pendingAmount').optional().isFloat({ min: 0 }).toFloat(),
     body('paymentStatus').optional().isIn(['Paid', 'Partial', 'Pending']).withMessage('Invalid payment status')
@@ -222,7 +222,7 @@ router.post(
         longitude,
         visitDatetime: new Date(),
         totalAmount: Number(totalAmount.toFixed(2)),
-        paymentMethod: paymentMethod || 'Offline',
+        paymentMethod: paymentMethod || 'Cash',
         paidAmount: paidAmount || 0,
         pendingAmount: pendingAmount || 0,
         paymentStatus: paymentStatus || 'Pending',

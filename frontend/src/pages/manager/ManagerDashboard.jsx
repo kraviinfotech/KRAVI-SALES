@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import API from '../../api/axios';
 import { AlertCircle, Loader2, Users, FileSpreadsheet, IndianRupee, TrendingUp } from 'lucide-react';
 import DashboardHeader from './components/DashboardHeader';
@@ -60,11 +61,11 @@ const getBlankWeeklyChart = () => {
 const defaultCustomRange = getRange('weekly');
 
 const tabs = [
-  { id: 'daily', label: 'Daily' },
-  { id: 'weekly', label: 'Weekly' },
-  { id: 'monthly', label: 'Monthly' },
-  { id: 'yearly', label: 'Yearly' },
-  { id: 'custom', label: 'Custom Range' }
+  { id: 'daily', labelKey: 'manager.tabs.daily' },
+  { id: 'weekly', labelKey: 'manager.tabs.weekly' },
+  { id: 'monthly', labelKey: 'manager.tabs.monthly' },
+  { id: 'yearly', labelKey: 'manager.tabs.yearly' },
+  { id: 'custom', labelKey: 'manager.tabs.custom_range' }
 ];
 
 let cachedSummary = null;
@@ -97,6 +98,7 @@ const ManagerDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const { t } = useTranslation();
 
   // Collections State
   const [collectionStats, setCollectionStats] = useState(cachedCollectionStats || { totalCollection: 0, cashCollection: 0, onlineCollection: 0, pendingCollection: 0 });
