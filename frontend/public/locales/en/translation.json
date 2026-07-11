@@ -11,8 +11,6 @@
     "manager": "Manager Dashboard",
     "seller": "Seller Dashboard",
     "sellers": "Sellers",
-    "attendance": "Attendance",
-    "calls": "Call",
     "records": "Records",
     "products": "Products",
     "subscription": "Subscription",
@@ -110,20 +108,6 @@
       "mode": "Mode",
       "no_recent_collections": "No recent collections found.",
       "unknown": "Unknown"
-    },
-    "calls": {
-      "title": "Calls",
-      "heading": "Manager Call Center",
-      "description": "Contact your sellers directly from a dedicated page.",
-      "loading": "Loading sellers...",
-      "empty": "No sellers available to call right now.",
-      "seller": "Seller",
-      "contact": "Contact",
-      "actions": "Actions",
-      "unnamed_seller": "Unnamed seller",
-      "no_contact": "No contact details",
-      "call": "Call",
-      "video": "Video"
     },
     "collection": {
       "total_collection": "Total Collection",

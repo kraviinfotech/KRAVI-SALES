@@ -378,45 +378,6 @@ const ReviewSave = () => {
     setLoading(true);
     setError('');
 
-    // Validate required fields
-    if (!shopName || !shopName.trim()) {
-      setError(t('seller.shop_name') + ' is required');
-      setLoading(false);
-      return;
-    }
-
-    if (!shopAddress || !shopAddress.trim()) {
-      setError(t('seller.address') + ' is required');
-      setLoading(false);
-      return;
-    }
-
-    // Validate items
-    if (!items || items.length === 0) {
-      setError('At least one product is required');
-      setLoading(false);
-      return;
-    }
-
-    // Check each item for valid productName and price
-    const invalidItem = items.find(item => {
-      const productName = (item.productName || '').trim();
-      const price = Number(item.price || item.rate || 0);
-      return !productName || price <= 0;
-    });
-
-    if (invalidItem) {
-      const productName = (invalidItem.productName || '').trim();
-      const price = Number(invalidItem.price || invalidItem.rate || 0);
-      if (!productName) {
-        setError('All products must have a name');
-      } else if (price <= 0) {
-        setError(`Product "${productName}" must have a price greater than 0`);
-      }
-      setLoading(false);
-      return;
-    }
-
     if (paymentMethod === 'Online' && (!scannerPhoto || (typeof scannerPhoto === 'string' && scannerPhoto.trim() === ''))) {
       setError('Please capture or select payment proof before saving for online payments.');
       setLoading(false);

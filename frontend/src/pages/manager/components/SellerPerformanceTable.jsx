@@ -21,8 +21,7 @@ const SellerPerformanceTable = ({
   onTabChange,
   customRange,
   onCustomRangeChange,
-  onApplyCustomRange,
-  callContactsBySellerId = {}
+  onApplyCustomRange
 }) => {
   return (
     <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
