@@ -390,91 +390,144 @@ router.get(
 // GET /api/attendance/manager
 // ==========================================
 
+
+
+
+
+
+
+
+
+
+
+
+// ==========================================
+// GET MANAGER ATTENDANCE
+// GET /api/attendance/manager
+// Supports:
+// page
+// limit
+// search
+// date
+// ==========================================
+
 router.get(
-    "/manager",
-    authMiddleware,
-    roleMiddleware("manager"),
+  "/manager",
+  authMiddleware,
+  roleMiddleware("manager"),
 
-    async (req, res) => {
+  async (req, res) => {
+    try {
+      const page = Math.max(parseInt(req.query.page) || 1, 1);
+      const limit = Math.max(parseInt(req.query.limit) || 10, 1);
+      const skip = (page - 1) * limit;
 
-        try {
+      const search = (req.query.search || "").trim();
+      const date = req.query.date;
 
-            const sellerIds = await Seller.find({
-                managerId: req.user._id
+      // -----------------------------
+      // Find manager sellers
+      // -----------------------------
+      const sellerQuery = {
+        managerId: req.user._id
+      };
 
-            }).select("_id name");
+      if (search) {
+        sellerQuery.name = {
+          $regex: search,
+          $options: "i"
+        };
+      }
 
-            console.log("========== MANAGER ==========");
-            console.log("Manager ID:", req.user._id);
-            console.log("Seller IDs:", sellerIds);
+      const sellers = await Seller.find(sellerQuery)
+        .select("_id name")
+        .lean();
 
-            const ids = sellerIds.map(s => s._id);
+      const sellerMap = {};
 
-            const attendance = await Attendance.find({
-                sellerId: { $in: ids }
+      sellers.forEach((seller) => {
+        sellerMap[seller._id.toString()] = seller.name;
+      });
+
+      const sellerIds = sellers.map((s) => s._id);
+
+      // -----------------------------
+      // Attendance Query
+      // -----------------------------
+      const attendanceQuery = {
+        sellerId: { $in: sellerIds }
+      };
+
+      if (date) {
+        const start = new Date(date);
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date(date);
+        end.setHours(23, 59, 59, 999);
+
+        attendanceQuery.date = {
+          $gte: start,
+          $lte: end
+        };
+      }
+
+      const totalRecords = await Attendance.countDocuments(attendanceQuery);
+
+      const attendance = await Attendance.find(attendanceQuery)
+        .sort({ date: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      const records = attendance.map((record) => ({
+        _id: record._id,
+
+        date: new Date(record.date).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric"
+        }),
+
+        sellerName:
+          sellerMap[record.sellerId.toString()] || "Unknown",
+
+        checkInTime: record.loginTime
+          ? new Date(record.loginTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit"
             })
-                .sort({ date: -1 })
-                .lean();
+          : "--",
 
-            console.log("Attendance Records:", attendance);
+        checkOutTime: record.logoutTime
+          ? new Date(record.logoutTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit"
+            })
+          : "--",
 
-            const sellerMap = {};
+        totalHours:
+          record.totalWorkingHours > 0
+            ? `${record.totalWorkingHours.toFixed(2)} hrs`
+            : "--",
 
-            sellerIds.forEach(s => {
-                sellerMap[s._id.toString()] = s.name;
-            });
+        status: record.status
+      }));
 
-            const data = attendance.map(record => {
+      res.json({
+        records,
+        currentPage: page,
+        totalPages: Math.ceil(totalRecords / limit),
+        totalRecords
+      });
 
-                const checkIn = record.loginTime
-                    ? new Date(record.loginTime).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit"
-                    })
-                    : "--";
+    } catch (err) {
+      console.error(err);
 
-                const checkOut = record.logoutTime
-                    ? new Date(record.logoutTime).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit"
-                    })
-                    : "--";
-
-                return {
-
-                    _id: record._id,
-
-                    sellerName:
-                        sellerMap[record.sellerId.toString()] || "Unknown",
-
-                    checkInTime: checkIn,
-
-                    checkOutTime: checkOut,
-
-                    totalHours:
-                        record.totalWorkingHours
-                            ? record.totalWorkingHours.toFixed(2) + " hrs"
-                            : "--",
-
-                    status: record.status
-
-                };
-
-            });
-
-            res.json(data);
-
-        } catch (err) {
-
-            console.error(err);
-
-            res.status(500).json({
-                message: "Server Error"
-            });
-
-        }
-
+      res.status(500).json({
+        message: "Server Error"
+      });
     }
+  }
 );
 
 
