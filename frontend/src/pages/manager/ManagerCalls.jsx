@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import API from '../../api/axios';
 import CallButton from '../../components/CallButton';
+import CallHistory from '../../components/CallHistory';
 import { Loader2, Phone, Video } from 'lucide-react';
 
 const ManagerCalls = () => {
@@ -54,6 +55,12 @@ const ManagerCalls = () => {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="p-4 border-b border-slate-100">
+          <h3 className="text-sm font-black text-slate-900">Recent calls</h3>
+        </div>
+        <div className="p-4">
+          <CallHistory limit={30} />
+        </div>
         {loading ? (
           <div className="flex items-center justify-center gap-2 px-6 py-16 text-sm font-semibold text-slate-500">
             <Loader2 className="animate-spin text-blue-700" size={18} />

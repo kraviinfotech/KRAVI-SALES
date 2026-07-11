@@ -63,10 +63,15 @@ export function CallProvider({ children }) {
   const [callError, setCallError] = useState(null);
   const [callDuration, setCallDuration] = useState(0);
   const [isSpeakerEnabled, setIsSpeakerEnabled] = useState(true);
+  const callStateRef = useRef(callState);
 
   useEffect(() => {
     activeCallRef.current = activeCall;
   }, [activeCall]);
+
+  useEffect(() => {
+    callStateRef.current = callState;
+  }, [callState]);
 
   const cleanupCall = useCallback(() => {
     if (peerConnectionRef.current) {
@@ -227,6 +232,12 @@ export function CallProvider({ children }) {
     });
 
     socket.on('call-ringing', ({ callId }) => {
+      // If we're currently ringing (incoming), don't flip to outgoing.
+      if (callStateRef.current === 'ringing') {
+        console.log('[CallProvider] Ignoring call-ringing because already ringing');
+        return;
+      }
+
       setActiveCall((currentCall) => {
         const nextCall = currentCall ? { ...currentCall, callId } : currentCall;
         activeCallRef.current = nextCall;
