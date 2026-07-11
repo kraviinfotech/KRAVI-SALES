@@ -23,7 +23,8 @@
     "react-draggable": "^4.7.0",
     "react-i18next": "^17.0.8",
     "react-router-dom": "^6.23.1",
-    "recharts": "^2.12.7"
+    "recharts": "^2.12.7",
+    "socket.io-client": "^4.8.3"
   },
   "optionalDependencies": {
     "@tanstack/react-query": "^5.101.2"

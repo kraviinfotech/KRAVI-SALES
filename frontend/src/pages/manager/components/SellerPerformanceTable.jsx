@@ -22,7 +22,8 @@ const SellerPerformanceTable = ({
   onTabChange,
   customRange,
   onCustomRangeChange,
-  onApplyCustomRange
+  onApplyCustomRange,
+  callContactsBySellerId = {}
 }) => {
   const { t } = useTranslation();
 
@@ -157,15 +158,17 @@ const SellerPerformanceTable = ({
                     </td>
                     <td className="px-4 py-3 text-center">
                       {row.sellerId && (
-                        <button 
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); onDeleteRecords(row.sellerId, row.seller); }}
-                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                          title={t('manager.table.delete_records')}
-                          aria-label={`${t('manager.table.delete_records')} ${row.seller}`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onDeleteRecords(row.sellerId, row.seller); }}
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                            title={t('manager.table.delete_records')}
+                            aria-label={`${t('manager.table.delete_records')} ${row.seller}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>

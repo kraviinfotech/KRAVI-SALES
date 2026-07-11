@@ -404,6 +404,7 @@ router.post(
         termsAccepted: user.termsAccepted || false,
         termsAcceptedVersion: user.termsAcceptedVersion || null
       },
+      token,
       subscriptionStatus
     });
   }
@@ -489,6 +490,7 @@ router.post(
           termsAccepted: user.termsAccepted || false,
           termsAcceptedVersion: user.termsAcceptedVersion || null
         },
+        token,
         subscriptionStatus
       });
     } catch (err) {
