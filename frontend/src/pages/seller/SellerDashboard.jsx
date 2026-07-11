@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import API from '../../api/axios';
+import CallButton from '../../components/CallButton';
 import {
   AlertCircle,
   Plus,
@@ -44,6 +45,7 @@ const SellerDashboard = () => {
   const [attendance, setAttendance] = useState(null);
   const [attendanceLoading, setAttendanceLoading] = useState(true);
   const [attendanceActionLoading, setAttendanceActionLoading] = useState(false);
+  const [managerContact, setManagerContact] = useState(null);
 
   const fetchTodayStats = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true);
@@ -64,6 +66,15 @@ const SellerDashboard = () => {
       setLoading(false);
     }
   }, [t.errorLoading]);
+
+  const fetchManagerContact = useCallback(async () => {
+    try {
+      const response = await API.get('/calls/contacts');
+      setManagerContact(response.data?.contacts?.[0] || null);
+    } catch (err) {
+      console.error('Unable to load manager call contact', err);
+    }
+  }, []);
 
 
   const fetchAttendance = async () => {
@@ -163,12 +174,13 @@ const SellerDashboard = () => {
 
     fetchTodayStats(hasFetchedStats);
     fetchAttendance();
+    fetchManagerContact();
     const interval = setInterval(() => {
       fetchTodayStats(true);
       fetchAttendance();
     }, 2 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [fetchTodayStats]);
+  }, [fetchTodayStats, fetchManagerContact]);
 
 
   const summaryRows = [
@@ -180,7 +192,19 @@ const SellerDashboard = () => {
   return (
     <div className="space-y-16">
 
-      <div className="flex justify-end">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        {managerContact && (
+          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-wide text-slate-500">Manager support</p>
+            <p className="mt-1 text-sm font-black text-slate-950">{managerContact.name || 'Manager'}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <CallButton targetUserId={managerContact.id} type="voice" label="Call" />
+              <CallButton targetUserId={managerContact.id} type="video" label="Video" />
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end">
 
         {attendanceLoading ? (
 
@@ -268,6 +292,8 @@ const SellerDashboard = () => {
           </button>
 
         )}
+
+        </div>
 
       </div>
 
