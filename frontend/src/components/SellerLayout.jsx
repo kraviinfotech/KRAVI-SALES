@@ -29,7 +29,7 @@ const SellerLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'en');
+  const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
   const { data: statusData, isLoading: checkingSubscription } = useSubscriptionStatus(true);
   const subscriptionStatus = statusData ?? null;
   const title = routeTitles.find((route) => location.pathname.startsWith(route.match))?.title || 'SalesFlow';

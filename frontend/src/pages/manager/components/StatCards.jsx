@@ -1,8 +1,6 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 
 const StatCards = ({ stats, loading }) => {
-  const { t } = useTranslation();
   return (
     <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
       {stats.map((stat) => {
