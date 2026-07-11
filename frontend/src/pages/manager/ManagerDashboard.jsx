@@ -102,11 +102,29 @@ const ManagerDashboard = () => {
   const [collectionStats, setCollectionStats] = useState(cachedCollectionStats || { totalCollection: 0, cashCollection: 0, onlineCollection: 0, pendingCollection: 0 });
   const [recentCollections, setRecentCollections] = useState(cachedRecentCollections || []);
   const [collectionsLoading, setCollectionsLoading] = useState(!hasFetchedCollections);
+  const [callContactsBySellerId, setCallContactsBySellerId] = useState({});
   const recordsRef = useRef(records);
 
   useEffect(() => {
     recordsRef.current = records;
   }, [records]);
+
+  const fetchCallContacts = useCallback(async () => {
+    try {
+      const response = await API.get('/calls/contacts');
+      const nextContacts = {};
+
+      (response.data?.contacts || []).forEach((contact) => {
+        if (contact.sellerId && contact.id) {
+          nextContacts[contact.sellerId] = contact.id;
+        }
+      });
+
+      setCallContactsBySellerId(nextContacts);
+    } catch (err) {
+      console.error('Error fetching call contacts', err);
+    }
+  }, []);
 
   const fetchCollectionData = useCallback(async (quiet = false) => {
     if (!quiet) setCollectionsLoading(true);
@@ -214,7 +232,8 @@ const ManagerDashboard = () => {
   useEffect(() => {
   fetchSummary(hasFetchedSummary);
   fetchCollectionData(hasFetchedCollections);
-}, [fetchSummary, fetchCollectionData]);
+  fetchCallContacts();
+}, [fetchSummary, fetchCollectionData, fetchCallContacts]);
 
 useEffect(() => {
   fetchChartData(hasFetchedChart);
@@ -352,6 +371,7 @@ useEffect(() => {
         customRange={customRange}
         onCustomRangeChange={setCustomRange}
         onApplyCustomRange={() => setAppliedCustomRange(customRange)}
+        callContactsBySellerId={callContactsBySellerId}
       />
 
       <CollectionStatsCards collectionStats={collectionStats} />

@@ -6,6 +6,7 @@ import ManagerLayout from './components/ManagerLayout';
 import AdminLayout from './components/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
+import { CallProvider } from './context/CallProvider';
 import Login from './pages/Login';
 import AdminLogin from './pages/Admin/Login';
 import Register from './pages/Register';
@@ -38,8 +39,27 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import bgImage from "./images/bg.png"; 
 import KraviChatbot from './components/KraviChatbot';
-import SubscriptionBilling from './pages/manager/SubscriptionBilling';
-import ManagerAttendance from './pages/manager/ManagerAttendance';
+import IncomingCallModal from './components/IncomingCallModal';
+import CallWindow from './components/CallWindow';
+import CallStatusToast from './components/CallStatusToast';
+
+const renderRoutes = (routes) => routes.map((route) => {
+  if (route.children) {
+    return (
+      <Route key={route.path} path={route.path} element={route.element}>
+        {route.children.map((child) =>
+          child.index ? (
+            <Route key="index" index element={child.element} />
+          ) : (
+            <Route key={child.path} path={child.path} element={child.element} />
+          )
+        )}
+      </Route>
+    );
+  }
+
+  return <Route key={route.path} path={route.path} element={route.element} />;
+});
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -59,7 +79,7 @@ const App = () => {
   const isLoginPage = location.pathname === '/login';
 
   return (
-    <>
+    <CallProvider>
       <div className={isSellerArea || isManagerArea || isAdminArea ? 'min-h-screen bg-slate-100' : 'public-background flex flex-col min-h-screen bg-gray-50'} style={
         !(isSellerArea || isManagerArea || isAdminArea)
           ? {
@@ -91,18 +111,7 @@ const App = () => {
               <SellerLayout />
             </ProtectedRoute>
           }>
-            <Route path="/dashboard" element={<SellerDashboard />} />
-            <Route path="/my-records" element={<MyRecords />} />
-            <Route path="/seller/reports" element={<SellerReports />} />
-            <Route path="/seller/profile" element={<SellerProfile />} />
-
-            {/* Start Selling Visit Flow */}
-            <Route path="/sell" element={<StartSelling />}>
-              <Route path="shop" element={<AddShop />} />
-              <Route path="products" element={<AddProducts />} />
-              <Route path="review" element={<ReviewSave />} />
-              <Route index element={<Navigate to="shop" replace />} />
-            </Route>
+            {renderRoutes(sellerRoutes)}
           </Route>
 
           {/* Manager Routes */}
@@ -130,14 +139,7 @@ const App = () => {
               <AdminLayout />
             </ProtectedRoute>
           }>
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/companies" element={<AdminCompanies />} />
-              <Route path="/admin/managers" element={<AdminManagers />} /> 
-              <Route path="/admin/plans" element={<AdminPlans />} />
-            <Route path="/admin/payments" element={<AdminPayments />} />
-            <Route path="/admin/reports" element={<AdminReports />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
-            <Route path="/admin/*" element={<AdminDashboard />} />
+            {renderRoutes(adminRoutes)}
           </Route>
 
           {/* Fallback */}
@@ -146,7 +148,10 @@ const App = () => {
       </main>
     </div>
     <KraviChatbot />
-  </>
+    <IncomingCallModal />
+    <CallWindow />
+    <CallStatusToast />
+  </CallProvider>
   );
 };
 

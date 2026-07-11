@@ -1,8 +1,16 @@
 import axios from 'axios';
 
+const getDefaultApiUrl = () => {
+  if (typeof window === 'undefined') {
+    return 'http://localhost:5002/api';
+  }
+
+  return `${window.location.protocol}//${window.location.hostname}:5002/api`;
+};
+
 const API = axios.create({
   // Prefer explicit VITE_API_URL; fall back to the local backend port from backend/.env
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5002/api',
+  baseURL: import.meta.env.VITE_API_URL || getDefaultApiUrl(),
   withCredentials: true,
 });
 
