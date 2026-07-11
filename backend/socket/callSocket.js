@@ -153,7 +153,7 @@ module.exports = function initCallSocket(io) {
         from: userId,
         tenantId,
         receiverId: normalizedReceiverId,
-        receiverSocketId: findSocketId(tenantId, normalizedReceiverId),
+        receiverSocketId: receiverSocketId,
         presenceKeys: Array.from(presence.keys()),
       });
 
@@ -165,17 +165,26 @@ module.exports = function initCallSocket(io) {
         return;
       }
 
-      if (!receiverSocketId) {
-        socket.emit('call-failed', {
-          reason: 'offline',
-          message: 'User is offline right now.',
-        });
-        return;
-      }
-
       const receiverPresence = presence.get(normalizedReceiverId);
       const callId = `${userId}-${normalizedReceiverId}-${Date.now()}`;
       const safeCallType = ['voice', 'video', 'screen'].includes(callType) ? callType : 'voice';
+
+      // Create the call record even if the receiver is offline so caller sees the ringing/outgoing state.
+      const NO_ANSWER_TIMEOUT_MS = Number(process.env.NO_ANSWER_TIMEOUT_MS) || 30000;
+
+      const timeoutId = setTimeout(async () => {
+        const call = activeCalls.get(callId);
+        if (!call) return;
+        // If call never started, mark as missed and notify caller
+        if (!call.startedAt) {
+          const callerSocketId = findSocketId(call.tenantId, call.caller.userId);
+          if (callerSocketId) {
+            io.to(callerSocketId).emit('call-ended', { callId, reason: 'no-answer' });
+          }
+          await logCall(call, 'missed');
+          activeCalls.delete(callId);
+        }
+      }, NO_ANSWER_TIMEOUT_MS);
 
       activeCalls.set(callId, {
         caller: { userId, name, role },
@@ -187,15 +196,19 @@ module.exports = function initCallSocket(io) {
         tenantId,
         callType: safeCallType,
         startedAt: null,
+        timeoutId,
       });
 
-      io.to(receiverSocketId).emit('incoming-call', {
-        callId,
-        callerId: userId,
-        callerName: name,
-        callerRole: role,
-        callType: safeCallType,
-      });
+      // If receiver is online, notify them. If not, we still let caller see 'ringing'.
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit('incoming-call', {
+          callId,
+          callerId: userId,
+          callerName: name,
+          callerRole: role,
+          callType: safeCallType,
+        });
+      }
 
       socket.emit('call-ringing', { callId });
     });
@@ -203,6 +216,12 @@ module.exports = function initCallSocket(io) {
     socket.on('call-accept', ({ callId }) => {
       const call = activeCalls.get(callId);
       if (!call) return;
+
+      // Clear no-answer timeout if set
+      if (call.timeoutId) {
+        clearTimeout(call.timeoutId);
+        delete call.timeoutId;
+      }
 
       call.startedAt = Date.now();
       const callerSocketId = findSocketId(tenantId, call.caller.userId);
@@ -214,6 +233,12 @@ module.exports = function initCallSocket(io) {
     socket.on('call-reject', async ({ callId }) => {
       const call = activeCalls.get(callId);
       if (!call) return;
+
+      // Clear any pending timeout
+      if (call.timeoutId) {
+        clearTimeout(call.timeoutId);
+        delete call.timeoutId;
+      }
 
       const callerSocketId = findSocketId(tenantId, call.caller.userId);
       if (callerSocketId) {
@@ -260,6 +285,12 @@ module.exports = function initCallSocket(io) {
       const call = activeCalls.get(callId);
       const targetSocketId = findSocketId(tenantId, targetUserId);
 
+      // Clear any pending timeout
+      if (call && call.timeoutId) {
+        clearTimeout(call.timeoutId);
+        delete call.timeoutId;
+      }
+
       if (targetSocketId) {
         io.to(targetSocketId).emit('call-ended', { callId });
       }
@@ -283,6 +314,12 @@ module.exports = function initCallSocket(io) {
             ? call.receiver.userId
             : call.caller.userId;
           const otherSocketId = findSocketId(tenantId, otherUserId);
+
+          // Clear any pending timeout
+          if (call.timeoutId) {
+            clearTimeout(call.timeoutId);
+            delete call.timeoutId;
+          }
 
           if (otherSocketId) {
             io.to(otherSocketId).emit('call-ended', { callId, reason: 'disconnected' });

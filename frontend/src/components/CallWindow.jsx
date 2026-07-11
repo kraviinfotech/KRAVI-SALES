@@ -199,8 +199,11 @@ export default function CallWindow() {
         <button
           type="button"
           onClick={toggleSpeaker}
-          className={`flex h-10 w-10 items-center justify-center rounded-full text-white ${
-            isSpeakerEnabled ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-600'
+          aria-pressed={isSpeakerEnabled}
+          className={`flex h-10 w-10 items-center justify-center rounded-full text-white transition-transform active:scale-95 focus:outline-none ${
+            isSpeakerEnabled
+              ? 'bg-amber-400 text-slate-950 hover:bg-amber-300 ring-2 ring-amber-300 shadow-md'
+              : 'bg-slate-600 hover:bg-slate-500'
           }`}
           title={isSpeakerEnabled ? 'Speaker on' : 'Speaker off'}
           aria-label={isSpeakerEnabled ? 'Speaker on' : 'Speaker off'}

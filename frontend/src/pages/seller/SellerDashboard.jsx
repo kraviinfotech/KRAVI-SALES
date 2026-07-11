@@ -3,6 +3,7 @@ import { Link, useOutletContext } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import API from '../../api/axios';
 import CallButton from '../../components/CallButton';
+import CallHistory from '../../components/CallHistory';
 import {
   AlertCircle,
   Plus,
@@ -338,6 +339,11 @@ const SellerDashboard = () => {
           <span>{error}</span>
         </div>
       )}
+      
+      <section className="rounded-md border border-slate-200 bg-white p-4 shadow-sm mt-6">
+        <h2 className="mb-4 text-xs font-black text-slate-950">Recent calls</h2>
+        <CallHistory limit={10} />
+      </section>
     </div>
   );
 };
