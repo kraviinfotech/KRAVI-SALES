@@ -13,10 +13,11 @@ export default function IncomingCallModal() {
       });
     }
 
+    const ringtone = ringtoneRef.current;
     return () => {
-      if (ringtoneRef.current) {
-        ringtoneRef.current.pause();
-        ringtoneRef.current.currentTime = 0;
+      if (ringtone) {
+        ringtone.pause();
+        ringtone.currentTime = 0;
       }
     };
   }, [callState]);
@@ -29,7 +30,9 @@ export default function IncomingCallModal() {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 px-4">
-      <audio ref={ringtoneRef} loop src="/sounds/ringtone.mp3" />
+      <audio ref={ringtoneRef} loop src="/sounds/ringtone.mp3">
+        <track kind="captions" />
+      </audio>
       <div className="w-full max-w-sm rounded-lg bg-white p-6 text-center shadow-2xl">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-indigo-600 text-2xl font-black text-white">
           {callerName ? callerName.charAt(0).toUpperCase() : '?'}

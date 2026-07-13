@@ -11,7 +11,6 @@ import API from '../api/axios';
 const AuthContext = createContext(null);
 
 const USER_STORAGE_KEY = 'user:v1';
-const AUTH_TOKEN_STORAGE_KEY = 'auth:token:v1';
 
 const getStoredUser = () => {
   if (typeof window === 'undefined') {
@@ -140,13 +139,6 @@ export const AuthProvider = ({ children }) => {
         USER_STORAGE_KEY,
         JSON.stringify(userData)
       );
-      if (authToken) {
-        localStorage.setItem(
-          AUTH_TOKEN_STORAGE_KEY,
-          authToken
-        );
-      }
-
       sessionStorage.removeItem(
         `subscriptionPromptSeen_${userData._id}`
       );
@@ -207,13 +199,6 @@ export const AuthProvider = ({ children }) => {
         USER_STORAGE_KEY,
         JSON.stringify(userData)
       );
-      if (authToken) {
-        localStorage.setItem(
-          AUTH_TOKEN_STORAGE_KEY,
-          authToken
-        );
-      }
-
       sessionStorage.removeItem(
         `subscriptionPromptSeen_${userData._id}`
       );
@@ -270,10 +255,6 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem(
         USER_STORAGE_KEY
       );
-      localStorage.removeItem(
-        AUTH_TOKEN_STORAGE_KEY
-      );
-
       setUser(null);
     }
   }, []);

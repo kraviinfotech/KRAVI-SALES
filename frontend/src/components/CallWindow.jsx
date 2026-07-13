@@ -132,15 +132,18 @@ export default function CallWindow() {
               ref={remoteVideoRef}
               autoPlay
               playsInline
-              className="h-full w-full object-cover"
-            />
+            >
+              <track kind="captions" />
+            </video>
             <video
               ref={localVideoRef}
               autoPlay
               playsInline
               muted
               className="absolute bottom-2 right-2 h-[60px] w-20 rounded-md border-2 border-white object-cover"
-            />
+            >
+              <track kind="captions" />
+            </video>
           </>
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-300">
