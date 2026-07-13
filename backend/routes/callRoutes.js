@@ -29,16 +29,18 @@ router.get('/contacts', async (req, res) => {
         .lean();
 
       return res.json({
-        contacts: sellers
-          .filter((seller) => seller.userId?._id)
-          .map((seller) => ({
+        contacts: sellers.reduce((acc, seller) => {
+          if (!seller.userId?._id) return acc;
+          acc.push({
             id: String(seller.userId._id),
             sellerId: String(seller._id),
             name: seller.name || seller.userId.name,
             mobile: seller.mobile || seller.userId.mobile,
             email: seller.userId.email || null,
             role: 'seller',
-          })),
+          });
+          return acc;
+        }, []),
       });
     }
 

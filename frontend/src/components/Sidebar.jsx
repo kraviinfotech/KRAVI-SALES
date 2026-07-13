@@ -41,6 +41,15 @@ const Sidebar = ({ onLogout }) => {
   const { t } = useTranslation();
 
   const { i18n } = useTranslation();
+  
+  const storedLang = React.useMemo(() => {
+    try {
+      return localStorage.getItem('lang');
+    } catch {
+      return null;
+    }
+  }, []);
+
   const toggleMenu = () => setMobileOpen(!mobileOpen);
 
   const handleLanguageChange = (e) => {
@@ -58,7 +67,7 @@ const Sidebar = ({ onLogout }) => {
           </span>
           <div className="flex items-center gap-3">
             <select
-              value={i18n.language?.split('-')[0] || localStorage.getItem('lang') || 'en'}
+              value={i18n.language?.split('-')[0] || storedLang || 'en'}
               onChange={handleLanguageChange}
               className="text-[11px] font-bold rounded px-1.5 py-1 bg-slate-800 border border-slate-700 text-white outline-none"
               aria-label="Select language"
@@ -139,7 +148,7 @@ const Sidebar = ({ onLogout }) => {
                 <span className="text-sm font-bold tracking-wide text-white">SalesFlow Menu</span>
                 <div className="flex items-center gap-3">
                   <select
-                    value={i18n.language?.split('-')[0] || localStorage.getItem('lang') || 'en'}
+                    value={i18n.language?.split('-')[0] || storedLang || 'en'}
                     onChange={handleLanguageChange}
                     className="text-[11px] font-bold rounded px-1.5 py-1 bg-slate-800 border border-slate-700 text-white outline-none"
                     aria-label="Select language"

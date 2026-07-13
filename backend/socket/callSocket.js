@@ -309,10 +309,11 @@ module.exports = function initCallSocket(io) {
       });
 
       for (const [callId, call] of activeCalls.entries()) {
-        if (call.caller.userId === userId || call.receiver.userId === userId) {
-          const otherUserId = call.caller.userId === userId
-            ? call.receiver.userId
-            : call.caller.userId;
+        const { userId: callerUserId } = call.caller;
+        const { userId: receiverUserId } = call.receiver;
+
+        if (callerUserId === userId || receiverUserId === userId) {
+          const otherUserId = callerUserId === userId ? receiverUserId : callerUserId;
           const otherSocketId = findSocketId(tenantId, otherUserId);
 
           // Clear any pending timeout
