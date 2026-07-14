@@ -1,29 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import API from '../../api/axios';
-import {
-  AlertCircle,
-  Plus,
-  LogIn,
-  LogOut,
-  Clock,
-  MapPin
-} from 'lucide-react';
-
-const translations = {
-  en: {
-    startSelling: "Start Selling", todaySummary: "Today Summary", totalVisits: "Total Visits",
-    totalSales: "Total Sales", totalItems: "Total Items", errorLoading: "Today summary could not be loaded."
-  },
-  hi: {
-    startSelling: "बेचना शुरू करें", todaySummary: "आज का सारांश", totalVisits: "कुल विज़िट",
-    totalSales: "कुल बिक्री", totalItems: "कुल आइटम", errorLoading: "आज का सारांश लोड नहीं हो पाया।"
-  },
-  mr: {
-    startSelling: "विक्री सुरू करा", todaySummary: "आजचा सारांश", totalVisits: "एकूण भेटी",
-    totalSales: "एकूण विक्री", totalItems: "एकूण वस्तू", errorLoading: "आजचा सारांश लोड होऊ शकला नाही."
-  }
-};
+import CallButton from '../../components/CallButton';
+import CallHistory from '../../components/CallHistory';
+import SellerAttendance from './SellerAttendance';
+import { AlertCircle, Plus } from 'lucide-react';
 
 const currencyFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -35,15 +17,11 @@ let cachedStats = null;
 let hasFetchedStats = false;
 
 const SellerDashboard = () => {
-  const { lang } = useOutletContext(); // Get language from SellerLayout
-  const t = translations[lang || 'en'];
+  const { t } = useTranslation();
   const [stats, setStats] = useState(cachedStats || { visits: 0, sales: 0, items: 0 });
   const [loading, setLoading] = useState(!hasFetchedStats);
   const [error, setError] = useState('');
-
-  const [attendance, setAttendance] = useState(null);
-  const [attendanceLoading, setAttendanceLoading] = useState(true);
-  const [attendanceActionLoading, setAttendanceActionLoading] = useState(false);
+  const [managerContact, setManagerContact] = useState(null);
 
   const fetchTodayStats = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true);
@@ -65,238 +43,56 @@ const SellerDashboard = () => {
     }
   }, [t.errorLoading]);
 
-
-  const fetchAttendance = async () => {
+  const fetchManagerContact = useCallback(async () => {
     try {
-      setAttendanceLoading(true);
-
-      const res = await API.get("/attendance/today");
-
-      setAttendance(res.data.attendance);
-
+      const response = await API.get('/calls/contacts');
+      setManagerContact(response.data?.contacts?.[0] || null);
     } catch (err) {
-      console.error(err);
-    } finally {
-      setAttendanceLoading(false);
+      console.error('Unable to load manager call contact', err);
     }
-  };
-
-  const getLocation = () =>
-    new Promise((resolve, reject) => {
-
-      if (!navigator.geolocation) {
-        reject("Geolocation not supported");
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy
-          });
-
-        },
-        reject,
-        {
-          enableHighAccuracy: true
-        }
-      );
-    });
-
-  const handleCheckIn = async () => {
-
-    try {
-
-      setAttendanceActionLoading(true);
-
-      const location = await getLocation();
-
-      await API.post("/attendance/checkin", location);
-
-      await fetchAttendance();
-
-      alert("Checked In Successfully");
-
-    } catch (err) {
-
-      alert(err.response?.data?.message || "Unable to Check In");
-
-    } finally {
-
-      setAttendanceActionLoading(false);
-
-    }
-
-  };
-
-  const handleCheckOut = async () => {
-
-    try {
-
-      setAttendanceActionLoading(true);
-
-      const location = await getLocation();
-
-      await API.post("/attendance/checkout", location);
-
-      await fetchAttendance();
-
-      alert("Checked Out Successfully");
-
-    } catch (err) {
-
-      alert(err.response?.data?.message || "Unable to Check Out");
-
-    } finally {
-
-      setAttendanceActionLoading(false);
-
-    }
-
-  };
-
+  }, []);
 
   useEffect(() => {
-
     fetchTodayStats(hasFetchedStats);
-    fetchAttendance();
+    fetchManagerContact();
     const interval = setInterval(() => {
       fetchTodayStats(true);
-      fetchAttendance();
     }, 2 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [fetchTodayStats]);
-
+  }, [fetchTodayStats, fetchManagerContact]);
 
   const summaryRows = [
-    { label: t.totalVisits, value: loading ? '--' : String(stats.visits).padStart(2, '0') },
-    { label: t.totalSales, value: loading ? '--' : currencyFormatter.format(stats.sales) },
-    { label: t.totalItems, value: loading ? '--' : stats.items }
+    { label: t('seller.total_visits'), value: loading ? '--' : String(stats.visits).padStart(2, '0') },
+    { label: t('seller.total_sales'), value: loading ? '--' : currencyFormatter.format(stats.sales) },
+    { label: t('seller.total_items'), value: loading ? '--' : stats.items }
   ];
 
   return (
     <div className="space-y-16">
-
-      <div className="flex justify-end">
-
-        {attendanceLoading ? (
-
-          <div className="rounded-lg border bg-white px-6 py-4 shadow-sm">
-            Loading...
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        {managerContact && (
+          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-wide text-slate-500">Manager support</p>
+            <p className="mt-1 text-sm font-black text-slate-950">{managerContact.name || 'Manager'}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <CallButton targetUserId={managerContact.id} type="voice" label="Call" />
+              <CallButton targetUserId={managerContact.id} type="video" label="Video" />
+            </div>
           </div>
-
-        ) : attendance ? (
-
-          attendance.logoutTime ? (
-
-            <div className="rounded-lg border border-green-200 bg-green-50 px-6 py-4 shadow-sm">
-
-<div className="font-bold text-green-700 bg-transparent border border-green-700">
-
-                ✅ Checked Out
-              </div>
-
-              <div className="mt-1 text-xs text-gray-600">
-                Checked In :
-                {" "}
-                {new Date(attendance.loginTime).toLocaleTimeString()}
-              </div>
-
-              <div className="text-xs text-gray-600">
-                Checked Out :
-                {" "}
-                {new Date(attendance.logoutTime).toLocaleTimeString()}
-              </div>
-
-            </div>
-
-          ) : (
-
-            <button
-              onClick={handleCheckOut}
-              disabled={attendanceActionLoading}
-              className="rounded-lg bg-red-600 px-6 py-3 text-white shadow hover:bg-red-700"
-            >
-
-              <div className="flex items-center justify-center gap-2">
-
-                <LogOut size={18} />
-
-                <span className="font-semibold">
-                  Check Out
-                </span>
-
-              </div>
-
-              <div className="mt-1 text-xs">
-
-                Checked In :
-
-                {" "}
-
-                {new Date(attendance.loginTime).toLocaleTimeString()}
-
-              </div>
-
-            </button>
-
-          )
-
-        ) : (
-
-          <button
-            onClick={handleCheckIn}
-            disabled={attendanceActionLoading}
-            className="rounded-lg bg-green-600 px-6 py-3 text-white shadow hover:bg-green-700"
-          >
-
-            <div className="flex items-center justify-center gap-2">
-
-              <LogIn size={18} />
-
-              <span className="font-semibold">
-
-                Check In
-
-              </span>
-
-            </div>
-
-          </button>
-
         )}
 
+        <div className="flex justify-end">
+          <SellerAttendance />
+        </div>
       </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
       <Link
         to="/sell/shop"
         className="flex h-14 mt-2 w-full items-center justify-center gap-2 rounded-md bg-blue-700 px-4 text-sm font-black text-white shadow-sm transition-colors hover:bg-blue-800"
       >
         <Plus size={17} />
-        <span>{t.startSelling}</span>
+        <span>{t('seller.start_selling')}</span>
       </Link>
-
 
       <section className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
         <h2 className="mb-4 text-xs font-black text-slate-950">
@@ -312,7 +108,6 @@ const SellerDashboard = () => {
               <p className="text-sm font-semibold text-slate-600">
                 {row.label}
               </p>
-
               <p className="mt-2 text-2xl font-black text-slate-950">
                 {row.value}
               </p>
@@ -327,6 +122,11 @@ const SellerDashboard = () => {
           <span>{error}</span>
         </div>
       )}
+      
+      <section className="rounded-md border border-slate-200 bg-white p-4 shadow-sm mt-6">
+        <h2 className="mb-4 text-xs font-black text-slate-950">Recent calls</h2>
+        <CallHistory limit={10} />
+      </section>
     </div>
   );
 };

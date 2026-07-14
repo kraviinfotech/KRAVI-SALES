@@ -1,10 +1,13 @@
 require('dotenv').config();
 const fs = require('fs');
+const http = require('http');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const { Server } = require('socket.io');
 const attendanceRoutes = require('./routes/attendance');
+const initCallSocket = require('./socket/callSocket');
 
 // Do not attempt to load frontend JSX files in the backend.
 // JSX/React components should live in the frontend and not be required by Node.
@@ -22,6 +25,7 @@ const subscriptionsRoutes = require('./routes/subscriptions');
 const shopPaymentsRoutes = require('./routes/shopPayments');
 const kraviChatRoutes = require('./routes/kraviChat');
 const companiesRoutes = require('./routes/companies');
+const callRoutes = require('./routes/callRoutes');
 
 require('./models/SubscriptionPlan');
 require('./services/emailService');
@@ -55,6 +59,7 @@ app.use('/api/shoppayments', shopPaymentsRoutes);
 app.use('/api/kravi-chat', kraviChatRoutes);
 app.use('/api/companies', companiesRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/calls', callRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {
@@ -72,12 +77,21 @@ app.use((err, req, res, next) => {
 // Database Connection and Server Boot
 const PORT = process.env.PORT || 5002;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/salestracker';
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || true,
+    credentials: true
+  }
+});
+
+initCallSocket(io);
 
 mongoose
   .connect(MONGO_URI)
   .then(() => {
     console.log('Successfully connected to MongoDB.');
-    app.listen(PORT, "0.0.0.0", () => {
+    server.listen(PORT, "0.0.0.0", () => {
       console.log(`Server is running on port ${PORT}`);
     });
   })

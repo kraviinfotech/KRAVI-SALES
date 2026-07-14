@@ -132,13 +132,13 @@ export const AuthProvider = ({ children }) => {
 
       const {
         user: userData,
+        token: authToken,
       } = response.data;
 
       localStorage.setItem(
         USER_STORAGE_KEY,
         JSON.stringify(userData)
       );
-
       sessionStorage.removeItem(
         `subscriptionPromptSeen_${userData._id}`
       );
@@ -192,13 +192,13 @@ export const AuthProvider = ({ children }) => {
 
       const {
         user: userData,
+        token: authToken,
       } = response.data;
 
       localStorage.setItem(
         USER_STORAGE_KEY,
         JSON.stringify(userData)
       );
-
       sessionStorage.removeItem(
         `subscriptionPromptSeen_${userData._id}`
       );
@@ -255,7 +255,6 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem(
         USER_STORAGE_KEY
       );
-
       setUser(null);
     }
   }, []);

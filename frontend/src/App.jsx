@@ -6,39 +6,39 @@ import ManagerLayout from './components/ManagerLayout';
 import AdminLayout from './components/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
+import { CallProvider } from './context/CallProvider';
 import Login from './pages/Login';
 import AdminLogin from './pages/Admin/Login';
 import Register from './pages/Register';
-import SellerDashboard from './pages/seller/SellerDashboard';
-import MyRecords from './pages/seller/MyRecords';
-import StartSelling from './pages/seller/StartSelling';
-import AddShop from './pages/seller/AddShop';
-import AddProducts from './pages/seller/AddProducts';
-import ReviewSave from './pages/seller/ReviewSave';
-import SellerReports from './pages/seller/SellerReports';
-import SellerProfile from './pages/seller/SellerProfile';
-import ManagerDashboard from './pages/manager/ManagerDashboard';
-import SubscriptionPayment from './pages/manager/SubscriptionPayment';
-import AddSeller from './pages/manager/AddSeller';
-import Reports from './pages/manager/Reports';
-import ManagerRecords from './pages/manager/ManagerRecords';
-import ProductsOverview from './pages/manager/ProductsOverview';
-import ManagerSellerDetail from './pages/manager/ManagerSellerDetail';
-import ManagerProfile from './pages/manager/ManagerProfile';
-import AdminDashboard from './pages/Admin/Dashboard';
-import AdminCompanies from './pages/Admin/Companies';
-import AdminManagers from './pages/Admin/Managers';
-import AdminPlans from './pages/Admin/Plans';
-import AdminPayments from './pages/Admin/Payments';
-import AdminReports from './pages/Admin/Reports';
-import AdminSettings from './pages/Admin/Settings';
+import { sellerRoutes } from './routes/sellerRoutes';
+import { managerRoutes } from './routes/managerRoutes';
+import { adminRoutes } from './routes/adminRoutes';
 
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import bgImage from "./images/bg.png"; 
 import KraviChatbot from './components/KraviChatbot';
-import SubscriptionBilling from './pages/manager/SubscriptionBilling';
-import ManagerAttendance from './pages/manager/ManagerAttendance';
+import IncomingCallModal from './components/IncomingCallModal';
+import CallWindow from './components/CallWindow';
+import CallStatusToast from './components/CallStatusToast';
+
+const renderRoutes = (routes) => routes.map((route) => {
+  if (route.children) {
+    return (
+      <Route key={route.path} path={route.path} element={route.element}>
+        {route.children.map((child) =>
+          child.index ? (
+            <Route key="index" index element={child.element} />
+          ) : (
+            <Route key={child.path} path={child.path} element={child.element} />
+          )
+        )}
+      </Route>
+    );
+  }
+
+  return <Route key={route.path} path={route.path} element={route.element} />;
+});
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -58,7 +58,7 @@ const App = () => {
   const isLoginPage = location.pathname === '/login';
 
   return (
-    <>
+    <CallProvider>
       <div className={isSellerArea || isManagerArea || isAdminArea ? 'min-h-screen bg-slate-100' : 'public-background flex flex-col min-h-screen bg-gray-50'} style={
         !(isSellerArea || isManagerArea || isAdminArea)
           ? {
@@ -90,18 +90,7 @@ const App = () => {
               <SellerLayout />
             </ProtectedRoute>
           }>
-            <Route path="/dashboard" element={<SellerDashboard />} />
-            <Route path="/my-records" element={<MyRecords />} />
-            <Route path="/seller/reports" element={<SellerReports />} />
-            <Route path="/seller/profile" element={<SellerProfile />} />
-
-            {/* Start Selling Visit Flow */}
-            <Route path="/sell" element={<StartSelling />}>
-              <Route path="shop" element={<AddShop />} />
-              <Route path="products" element={<AddProducts />} />
-              <Route path="review" element={<ReviewSave />} />
-              <Route index element={<Navigate to="shop" replace />} />
-            </Route>
+            {renderRoutes(sellerRoutes)}
           </Route>
 
           {/* Manager Routes */}
@@ -110,16 +99,7 @@ const App = () => {
               <ManagerLayout />
             </ProtectedRoute>
           }>
-            <Route path="/manager" element={<ManagerDashboard />} />
-            <Route path="/manager/payment" element={<SubscriptionPayment />} />
-            <Route path="/manager/subscription" element={<SubscriptionBilling />} />
-            <Route path="/manager/sellers" element={<AddSeller />} />
-            <Route path="/manager/records" element={<ManagerRecords />} />
-            <Route path="/manager/reports" element={<Reports />} />
-            <Route path="/manager/products" element={<ProductsOverview />} />
-            <Route path="/manager/profile" element={<ManagerProfile />} />
-            <Route path="/manager/seller/:sellerId" element={<ManagerSellerDetail />} />
-            <Route path="/manager/attendance" element={<ManagerAttendance />} />
+            {renderRoutes(managerRoutes)}
           </Route>
 
           {/* Admin Routes */}
@@ -128,14 +108,7 @@ const App = () => {
               <AdminLayout />
             </ProtectedRoute>
           }>
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/companies" element={<AdminCompanies />} />
-              <Route path="/admin/managers" element={<AdminManagers />} /> 
-              <Route path="/admin/plans" element={<AdminPlans />} />
-            <Route path="/admin/payments" element={<AdminPayments />} />
-            <Route path="/admin/reports" element={<AdminReports />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
-            <Route path="/admin/*" element={<AdminDashboard />} />
+            {renderRoutes(adminRoutes)}
           </Route>
 
           {/* Fallback */}
@@ -144,7 +117,10 @@ const App = () => {
       </main>
     </div>
     <KraviChatbot />
-  </>
+    <IncomingCallModal />
+    <CallWindow />
+    <CallStatusToast />
+  </CallProvider>
   );
 };
 

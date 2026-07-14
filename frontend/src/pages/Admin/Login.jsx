@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Lock, Mail, Eye, EyeOff, ShieldCheck, Users, ShoppingBag, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const roleConfig = {
-  admin: { badge: 'Master Control', title: 'Admin Access', subtitle: 'Manage System & Companies', color: 'bg-[#6C3EF4]', text: 'text-[#6C3EF4]', light: 'bg-purple-50', borderColor: 'border-purple-200' },
-  manager: { badge: 'Operations', title: 'Manager Login', subtitle: 'Oversee Sellers & Reports', color: 'bg-[#0EA5E9]', text: 'text-[#0EA5E9]', light: 'bg-blue-50', borderColor: 'border-blue-200' },
-  seller: { badge: 'Field Access', title: 'Seller Login', subtitle: 'Record Visits & Sales', color: 'bg-[#6366F1]', text: 'text-[#6366F1]', light: 'bg-indigo-50', borderColor: 'border-indigo-200' }
+  admin: { badge: 'admin.badge_admin', title: 'admin.title_admin', subtitle: 'admin.subtitle_admin', color: 'bg-[#6C3EF4]', text: 'text-[#6C3EF4]', light: 'bg-purple-50', borderColor: 'border-purple-200' },
+  manager: { badge: 'admin.badge_manager', title: 'admin.title_manager', subtitle: 'admin.subtitle_manager', color: 'bg-[#0EA5E9]', text: 'text-[#0EA5E9]', light: 'bg-blue-50', borderColor: 'border-blue-200' },
+  seller: { badge: 'admin.badge_seller', title: 'admin.title_seller', subtitle: 'admin.subtitle_seller', color: 'bg-[#6366F1]', text: 'text-[#6366F1]', light: 'bg-indigo-50', borderColor: 'border-indigo-200' }
 };
 
 const Login = () => {
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +30,7 @@ const Login = () => {
     
     // Validation
     if (!email || !password) {
-      setError('Please enter both email and password');
+      setError(t('admin.enter_email_password'));
       setIsLoading(false);
       return;
     }
@@ -41,11 +43,11 @@ const Login = () => {
       if (userData.role === 'admin') {
         navigate('/admin');
       } else {
-        setError('Only admins can access this portal');
+        setError(t('admin.only_admins_can_access'));
         setIsLoading(false);
       }
     } catch (err) {
-      setError(err || 'Login failed');
+      setError(err || t('admin.login_failed'));
       setIsLoading(false);
     }
   };
@@ -64,7 +66,7 @@ const Login = () => {
             K
           </div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight">KRAVI ADMIN</h1>
-          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1 tracking-tighter">Enterprise Access Portal</p>
+          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1 tracking-tighter">{t('admin.enterprise_access_portal')}</p>
         </div>
 
         {/* Improved Role Selector Tabs */}
@@ -81,7 +83,7 @@ const Login = () => {
                     : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
-                {role}
+                {t(`admin.${role}`)}
               </button>
             ))}
           </div>
@@ -96,8 +98,8 @@ const Login = () => {
               {activeRole === 'seller' && <ShoppingBag size={28} />}
             </div>
             <div className="text-left">
-              <h2 className="font-black text-gray-900 leading-none uppercase tracking-tighter">{currentRole.title}</h2>
-              <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-tight italic">{currentRole.badge}</p>
+              <h2 className="font-black text-gray-900 leading-none uppercase tracking-tighter">{t(currentRole.title)}</h2>
+              <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-tight italic">{t(currentRole.badge)}</p>
             </div>
           </div>
         </div>
@@ -112,7 +114,7 @@ const Login = () => {
           )}
 
           <div className="space-y-1.5">
-            <label htmlFor="admin-login-email" className="text-sm font-semibold text-gray-700">Email Address</label>
+            <label htmlFor="admin-login-email" className="text-sm font-semibold text-gray-700">{t('admin.email_address')}</label>
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
@@ -126,7 +128,7 @@ const Login = () => {
           </div>
 
           <div className="space-y-1.5 pb-2">
-            <label htmlFor="admin-login-password" className="text-sm font-semibold text-gray-700">Password</label>
+            <label htmlFor="admin-login-password" className="text-sm font-semibold text-gray-700">{t('admin.password')}</label>
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
@@ -139,6 +141,7 @@ const Login = () => {
               <button 
                 type="button" 
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? t('admin.hide_password') : t('admin.show_password')}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-800"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -151,9 +154,9 @@ const Login = () => {
             disabled={isLoading}
             className={`w-full flex items-center justify-center gap-2 text-white py-4 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-[0.98] disabled:opacity-70 ${currentRole.color} shadow-purple-100`}
           >
-            {isLoading ? 'VERIFYING...' : (
+            {isLoading ? t('admin.verifying') : (
               <>
-                SIGN IN
+                {t('admin.sign_in')}
                 <ArrowRight size={20} />
               </>
             )}
@@ -162,8 +165,8 @@ const Login = () => {
 
         <div className="p-8 pt-0 text-center">
           <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-loose">
-            Secure Identity Management <br /> 
-            Protected by KRAVI Tech
+            {t('admin.secure_identity_management')} <br /> 
+            {t('admin.protected_by_kravi_tech')}
           </p>
         </div>
       </div>

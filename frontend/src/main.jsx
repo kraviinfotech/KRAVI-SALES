@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext'
 import { queryClient } from './api/queryClient'
 import App from './App'
 import './index.css'
+import './i18n'
 
 // --- Razorpay LocalStorage Interceptor ---
 // Must run before any other code or component renders!

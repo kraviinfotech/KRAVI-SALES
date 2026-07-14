@@ -29,6 +29,7 @@ const NotificationBell = () => {
     <button
       type="button"
       onClick={handleBellClick}
+      aria-label="Notifications"
       className="relative p-2 rounded-full hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
     >
       <Bell size={20} />
