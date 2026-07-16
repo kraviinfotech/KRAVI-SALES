@@ -152,6 +152,7 @@ const ManagerDashboard = () => {
 
       <SalesChartSection chartData={chartData} chartLoading={chartLoading} />
 
+{/* 4. Seller Performance Table */}
       <SellerPerformanceTable
         sellerRows={sellerRows}
         totals={totals}
@@ -168,9 +169,10 @@ const ManagerDashboard = () => {
         onApplyCustomRange={() => setAppliedCustomRange(customRange)}
         callContactsBySellerId={callContactsBySellerId}
       />
+      
 
       <CollectionStatsCards collectionStats={collectionStats} />
-
+{/* 5. Recent Collections Table */}
       <RecentCollectionsTable 
         recentCollections={recentCollections}
         collectionsLoading={collectionsLoading}

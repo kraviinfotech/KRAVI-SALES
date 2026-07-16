@@ -40,9 +40,9 @@ const SalesTable = ({ records }) => {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+    <div className="w-full max-w-full overflow-x-auto">
+      <div className="min-w-0 bg-white rounded-xl border border-slate-200 shadow-sm">
+        <table className="w-full table-fixed border-collapse">
           <thead>
             <tr className="bg-slate-50 text-slate-500 text-[11px] font-black uppercase tracking-widest border-b border-slate-200">
               <th className="p-4">Seller</th>
@@ -59,7 +59,7 @@ const SalesTable = ({ records }) => {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {records.map((record) => {
-              
+
               const isExpanded = expandedId === record._id;
               const sellerName = record.sellerId?.name || 'Unknown Seller';
               const itemsCount = record.items?.length || 0;
@@ -78,15 +78,17 @@ const SalesTable = ({ records }) => {
                     aria-label={`Toggle details for ${sellerName}`}
                     className={`hover:bg-blue-50/40 transition-colors cursor-pointer text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 ${isExpanded ? 'bg-blue-50/30' : ''}`}
                   >
-                    <td className="p-4 font-bold text-slate-900">{sellerName}</td>
-                    <td className="p-4 text-slate-700 font-semibold">{record.shopName}</td>
-                    <td className="p-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        record.shopType === 'Retail' ? 'bg-blue-50 text-blue-700' :
+                    <td className="p-4 font-bold text-slate-900">
+                      {sellerName}
+                    </td>
+                    <td className="p-4 max-w-[180px] break-words">
+                      {record.shopName}
+                    </td>                    <td className="p-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${record.shopType === 'Retail' ? 'bg-blue-50 text-blue-700' :
                         record.shopType === 'Wholesale' ? 'bg-purple-50 text-purple-700' :
-                        record.shopType === 'Distributor' ? 'bg-orange-50 text-orange-700' :
-                        'bg-slate-100 text-slate-700'
-                      }`}>
+                          record.shopType === 'Distributor' ? 'bg-orange-50 text-orange-700' :
+                            'bg-slate-100 text-slate-700'
+                        }`}>
                         {record.shopType}
                       </span>
                     </td>
@@ -104,18 +106,18 @@ const SalesTable = ({ records }) => {
                   {isExpanded && (
                     <tr className="bg-slate-50/80">
                       <td colSpan="8" className="p-6 border-t border-slate-200">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                          <div>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-w-0">
+<div className="min-w-0">
                             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Visit Details</h4>
                             <div className="space-y-1.5 text-xs text-gray-700">
                               <p><span className="font-semibold text-gray-900">Address:</span> {record.shopAddress}</p>
                               {record.landmark && <p><span className="font-semibold text-gray-900">Landmark:</span> {record.landmark}</p>}
-                              
+
                               <div className="mt-3 pt-2 border-t border-slate-200">
                                 <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">Payment Summary</p>
                                 <p><span className="font-semibold text-gray-900">Paid:</span> {currencyFormatter.format(record.paidAmount || 0)}</p>
                                 <p><span className="font-semibold text-red-600">Pending:</span> {currencyFormatter.format(record.pendingAmount || 0)}</p>
-                                <p><span className="font-semibold text-gray-900">Status:</span> 
+                                <p><span className="font-semibold text-gray-900">Status:</span>
                                   <span className={`ml-1 font-bold ${record.paymentStatus === 'Paid' ? 'text-emerald-600' : 'text-orange-600'}`}>
                                     {record.paymentStatus || 'Pending'}
                                   </span>
@@ -125,6 +127,8 @@ const SalesTable = ({ records }) => {
                               <p className="flex items-center space-x-1 mt-1 text-primary">
                                 <MapPin size={12} />
                                 <a
+                                  className="underline hover:text-primary-dark break-all"
+
                                   href={`https://maps.google.com/?q=${record.latitude},${record.longitude}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
@@ -136,7 +140,7 @@ const SalesTable = ({ records }) => {
                             </div>
                           </div>
 
-                          <div>
+<div className="min-w-0">
                             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Items Ordered</h4>
                             <div className="bg-white rounded border border-gray-200 overflow-hidden">
                               <table className="w-full text-left text-xs">
@@ -163,8 +167,9 @@ const SalesTable = ({ records }) => {
 
                                     return (
                                       <tr key={item._id || idx}>
-                                        <td className="p-2 text-gray-800 font-medium">{item.productName}</td>
-                                        <td className="p-2 text-center text-gray-600">{displayLabel}</td>
+                                        <td className="p-2 max-w-[140px] break-words">
+                                          {item.productName}
+                                        </td>                                        <td className="p-2 text-center text-gray-600">{displayLabel}</td>
                                         <td className="p-2 text-right text-gray-600">₹{rate.toFixed(2)}</td>
                                         <td className="p-2 text-right text-gray-800 font-medium">₹{amount.toFixed(2)}</td>
                                       </tr>
@@ -175,7 +180,7 @@ const SalesTable = ({ records }) => {
                             </div>
                           </div>
 
-                          <div>
+<div className="min-w-0">
                             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Media Files</h4>
                             <div className="grid grid-cols-2 gap-3">
                               <div className="flex flex-col items-center">
@@ -213,7 +218,7 @@ const SalesTable = ({ records }) => {
                                 ) : record.paymentMethod === 'Online' ? (
                                   <div className="w-full h-24 rounded border border-dashed border-red-200 bg-red-50/50 flex flex-col items-center justify-center text-red-400">
                                     <Image size={18} />
-                                    <span className="text-[9px] font-bold mt-1 text-center leading-tight">Missing Proof<br/>(Online)</span>
+                                    <span className="text-[9px] font-bold mt-1 text-center leading-tight">Missing Proof<br />(Online)</span>
                                   </div>
                                 ) : (
                                   <div className="w-full h-24 rounded border border-slate-200 bg-slate-100 flex flex-col items-center justify-center text-slate-500 p-1 text-center">
@@ -233,33 +238,34 @@ const SalesTable = ({ records }) => {
             })}
           </tbody>
         </table>
-      </div>
 
-      <dialog
-        ref={dialogRef}
-        aria-label="Image Preview"
-        className="backdrop:bg-black/80 backdrop:backdrop-blur-xs rounded-lg p-0 shadow-2xl overflow-hidden"
-        onCancel={handleCloseImage}
-      >
-        {/* FIXED: Swapped click-mask div out for native close actions & native HTML button semantics */}
-        <div className="p-2 max-w-3xl max-h-[85vh] flex flex-col items-center justify-center relative rounded-lg">
-          <button
-            type="button"
-            onClick={handleCloseImage}
-            className="absolute -top-10 right-0 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            aria-label="Close modal"
-          >
-            <X size={20} />
-          </button>
-          {selectedImage && (
-            <img
-              src={selectedImage}
-              alt="High Resolution Preview"
-              className="max-w-full max-h-[80vh] rounded object-contain pointer-events-auto"
-            />
-          )}
-        </div>
-      </dialog>
+
+        <dialog
+          ref={dialogRef}
+          aria-label="Image Preview"
+          className="backdrop:bg-black/80 backdrop:backdrop-blur-xs rounded-lg p-0 shadow-2xl overflow-hidden"
+          onCancel={handleCloseImage}
+        >
+          {/* FIXED: Swapped click-mask div out for native close actions & native HTML button semantics */}
+          <div className="p-2 max-w-3xl max-h-[85vh] flex flex-col items-center justify-center relative rounded-lg">
+            <button
+              type="button"
+              onClick={handleCloseImage}
+              className="absolute -top-10 right-0 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              aria-label="Close modal"
+            >
+              <X size={20} />
+            </button>
+            {selectedImage && (
+              <img
+                src={selectedImage}
+                alt="High Resolution Preview"
+                className="max-w-full max-h-[80vh] rounded object-contain pointer-events-auto"
+              />
+            )}
+          </div>
+        </dialog>
+      </div>
     </div>
   );
 };

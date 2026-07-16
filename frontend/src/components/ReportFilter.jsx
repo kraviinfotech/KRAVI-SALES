@@ -104,10 +104,8 @@ const ReportFilter = ({
 
   return (
     <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <div className="flex flex-nowrap overflow-x-auto items-end gap-4 pb-2">
-        {/* Seller */}
-        <div>
-          <label htmlFor="report-filter-seller" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+<div className="flex overflow-x-auto items-end gap-4 pb-2 min-w-0">        {/* Seller */}
+<div className="min-w-[160px] flex-shrink-0">          <label htmlFor="report-filter-seller" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Seller
           </label>
 
@@ -138,8 +136,7 @@ const ReportFilter = ({
         </div>
 
         {/* Seller Name */}
-        <div>
-          <label htmlFor="report-filter-seller-name" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+<div className="min-w-[160px] flex-shrink-0">          <label htmlFor="report-filter-seller-name" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Seller Name
           </label>
 
@@ -159,8 +156,7 @@ const ReportFilter = ({
         </div>
 
         {/* Shop Name */}
-        <div>
-          <label htmlFor="report-filter-shop-name" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+<div className="min-w-[160px] flex-shrink-0">          <label htmlFor="report-filter-shop-name" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Shop Name
           </label>
 
@@ -180,8 +176,7 @@ const ReportFilter = ({
         </div>
 
         {/* Shop Type */}
-        <div>
-          <label htmlFor="report-filter-shop-type" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+<div className="min-w-[160px] flex-shrink-0">          <label htmlFor="report-filter-shop-type" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Shop Type
           </label>
 
@@ -219,7 +214,7 @@ const ReportFilter = ({
         </div>
 
         {/* Status */}
-        <div>
+        <div className="min-w-[160px] flex-shrink-0">
           <label htmlFor="report-filter-status" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             Status
           </label>
@@ -254,7 +249,7 @@ const ReportFilter = ({
         </div>
 
         {/* From Date */}
-        <div>
+        <div className="min-w-[160px] flex-shrink-0">
           <label htmlFor="report-filter-from" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             From Date
           </label>
@@ -274,7 +269,7 @@ const ReportFilter = ({
         </div>
 
         {/* To Date */}
-        <div>
+        <div className="min-w-[160px] flex-shrink-0">
           <label htmlFor="report-filter-to" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
             To Date
           </label>
@@ -294,8 +289,7 @@ const ReportFilter = ({
         </div>
 
         {/* Reset Button */}
-        <div className="flex flex-col justify-end">
-          <button
+<div className="min-w-[160px] flex-shrink-0">          <button
             type="button"
             onClick={handleClear}
             className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded text-sm font-medium transition-colors whitespace-nowrap"
