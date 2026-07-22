@@ -143,7 +143,7 @@ router.post(
   '/send-registration-otp',
   [
     body('name').exists().withMessage('Name is required').trim().notEmpty(),
-    body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
+    body('email').isEmail().withMessage('Valid email is required'),
     body('mobile').isMobilePhone('any').withMessage('Valid mobile is required').trim(),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
     body('acceptedTerms')
@@ -205,7 +205,7 @@ router.post(
 router.post(
   '/verify-registration-otp',
   [
-    body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
+    body('email').isEmail().withMessage('Valid email is required'),
     body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
 
   ],

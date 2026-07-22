@@ -210,7 +210,7 @@ const RecordCard = ({ record, onReceivePayment, t }) => {
                 className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 transition-colors"
               >
                 <CheckCircle2 size={14} />
-                {t('seller.receive_payment')}
+                {t('pay amount')}
               </button>
             </div>
           )}

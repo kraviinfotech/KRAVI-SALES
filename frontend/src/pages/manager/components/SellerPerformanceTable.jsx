@@ -100,8 +100,8 @@ const SellerPerformanceTable = ({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[860px] border-collapse text-sm">
-          <thead>
+<table className="w-full border-collapse text-sm min-w-[700px]">
+            <thead>
             <tr className="border-b border-slate-200 bg-indigo-50 text-xs font-black text-indigo-800">
               <th className="px-4 py-3 text-left">{t('manager.table.seller')}</th>
               <th className="px-4 py-3 text-center">{t('manager.table.total_records')}</th>
